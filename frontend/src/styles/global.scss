@@ -1,0 +1,238 @@
+// ========================================
+// 杰迷结业考试 全局样式
+// UI 组件库: Vant 4 | 设计系统: ui-ux-pro-max
+// ========================================
+
+// Google Fonts: Poppins (ui-ux-pro-max 推荐音乐/娱乐调性字体)
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+// ========================================
+// 设计 Token（自定义属性）
+// ========================================
+:root {
+  // Vant 主题色覆盖（对齐品牌金）
+  --van-primary-color: #c9a84c;
+  --van-primary-color-end: #b8973b;
+  --van-dialog-background: #141428;
+  --van-dialog-text-color: #f0ead6;
+  --van-toast-background: rgba(20, 20, 40, 0.95);
+  --van-toast-text-color: #f0ead6;
+  --van-tag-primary-color: #c9a84c;
+
+  // 品牌色
+  --app-gold: #c9a84c;
+  --app-gold-light: #e0cc8e;
+  --app-gold-dark: #a08030;
+  --app-bg-color: #0a0a14;
+  --app-bg-deep: #0a0a14;
+  --app-bg-card: rgba(255, 255, 255, 0.04);
+  --app-bg-card-hover: rgba(255, 255, 255, 0.07);
+  --app-border: rgba(255, 255, 255, 0.08);
+  --app-text-primary: #f0ead6;
+  --app-text-secondary: #9ca3af;
+  --app-text-muted: #6b7280;
+
+  // 字体
+  --app-font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  // 渐变
+  --app-bg-gradient: linear-gradient(180deg, #0a0a18 0%, #111128 30%, #0f1a2e 60%, #0a0a18 100%);
+  --app-gold-gradient: linear-gradient(135deg, #c9a84c 0%, #e0cc8e 50%, #b8973b 100%);
+  --app-gold-gradient-horizontal: linear-gradient(90deg, #c9a84c 0%, #e0cc8e 50%, #c9a84c 100%);
+
+  // 发光
+  --app-glow-gold: 0 0 20px rgba(201, 168, 76, 0.3);
+  --app-glow-gold-strong: 0 0 40px rgba(201, 168, 76, 0.5);
+}
+
+// ========================================
+// Reset & Base
+// ========================================
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--app-bg-color);
+  color: var(--app-text-primary);
+  font-family: var(--app-font-family);
+}
+
+body {
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+// 移动端触摸优化（ui-ux-pro-max: 触控目标 ≥44x44px, 间距 ≥8px）
+button, a, .clickable {
+  min-height: 44px;
+  min-width: 44px;
+  cursor: pointer;
+}
+
+// 滚动条美化
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.3);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+// ========================================
+// Vant 组件暗色主题覆盖
+// ========================================
+
+// Dialog（确认弹窗）
+.van-dialog {
+  border-radius: 20px !important;
+  overflow: hidden;
+
+  .van-dialog__header {
+    padding: 24px 24px 0;
+    color: var(--app-text-primary);
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .van-dialog__content {
+    .van-dialog__message {
+      padding: 16px 24px 0;
+      color: var(--app-text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+      text-align: center;
+    }
+  }
+
+  .van-dialog__footer {
+    padding: 20px 24px 24px;
+    display: flex;
+    gap: 12px;
+  }
+
+  .van-button {
+    flex: 1;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .van-dialog__cancel {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--app-text-secondary) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .van-dialog__confirm {
+    background: var(--app-gold-gradient) !important;
+    color: #1a1a2e !important;
+    border: none !important;
+  }
+}
+
+// Tag（标签徽章）
+.van-tag {
+  border-radius: 8px;
+  font-weight: 600;
+
+  &.van-tag--round {
+    border-radius: 999px;
+  }
+}
+
+// Toast（消息提示）
+.van-toast {
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 14px;
+}
+
+// ========================================
+// 页面背景渐变
+// ========================================
+.page-bg {
+  background: var(--app-bg-gradient);
+  min-height: 100vh;
+}
+
+// ========================================
+// 玻璃卡片（毛玻璃效果）
+// ========================================
+.glass-card {
+  background: var(--app-bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+}
+
+// ========================================
+// 文字渐变金色工具类
+// ========================================
+.text-gold {
+  background: var(--app-gold-gradient-horizontal);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// ========================================
+// 关键帧动画
+// ========================================
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(201, 168, 76, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(201, 168, 76, 0.5), 0 0 80px rgba(201, 168, 76, 0.15); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ========================================
+// 无障碍：偏好减少动画
+// ========================================
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

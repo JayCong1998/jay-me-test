@@ -1,0 +1,62 @@
+# ====================
+# Node / Vite (frontend)
+# ====================
+node_modules/
+dist/
+*.local
+
+# Vite auto-generated
+frontend/src/auto-imports.d.ts
+frontend/src/components.d.ts
+
+# ====================
+# Java / Maven (backend)
+# ====================
+target/
+*.class
+*.jar
+*.war
+
+# Maven wrapper
+!.mvn/wrapper/maven-wrapper.jar
+
+# ====================
+# IDE
+# ====================
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# ====================
+# OS
+# ====================
+Thumbs.db
+.DS_Store
+
+# ====================
+# Environment & Secrets
+# ====================
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# ====================
+# Logs
+# ====================
+logs/
+*.log
+
+# ====================
+# Claude / Agent artifacts
+# ====================
+.claude/settings.local.json
+.claude/worktrees/
+.superpowers/
+prompt/
+
+# TypeScript build info
+*.tsbuildinfo
