@@ -48,6 +48,17 @@ client.interceptors.response.use(
     if (!error.response) {
       return Promise.reject(new Error('网络开小差了，请重试'))
     }
+    // 401 表示登录已过期或 token 无效，清除本地登录态并跳转首页
+    if (error.response.status === 401) {
+      localStorage.removeItem('jaymetest_auth')
+      // 如果当前不在首页，跳转到首页（游客模式）
+      if (window.location.hash !== '#/') {
+        window.location.hash = '#/'
+      }
+      // 延迟 reload 确保路由跳转生效，同时清除内存中的 store 状态
+      window.location.reload()
+      return Promise.reject(new Error('登录已过期，请重新登录'))
+    }
     return Promise.reject(error)
   }
 )

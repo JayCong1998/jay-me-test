@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /**
- * 题目 API
+ * 题目 API — 经典模式入口。
+ * 内部委托给 {@code ClassicGameStrategy}。
  */
 @Tag(name = "题目接口")
 @RestController
@@ -21,10 +22,11 @@ public class QuestionController {
 
     private final QuestionService questionService;
 
-    @Operation(summary = "随机抽取一局题目")
+    @Operation(summary = "随机抽取一局题目（经典模式）")
     @GetMapping("/round")
     public R<RoundDTO> getRound(@RequestParam(defaultValue = "10") int count) {
-        RoundDTO round = questionService.generateRound(count);
+        RoundDTO round = questionService.classic()
+                .generateRound(count, null, questionService.cacheManager());
         return R.ok(round);
     }
 
@@ -39,10 +41,11 @@ public class QuestionController {
     @Operation(summary = "使用复活机会")
     @PostMapping("/revive")
     public R<Map<String, Object>> revive(@Valid @RequestBody ReviveRequest request) {
-        // 复活：返回正确答案，前端可据此让用户重新作答
-        String correctAnswer = questionService.getCorrectAnswer(request.getRoundId(), request.getQuestionId());
+        String correctAnswer = questionService.classic()
+                .revive(request.getRoundId(), request.getQuestionId(), questionService.cacheManager());
         return R.ok(Map.of(
                 "revived", true,
+                "correctAnswer", correctAnswer,
                 "remainingRevivals", 0
         ));
     }

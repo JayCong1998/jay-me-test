@@ -9,6 +9,11 @@ import com.jaymetest.model.dto.GameSubmitRequest;
 import com.jaymetest.model.dto.StatsOverviewDTO;
 import com.jaymetest.model.entity.GameRecord;
 import com.jaymetest.model.enums.FanLevel;
+import com.jaymetest.model.enums.GameMode;
+import com.jaymetest.service.game.GameStrategy;
+import com.jaymetest.service.game.GameStrategyFactory;
+import com.jaymetest.service.game.LevelInfo;
+import com.jaymetest.service.game.PostSubmitHook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +24,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 统计服务：等级计算 + 百分位
+ * 统计服务：等级计算 + 百分位 + 结果持久化。
+ *
+ * <p>重构后通过 {@link GameStrategyFactory} 获取策略，所有模式分支由多态处理。</p>
  */
 @Slf4j
 @Service
@@ -27,12 +34,13 @@ import java.util.stream.Collectors;
 public class StatsService {
 
     private final GameRecordMapper gameRecordMapper;
+    private final GameStrategyFactory strategyFactory;
 
     /**
-     * 提交游戏结果
+     * 提交游戏结果 — 模式差异完全委托给策略。
      */
     public GameResultDTO submitResult(GameSubmitRequest request) {
-        // 检查 roundId 是否已提交（去重）
+        // 去重检查
         GameRecord existing = gameRecordMapper.selectOne(
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<GameRecord>()
                         .eq(GameRecord::getRoundId, request.getRoundId()));
@@ -40,25 +48,32 @@ public class StatsService {
             throw new BusinessException(400, "该 roundId 已提交过结果");
         }
 
-        int totalQuestions = 10;
+        // 解析模式 → 获取策略
+        GameMode mode = strategyFactory.resolveMode(
+                request.getMode() != null ? request.getMode() : "CLASSIC");
+        GameStrategy strategy = strategyFactory.get(mode);
+
+        int totalQuestions = request.getTotalQuestions() != null ? request.getTotalQuestions() : 10;
         int correctCount = request.getCorrectCount();
-        int score = correctCount * 10;
-        double accuracy = (double) correctCount / totalQuestions;
 
-        // 计算等级
-        FanLevel level = FanLevel.fromScore(correctCount);
+        // 计分 & 等级 — 委托给策略
+        int score = strategy.calculateScore(correctCount, totalQuestions);
+        double accuracy = totalQuestions > 0 ? (double) correctCount / totalQuestions : 0.0;
+        LevelInfo levelInfo = strategy.evaluateLevel(correctCount);
 
-        // 判断是否登录：登录用户写入 user_id
+        // 用户身份
         Long userId = null;
         try {
             userId = StpUtil.getLoginIdAsLong();
         } catch (Exception ignored) {
-            // 游客，userId 保持 null
+            // 游客
         }
 
-        // 保存记录
+        // 持久化
         GameRecord record = new GameRecord();
         record.setRoundId(request.getRoundId());
+        record.setMode(mode.name());
+        record.setAlbumKey(request.getAlbumKey());
         record.setUserId(userId);
         record.setNickname(request.getNickname() != null ? request.getNickname() : "匿名杰迷");
         record.setTotalQuestions(totalQuestions);
@@ -67,7 +82,7 @@ public class StatsService {
         record.setUsedRevival(request.getUsedRevival() != null ? request.getUsedRevival() : 0);
         gameRecordMapper.insert(record);
 
-        // 计算百分位
+        // 百分位
         long totalPlayers = gameRecordMapper.countTotal();
         long lowerCount = gameRecordMapper.countByCorrectCountLessThan(correctCount);
         double beatPercentage = totalPlayers > 0
@@ -75,21 +90,28 @@ public class StatsService {
                 : 0.0;
         beatPercentage = Math.min(beatPercentage, 99.99);
 
-        log.info("游戏结果已保存 roundId={}, userId={}, correctCount={}, level={}",
-                request.getRoundId(), userId, correctCount, level.name());
+        log.info("游戏结果已保存 roundId={}, userId={}, mode={}, correctCount={}, level={}",
+                request.getRoundId(), userId, mode, correctCount, levelInfo.name());
 
-        return GameResultDTO.builder()
+        // 构建结果（通用字段）
+        GameResultDTO.GameResultDTOBuilder builder = GameResultDTO.builder()
                 .score(score)
                 .correctCount(correctCount)
                 .totalQuestions(totalQuestions)
                 .accuracy(accuracy)
                 .timeSpentSecs(request.getTimeSpentSecs())
-                .level(level.name())
-                .levelTitle(level.getTitle())
-                .levelDescription(level.getDescription())
+                .level(levelInfo.name())
+                .levelTitle(levelInfo.getTitle())
+                .levelDescription(levelInfo.getDescription())
                 .beatPercentage(beatPercentage)
-                .totalPlayers(totalPlayers)
-                .build();
+                .totalPlayers(totalPlayers);
+
+        // 执行后置钩子（如专辑解锁）
+        for (PostSubmitHook hook : strategy.getPostSubmitHooks()) {
+            hook.afterSubmit(request, builder, userId);
+        }
+
+        return builder.build();
     }
 
     /**
@@ -99,7 +121,6 @@ public class StatsService {
         long totalGames = gameRecordMapper.countTotal();
         double averageScore = gameRecordMapper.selectAverageScore();
 
-        // 计算等级分布
         Map<String, Double> levelDistribution = new HashMap<>();
         List<Map<String, Object>> distribution = gameRecordMapper.selectLevelDistribution();
         for (FanLevel level : FanLevel.values()) {
@@ -117,7 +138,7 @@ public class StatsService {
         }
 
         return StatsOverviewDTO.builder()
-                .totalPlayers(totalGames) // 每个记录视为一个玩家（匿名）
+                .totalPlayers(totalGames)
                 .totalGames(totalGames)
                 .averageScore(Math.round(averageScore * 10.0) / 10.0)
                 .levelDistribution(levelDistribution)
@@ -131,7 +152,7 @@ public class StatsService {
         long userId = StpUtil.getLoginIdAsLong();
         List<GameRecord> records = gameRecordMapper.selectByUserId(userId, 20);
         return records.stream().map(r -> {
-            FanLevel level = FanLevel.fromScore(r.getCorrectCount());
+            LevelInfo levelInfo = resolveLevel(r.getMode(), r.getCorrectCount());
             return GameRecordDTO.builder()
                     .roundId(r.getRoundId())
                     .correctCount(r.getCorrectCount())
@@ -139,9 +160,18 @@ public class StatsService {
                     .timeSpentSecs(r.getTimeSpentSecs())
                     .usedRevival(r.getUsedRevival() != null && r.getUsedRevival() == 1)
                     .createdAt(r.getCreatedAt())
-                    .level(level.name())
-                    .levelTitle(level.getTitle())
+                    .level(levelInfo.name())
+                    .levelTitle(levelInfo.getTitle())
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    /** 根据模式和分数解析等级 */
+    private LevelInfo resolveLevel(String mode, int correctCount) {
+        try {
+            return strategyFactory.get(GameMode.valueOf(mode)).evaluateLevel(correctCount);
+        } catch (Exception e) {
+            return FanLevel.fromScore(correctCount); // 降级
+        }
     }
 }

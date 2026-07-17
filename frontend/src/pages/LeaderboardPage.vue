@@ -63,7 +63,7 @@
               <div class="podium-card silver-card">
                 <span class="podium-rank">🥈</span>
                 <span class="podium-name">{{ data.list[1].nickname }}</span>
-                <span class="podium-score">{{ data.list[1].correctCount }}/10</span>
+                <span class="podium-score">{{ isAbyssTab ? data.list[1].correctCount + '连对' : data.list[1].correctCount + '/10' }}</span>
               </div>
             </div>
             <!-- 1st -->
@@ -74,7 +74,7 @@
               <div class="podium-card gold-card">
                 <span class="podium-rank">🥇</span>
                 <span class="podium-name">{{ data.list[0].nickname }}</span>
-                <span class="podium-score">{{ data.list[0].correctCount }}/10</span>
+                <span class="podium-score">{{ isAbyssTab ? data.list[0].correctCount + '连对' : data.list[0].correctCount + '/10' }}</span>
               </div>
             </div>
             <!-- 3rd -->
@@ -85,7 +85,7 @@
               <div class="podium-card bronze-card">
                 <span class="podium-rank">🥉</span>
                 <span class="podium-name">{{ data.list[2].nickname }}</span>
-                <span class="podium-score">{{ data.list[2].correctCount }}/10</span>
+                <span class="podium-score">{{ isAbyssTab ? data.list[2].correctCount + '连对' : data.list[2].correctCount + '/10' }}</span>
               </div>
             </div>
           </div>
@@ -103,7 +103,7 @@
             <span class="rank-level" :style="{ color: getLevelColor(entry.correctCount) }">
               {{ entry.levelTitle }}
             </span>
-            <span class="rank-score">{{ entry.correctCount }}/10</span>
+            <span class="rank-score">{{ isAbyssTab ? entry.correctCount + '连对' : entry.correctCount + '/10' }}</span>
             <span class="rank-time">{{ formatDuration(entry.timeSpentSecs) }}</span>
           </div>
 
@@ -138,7 +138,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import * as leaderboardApi from '@/api/leaderboardApi'
 import type { LeaderboardResult } from '@/api/leaderboardApi'
-import { LEVELS } from '@/utils/constants'
+import { LEVELS, ABYSS_LEVELS } from '@/utils/constants'
+import { getAbyssLevelByStreak } from '@/utils/levels'
 import { showFailToast } from 'vant'
 
 const router = useRouter()
@@ -148,10 +149,13 @@ const tabs = [
   { key: 'total' as const, label: '🏆 总分榜' },
   { key: 'daily' as const, label: '📅 今日榜' },
   { key: 'level' as const, label: '🎖 等级榜' },
+  { key: 'abyss' as const, label: '🕳️ 深渊榜' },
 ]
 
-const activeTab = ref<'total' | 'daily' | 'level'>('total')
+const activeTab = ref<'total' | 'daily' | 'level' | 'abyss'>('total')
 const selectedLevel = ref('ULTIMATE')
+
+const isAbyssTab = computed(() => activeTab.value === 'abyss')
 const data = ref<LeaderboardResult | null>(null)
 const loading = ref(false)
 const errorMsg = ref('')
@@ -161,7 +165,7 @@ const listAfterPodium = computed(() => {
   return data.value.list.slice(3)
 })
 
-function switchTab(tab: 'total' | 'daily' | 'level') {
+function switchTab(tab: 'total' | 'daily' | 'level' | 'abyss') {
   activeTab.value = tab
   loadData()
 }
@@ -199,8 +203,11 @@ async function loadData() {
 }
 
 function getLevelColor(score: number): string {
+  if (isAbyssTab.value) {
+    return getAbyssLevelByStreak(score).color
+  }
   const level = LEVELS.find(l => score >= l.minScore && score <= l.maxScore)
-  return level?.color || '#909399'
+  return level?.color || 'var(--app-text-muted)'
 }
 
 function formatDuration(secs: number): string {
@@ -224,11 +231,11 @@ onMounted(() => {
 
   &--top {
     width: 240px; height: 240px; top: -60px; right: -60px;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--app-accent-rgb), 0.1) 0%, transparent 70%);
   }
   &--bottom {
     width: 200px; height: 200px; bottom: 10%; left: -60px;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.06) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--app-accent-rgb), 0.06) 0%, transparent 70%);
   }
 }
 
@@ -258,7 +265,7 @@ onMounted(() => {
 
 .btn-back {
   width: 36px; height: 36px;
-  border: none; background: rgba(255,255,255,0.06);
+  border: none; background: rgba(var(--app-surface-rgb),0.06);
   border-radius: 50%;
   color: var(--app-text-secondary);
   cursor: pointer;
@@ -266,7 +273,7 @@ onMounted(() => {
   transition: all 0.2s;
 
   svg { width: 20px; height: 20px; }
-  &:hover { background: rgba(255,255,255,0.12); color: var(--app-gold); }
+  &:hover { background: rgba(var(--app-surface-rgb),0.12); color: var(--app-gold); }
 }
 
 .lb-title {
@@ -279,7 +286,7 @@ onMounted(() => {
 .lb-tabs {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(var(--app-surface-rgb),0.08);
   margin-bottom: 16px;
   animation: fade-in-up 0.5s ease-out;
 }
@@ -316,19 +323,19 @@ onMounted(() => {
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 500;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(var(--app-surface-rgb),0.1);
   border-radius: 20px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(var(--app-surface-rgb),0.03);
   color: var(--app-text-secondary);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s;
 
   &.active {
-    background: rgba(201,168,76,0.1);
+    background: rgba(var(--app-accent-rgb),0.1);
   }
 
-  &:hover { border-color: rgba(255,255,255,0.2); }
+  &:hover { border-color: rgba(var(--app-surface-rgb),0.2); }
 }
 
 /* ======== Podium ======== */
@@ -361,7 +368,7 @@ onMounted(() => {
   justify-content: center;
   font-size: 18px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--app-text-on-accent);
 
   &.gold { background: linear-gradient(135deg, #ffd700, #ffaa00); }
   &.silver { background: linear-gradient(135deg, #c0c0c0, #a0a0a0); }
@@ -372,8 +379,8 @@ onMounted(() => {
   text-align: center;
   padding: 8px 12px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(var(--app-surface-rgb),0.04);
+  border: 1px solid rgba(var(--app-surface-rgb),0.06);
   min-width: 80px;
 
   &.gold-card { border-color: rgba(255,215,0,0.2); background: rgba(255,215,0,0.05); }
@@ -397,11 +404,11 @@ onMounted(() => {
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(var(--app-surface-rgb),0.04);
   transition: background 0.2s;
 
   &:last-child { border-bottom: none; }
-  &:hover { background: rgba(255,255,255,0.03); }
+  &:hover { background: rgba(var(--app-surface-rgb),0.03); }
 }
 
 .rank-num {
@@ -458,8 +465,8 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 14px 18px;
-  border: 1px solid rgba(201,168,76,0.2);
-  background: rgba(201,168,76,0.06);
+  border: 1px solid rgba(var(--app-accent-rgb),0.2);
+  background: rgba(var(--app-accent-rgb),0.06);
   animation: fade-in-up 0.5s ease-out 0.2s both;
 }
 
@@ -484,7 +491,7 @@ onMounted(() => {
 .loading-spinner {
   display: inline-block;
   width: 32px; height: 32px;
-  border: 2px solid rgba(201,168,76,0.2);
+  border: 2px solid rgba(var(--app-accent-rgb),0.2);
   border-top-color: var(--app-gold);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -494,9 +501,9 @@ onMounted(() => {
 .btn-retry {
   margin-top: 12px;
   padding: 8px 24px;
-  border: 1px solid rgba(201,168,76,0.3);
+  border: 1px solid rgba(var(--app-accent-rgb),0.3);
   border-radius: 10px;
-  background: rgba(201,168,76,0.06);
+  background: rgba(var(--app-accent-rgb),0.06);
   color: var(--app-gold);
   font-size: 14px;
   cursor: pointer;

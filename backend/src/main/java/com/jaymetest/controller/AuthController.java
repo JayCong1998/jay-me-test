@@ -1,5 +1,6 @@
 package com.jaymetest.controller;
 
+import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.jaymetest.model.dto.*;
 import com.jaymetest.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,8 +34,9 @@ public class AuthController {
         return R.ok(response);
     }
 
-    @Operation(summary = "获取当前用户信息")
+    @Operation(summary = "获取当前用户信息（需登录）")
     @GetMapping("/me")
+    @SaCheckLogin
     public R<UserDTO> me() {
         UserDTO user = authService.getCurrentUser();
         return R.ok(user);

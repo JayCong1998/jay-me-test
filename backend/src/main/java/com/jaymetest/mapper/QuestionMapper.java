@@ -22,6 +22,13 @@ public interface QuestionMapper extends BaseMapper<Question> {
                                              @Param("limit") int limit);
 
     /**
+     * 按专辑随机抽取指定数量的题目
+     */
+    @Select("SELECT * FROM question WHERE album = #{album} ORDER BY RAND() LIMIT #{limit}")
+    List<Question> selectRandomByAlbum(@Param("album") String album,
+                                        @Param("limit") int limit);
+
+    /**
      * 查询题目总数
      */
     @Select("SELECT COUNT(*) FROM question")

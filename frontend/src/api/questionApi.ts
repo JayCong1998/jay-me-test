@@ -61,3 +61,37 @@ export async function revive(req: ReviveRequest): Promise<ReviveResult> {
   const res = await client.post<R<ReviveResult>>('/questions/revive', req)
   return res.data.data
 }
+
+// ============================================================
+// 无尽深渊模式
+// ============================================================
+
+export interface AbyssStepData {
+  roundId: string
+  questions: QuestionDTO[]
+  streak: number
+}
+
+/**
+ * 开始深渊挑战，返回首批题目
+ */
+export async function startAbyss(): Promise<AbyssStepData> {
+  const res = await client.post<R<AbyssStepData>>('/abyss/start')
+  return res.data.data
+}
+
+/**
+ * 获取下一批深渊题目（前端静默预加载）
+ */
+export async function fetchAbyssBatch(roundId: string): Promise<AbyssStepData> {
+  const res = await client.post<R<AbyssStepData>>('/abyss/batch', { roundId })
+  return res.data.data
+}
+
+/**
+ * 深渊模式校验答案（答对自动累加 streak）
+ */
+export async function checkAbyssAnswer(req: AnswerRequest): Promise<AnswerResult> {
+  const res = await client.post<R<AnswerResult>>('/abyss/check', req)
+  return res.data.data
+}

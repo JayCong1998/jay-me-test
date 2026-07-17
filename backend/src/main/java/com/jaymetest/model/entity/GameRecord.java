@@ -20,6 +20,12 @@ public class GameRecord implements Serializable {
     /** Round UUID，去重 */
     private String roundId;
 
+    /** 游戏模式: CLASSIC | ALBUM | ABYSS */
+    private String mode;
+
+    /** 专辑模式下的专辑标识 */
+    private String albumKey;
+
     /** 用户ID（游客为NULL） */
     private Long userId;
 

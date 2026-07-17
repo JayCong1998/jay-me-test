@@ -2,6 +2,9 @@ server:
   port: 8080
 
 spring:
+  ai:
+    dashscope:
+      api-key: ${AI_DASHSCOPE_API_KEY}
   datasource:
     url: jdbc:mysql://localhost:3306/jaymetest?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -54,3 +57,15 @@ sa-token:
 # 应用配置
 app:
   jwt-secret: jaymetest2024secretkeyformusic
+
+# 深渊模式难度阶梯配置
+game:
+  abyss:
+    difficulty:
+      early-tier: EASY           # streak 0-2: 100% EASY
+      mid-tier-medium-prob: 0.7  # streak 3-5: 70% MEDIUM, 30% EASY
+      mid-hard-tier-hard-prob: 0.6 # streak 6-9: 60% HARD, 40% MEDIUM
+      hard-tier-hard-prob: 0.7   # streak 10-14: 70% HARD, 30% MEDIUM
+      hard-tier: HARD            # streak 15-19: 100% HARD
+      late-tier-hard-prob: 0.8   # streak 20-29: 80% HARD, 20% 不限
+      endless-tier: HARD         # streak 30+: 50% HARD, 50% 不限

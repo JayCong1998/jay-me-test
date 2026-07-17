@@ -51,8 +51,12 @@
             <circle cx="56" cy="20" r="4" fill="currentColor" opacity="0.4"/>
           </svg>
         </div>
-        <h1 class="level-title" :style="{ color: levelColor }">{{ result.levelTitle }}</h1>
-        <p class="level-desc">{{ result.levelDescription }}</p>
+        <h1 class="level-title" :style="{ color: levelColor }">
+          {{ result.levelTitle }}
+        </h1>
+        <p class="level-desc">
+          {{ result.levelDescription }}
+        </p>
       </section>
 
       <!-- ===== 得分圆环 ===== -->
@@ -83,8 +87,13 @@
           </div>
         </div>
         <p class="accuracy-text">
-          正确率
-          <strong>{{ (result.accuracy * 100).toFixed(0) }}%</strong>
+          <template v-if="isAbyss">
+            深渊深度 <strong>{{ result.correctCount }}</strong> 层
+          </template>
+          <template v-else>
+            正确率
+            <strong>{{ (result.accuracy * 100).toFixed(0) }}%</strong>
+          </template>
           <template v-if="result.beatPercentage > 0">
             · 击败
             <strong class="beat-highlight">{{ result.beatPercentage }}%</strong>
@@ -101,8 +110,8 @@
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
             </svg>
-            <span class="stat-val">{{ result.score }}<small>分</small></span>
-            <span class="stat-lbl">得分</span>
+            <span class="stat-val">{{ isAbyss ? result.correctCount : result.score }}<small>{{ isAbyss ? '层' : '分' }}</small></span>
+            <span class="stat-lbl">{{ isAbyss ? '深渊深度' : '得分' }}</span>
           </div>
           <div class="stat-card glass-card">
             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -130,14 +139,38 @@
           </div>
         </div>
 
-        <!-- 复活标记 -->
-        <div v-if="usedRevival" class="revival-tag glass-card">
+        <!-- 复活标记（深渊模式不显示） -->
+        <div v-if="usedRevival && !isAbyss" class="revival-tag glass-card">
           <svg class="revival-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 4v6h6" />
             <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
           </svg>
           <span>本轮使用了复活机会</span>
+        </div>
+      </section>
+
+      <!-- ===== 专辑闯关结果 ===== -->
+      <section v-if="result.albumResult" class="album-result-section glass-card">
+        <h3 class="album-result-title">
+          {{ result.albumResult.albumDisplayName }}
+        </h3>
+        <div class="album-result-detail">
+          <p v-if="result.albumResult.passed" class="album-passed">
+            ✅ 通关成功！正确率 {{ result.correctCount }}/10
+          </p>
+          <p v-else class="album-failed">
+            ❌ 需要 {{ UNLOCK_THRESHOLD }}/10 才能解锁下一专辑（当前 {{ result.correctCount }}/10）
+          </p>
+          <p v-if="result.albumResult.unlockedNext" class="album-next">
+            🎉 已解锁下一专辑：<strong>{{ result.albumResult.nextAlbumDisplayName }}</strong>
+          </p>
+          <p v-if="result.albumResult.isNewRecord" class="album-new-record">
+            🏆 刷新个人最佳纪录！
+          </p>
+        </div>
+        <div class="album-result-stats">
+          <span class="album-best">历史最佳：<strong>{{ result.albumResult.albumBestScore }}/10</strong></span>
         </div>
       </section>
 
@@ -162,13 +195,29 @@
         <button v-if="authStore.isLoggedIn" class="btn-leaderboard" @click="router.push('/leaderboard')">
           🏆 查看排行榜
         </button>
-        <button class="btn-retry" :disabled="retrying" @click="handleRetry">
+        <!-- 专辑模式专属按钮 -->
+        <template v-if="result.albumResult">
+          <button
+            v-if="result.albumResult.unlockedNext"
+            class="btn-next-album"
+            @click="handleNextAlbum"
+          >
+            🎵 挑战下一专辑：{{ result.albumResult.nextAlbumDisplayName }}
+          </button>
+          <button class="btn-retry-album" @click="handleRetryAlbum">
+            🔄 重试本专辑
+          </button>
+          <button class="btn-back-albums" @click="router.push('/albums')">
+            📀 返回专辑列表
+          </button>
+        </template>
+        <button v-if="!result.albumResult" class="btn-retry" :disabled="retrying" @click="handleRetry">
           <svg v-if="!retrying" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 4v6h6" />
             <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
           </svg>
-          <span v-if="!retrying">再来一局</span>
+          <span v-if="!retrying">{{ isAbyss ? '再次挑战深渊' : '再来一局' }}</span>
           <span v-else class="retry-spinner"></span>
         </button>
         <button class="btn-home" @click="goHome">返回首页</button>
@@ -196,16 +245,20 @@ import { useAuthStore } from '@/stores/authStore'
 import { useQuiz } from '@/composables/useQuiz'
 import { showFailToast } from 'vant'
 import { formatTime } from '@/utils/format'
-import { LEVELS } from '@/utils/constants'
+import { LEVELS, ABYSS_LEVELS } from '@/utils/constants'
+import { getAbyssLevelByStreak } from '@/utils/levels'
+import { UNLOCK_THRESHOLD } from '@/utils/albums'
 import type { GameResult } from '@/stores/gameStore'
 
 const router = useRouter()
 const gameStore = useGameStore()
 const userStore = useUserStore()
 const authStore = useAuthStore()
-const { startNewRound } = useQuiz()
+const { startNewRound, startAlbumRound, startAbyssRound } = useQuiz()
 
 const retrying = ref(false)
+
+const isAbyss = computed(() => gameStore.mode === 'ABYSS')
 
 // 得分圆环
 const circumference = 2 * Math.PI * 66 // r=66
@@ -245,13 +298,19 @@ const result = computed<GameResult | null>(() => {
 
 const levelKey = computed(() => {
   if (!result.value) return 'PASSERBY'
+  if (isAbyss.value) {
+    return getAbyssLevelByStreak(result.value.correctCount).key
+  }
   return LEVELS.find(
     l => result.value!.correctCount >= l.minScore && result.value!.correctCount <= l.maxScore
   )?.key || 'PASSERBY'
 })
 
 const levelColor = computed(() => {
-  return LEVELS.find(l => l.key === levelKey.value)?.color || '#909399'
+  if (isAbyss.value) {
+    return getAbyssLevelByStreak(result.value?.correctCount || 0).color
+  }
+  return LEVELS.find(l => l.key === levelKey.value)?.color || 'var(--app-text-muted)'
 })
 
 const usedRevival = computed(() => {
@@ -281,11 +340,47 @@ function goCertificate() {
 async function handleRetry() {
   retrying.value = true
   try {
+    // 先记住当前模式，因为 resetGame() 会把 mode 重置为 CLASSIC
+    const wasAbyss = isAbyss.value
     gameStore.resetGame()
-    await startNewRound()
+    if (wasAbyss) {
+      await startAbyssRound()
+    } else {
+      await startNewRound()
+    }
     router.push('/quiz')
   } catch (e: any) {
     showFailToast(e.message || '加载失败，请重试')
+  } finally {
+    retrying.value = false
+  }
+}
+
+async function handleNextAlbum() {
+  const nextKey = result.value?.albumResult?.nextAlbumKey
+  if (!nextKey) return
+  retrying.value = true
+  try {
+    gameStore.resetGame()
+    await startAlbumRound(nextKey)
+    router.push('/quiz')
+  } catch (e: any) {
+    showFailToast(e.message || '加载失败')
+  } finally {
+    retrying.value = false
+  }
+}
+
+async function handleRetryAlbum() {
+  const albumKey = gameStore.albumKey || result.value?.albumResult?.albumKey
+  if (!albumKey) return
+  retrying.value = true
+  try {
+    gameStore.resetGame()
+    await startAlbumRound(albumKey)
+    router.push('/quiz')
+  } catch (e: any) {
+    showFailToast(e.message || '加载失败')
   } finally {
     retrying.value = false
   }
@@ -310,7 +405,7 @@ function goHome() {
     height: 260px;
     top: -60px;
     left: -80px;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--app-accent-rgb), 0.1) 0%, transparent 70%);
   }
 
   &--bottom {
@@ -318,7 +413,7 @@ function goHome() {
     height: 200px;
     bottom: 15%;
     right: -60px;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.06) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--app-accent-rgb), 0.06) 0%, transparent 70%);
   }
 }
 
@@ -366,23 +461,23 @@ function goHome() {
 
   &.icon-passerby {
     background: rgba(144, 147, 153, 0.12);
-    color: #909399;
+    color: var(--app-text-muted);
   }
   &.icon-junior {
     background: rgba(103, 194, 58, 0.12);
-    color: #67c23a;
+    color: var(--app-success);
   }
   &.icon-intermediate {
     background: rgba(64, 158, 255, 0.12);
-    color: #409eff;
+    color: var(--app-info);
   }
   &.icon-senior {
     background: rgba(230, 162, 60, 0.12);
-    color: #e6a23c;
+    color: var(--app-warning);
   }
   &.icon-ultimate {
     background: rgba(245, 108, 108, 0.12);
-    color: #f56c6c;
+    color: var(--app-error);
   }
 }
 
@@ -526,7 +621,7 @@ function goHome() {
   gap: 8px;
   margin-top: 12px;
   padding: 12px 20px;
-  color: #facc15;
+  color: var(--app-warning);
   font-size: 13px;
   font-weight: 500;
   border-color: rgba(234, 179, 8, 0.2);
@@ -536,15 +631,15 @@ function goHome() {
 .revival-icon {
   width: 18px;
   height: 18px;
-  color: #facc15;
+  color: var(--app-warning);
 }
 
 /* ======== 登录引导 ======== */
 .login-prompt {
   text-align: center;
   padding: 18px 20px;
-  border: 1px dashed rgba(201, 168, 76, 0.3);
-  background: rgba(201, 168, 76, 0.06);
+  border: 1px dashed rgba(var(--app-accent-rgb), 0.3);
+  background: rgba(var(--app-accent-rgb), 0.06);
 }
 
 .prompt-text {
@@ -572,13 +667,13 @@ function goHome() {
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  color: #1a1a2e;
+  color: var(--app-text-on-accent);
   background: var(--app-gold-gradient);
   transition: all 0.2s;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(201, 168, 76, 0.3);
+    box-shadow: 0 4px 16px rgba(var(--app-accent-rgb), 0.3);
   }
 }
 
@@ -589,9 +684,9 @@ function goHome() {
   gap: 6px;
   width: 100%;
   height: 48px;
-  border: 1.5px solid rgba(201, 168, 76, 0.3);
+  border: 1.5px solid rgba(var(--app-accent-rgb), 0.3);
   border-radius: 14px;
-  background: rgba(201, 168, 76, 0.08);
+  background: rgba(var(--app-accent-rgb), 0.08);
   color: var(--app-gold);
   font-size: 16px;
   font-weight: 600;
@@ -600,7 +695,7 @@ function goHome() {
   transition: all 0.25s ease;
 
   &:hover {
-    background: rgba(201, 168, 76, 0.14);
+    background: rgba(var(--app-accent-rgb), 0.14);
     border-color: var(--app-gold);
   }
 }
@@ -629,9 +724,9 @@ function goHome() {
   letter-spacing: 1px;
   cursor: pointer;
   font-family: inherit;
-  color: #1a1a2e;
+  color: var(--app-text-on-accent);
   background: var(--app-gold-gradient);
-  box-shadow: 0 4px 20px rgba(201, 168, 76, 0.3);
+  box-shadow: 0 4px 20px rgba(var(--app-accent-rgb), 0.3);
   transition: all 0.3s ease;
 
   svg {
@@ -641,7 +736,7 @@ function goHome() {
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 28px rgba(201, 168, 76, 0.45);
+    box-shadow: 0 6px 28px rgba(var(--app-accent-rgb), 0.45);
   }
 
   &:active {
@@ -656,9 +751,9 @@ function goHome() {
   gap: 8px;
   width: 100%;
   height: 48px;
-  border: 1.5px solid rgba(201, 168, 76, 0.3);
+  border: 1.5px solid rgba(var(--app-accent-rgb), 0.3);
   border-radius: 14px;
-  background: rgba(201, 168, 76, 0.06);
+  background: rgba(var(--app-accent-rgb), 0.06);
   color: var(--app-gold);
   font-size: 16px;
   font-weight: 600;
@@ -672,13 +767,148 @@ function goHome() {
   }
 
   &:hover:not(:disabled) {
-    background: rgba(201, 168, 76, 0.12);
-    border-color: rgba(201, 168, 76, 0.5);
+    background: rgba(var(--app-accent-rgb), 0.12);
+    border-color: rgba(var(--app-accent-rgb), 0.5);
   }
 
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+}
+
+/* ======== 专辑闯关结果 ======== */
+.album-result-section {
+  width: 100%;
+  padding: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+  border-color: rgba(var(--app-accent-rgb), 0.15);
+  background: rgba(var(--app-accent-rgb), 0.04);
+}
+
+.album-result-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--app-gold);
+  margin-bottom: 12px;
+}
+
+.album-result-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.album-passed {
+  font-size: 15px;
+  color: var(--app-success);
+  font-weight: 600;
+}
+
+.album-failed {
+  font-size: 14px;
+  color: var(--app-error);
+  font-weight: 500;
+}
+
+.album-next {
+  font-size: 15px;
+  color: var(--app-gold);
+  font-weight: 600;
+
+  strong {
+    font-weight: 800;
+  }
+}
+
+.album-new-record {
+  font-size: 13px;
+  color: var(--app-warning);
+  font-weight: 600;
+}
+
+.album-result-stats {
+  .album-best {
+    font-size: 13px;
+    color: var(--app-text-muted);
+
+    strong {
+      color: var(--app-gold);
+      font-weight: 700;
+    }
+  }
+}
+
+.btn-next-album {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--app-text-on-accent);
+  background: var(--app-gold-gradient);
+  box-shadow: 0 4px 20px rgba(var(--app-accent-rgb), 0.3);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(var(--app-accent-rgb), 0.45);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.btn-retry-album {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 48px;
+  border: 1.5px solid rgba(var(--app-accent-rgb), 0.3);
+  border-radius: 14px;
+  background: rgba(var(--app-accent-rgb), 0.06);
+  color: var(--app-gold);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.25s ease;
+
+  &:hover {
+    background: rgba(var(--app-accent-rgb), 0.12);
+    border-color: rgba(var(--app-accent-rgb), 0.5);
+  }
+}
+
+.btn-back-albums {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 48px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: rgba(var(--app-surface-rgb), 0.03);
+  color: var(--app-text-secondary);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(var(--app-surface-rgb), 0.06);
+    color: var(--app-text-primary);
   }
 }
 
@@ -696,7 +926,7 @@ function goHome() {
 
   &:hover {
     color: var(--app-text-secondary);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(var(--app-surface-rgb), 0.04);
   }
 }
 
@@ -704,7 +934,7 @@ function goHome() {
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(201, 168, 76, 0.2);
+  border: 2px solid rgba(var(--app-accent-rgb), 0.2);
   border-top-color: var(--app-gold);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;

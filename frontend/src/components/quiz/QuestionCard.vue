@@ -68,8 +68,10 @@ const emit = defineEmits<{
   select: [option: string]
 }>()
 
-const difficultyLabel = props.question.difficulty === 'EASY' ? '简单' : '中等'
-const categoryLabel = props.question.category === 'LYRICS' ? '歌词类' : '专辑归属'
+const difficultyMap: Record<string, string> = { EASY: '简单', MEDIUM: '中等', HARD: '困难' }
+const categoryMap: Record<string, string> = { LYRICS: '歌词类', ALBUM: '专辑归属' }
+const difficultyLabel = difficultyMap[props.question.difficulty] || props.question.difficulty
+const categoryLabel = categoryMap[props.question.category] || props.question.category
 
 function optionLetter(idx: number): string {
   return String.fromCharCode(65 + idx)
@@ -108,21 +110,21 @@ function handleClick(letter: string) {
   &--difficulty {
     &.meta-tag--easy {
       background: rgba(34, 197, 94, 0.12);
-      color: #4ade80;
+      color: var(--app-success);
       border: 1px solid rgba(34, 197, 94, 0.2);
     }
 
     &.meta-tag--medium {
       background: rgba(234, 179, 8, 0.12);
-      color: #facc15;
+      color: var(--app-warning);
       border: 1px solid rgba(234, 179, 8, 0.2);
     }
   }
 
   &--category {
-    background: rgba(201, 168, 76, 0.1);
+    background: rgba(var(--app-accent-rgb), 0.1);
     color: var(--app-gold);
-    border: 1px solid rgba(201, 168, 76, 0.18);
+    border: 1px solid rgba(var(--app-accent-rgb), 0.18);
   }
 }
 
@@ -169,7 +171,7 @@ function handleClick(letter: string) {
 
   &:hover:not(.option-disabled) {
     background: var(--app-bg-card-hover);
-    border-color: rgba(201, 168, 76, 0.25);
+    border-color: rgba(var(--app-accent-rgb), 0.25);
     transform: translateX(4px);
   }
 
@@ -179,8 +181,8 @@ function handleClick(letter: string) {
 
   &.option-selected {
     border-color: var(--app-gold);
-    background: rgba(201, 168, 76, 0.1);
-    box-shadow: 0 0 20px rgba(201, 168, 76, 0.1);
+    background: rgba(var(--app-accent-rgb), 0.1);
+    box-shadow: 0 0 20px rgba(var(--app-accent-rgb), 0.1);
 
     &:hover {
       transform: translateX(4px);
@@ -197,7 +199,7 @@ function handleClick(letter: string) {
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: rgba(201, 168, 76, 0.1);
+  background: rgba(var(--app-accent-rgb), 0.1);
   color: var(--app-gold);
   display: flex;
   align-items: center;
@@ -205,19 +207,19 @@ function handleClick(letter: string) {
   font-weight: 700;
   font-size: 14px;
   flex-shrink: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--app-font-display), sans-serif;
   transition: all 0.25s ease;
 
   &.letter-active {
     background: var(--app-gold-gradient);
-    color: #1a1a2e;
+    color: var(--app-text-on-accent);
   }
 }
 
 .option-text {
   flex: 1;
   font-size: 15px;
-  color: #d4d4d8;
+  color: var(--app-text-muted);
   line-height: 1.5;
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="quiz-page page-bg">
+  <div class="quiz-page page-bg" :class="{ 'abyss-mode': gameStore.mode === 'ABYSS' }">
     <!-- 背景光斑 -->
     <div class="bg-orb bg-orb--top"></div>
 
@@ -16,10 +16,29 @@
         </button>
 
         <!-- 进度文本 -->
-        <span class="progress-text">
+        <!-- 经典/专辑模式：X/10 -->
+        <span v-if="gameStore.mode !== 'ABYSS'" class="progress-text">
           <span class="progress-current">{{ gameStore.currentIndex + 1 }}</span>
           <span class="progress-sep">/</span>
           <span class="progress-total">{{ gameStore.totalQuestions }}</span>
+        </span>
+        <!-- 深渊模式：深渊第 N 题 -->
+        <span v-else class="progress-text abyss-progress">
+          <span class="abyss-label">深渊第</span>
+          <span class="progress-current">{{ gameStore.currentIndex + 1 }}</span>
+          <span class="abyss-label">题</span>
+          <span class="abyss-streak-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            {{ gameStore.abyssStreak || gameStore.correctCount }}
+          </span>
+        </span>
+
+        <!-- 专辑标签 -->
+        <span v-if="gameStore.mode === 'ALBUM'" class="album-badge">
+          {{ albumDisplayName }}
         </span>
 
         <!-- 计时器 -->
@@ -37,13 +56,14 @@
       <div class="progress-track">
         <div
           class="progress-fill"
-          :style="{ width: gameStore.progress + '%' }"
+          :class="{ 'progress-abyss': gameStore.mode === 'ABYSS' }"
+          :style="{ width: gameStore.mode === 'ABYSS' ? '100%' : gameStore.progress + '%' }"
         ></div>
       </div>
 
-      <!-- 复活标记 -->
+      <!-- 复活标记（深渊模式不显示） -->
       <Transition name="slide-down">
-        <div v-if="gameStore.revivalRemaining > 0" class="revival-indicator">
+        <div v-if="gameStore.revivalRemaining > 0 && gameStore.mode !== 'ABYSS'" class="revival-indicator">
           <svg class="revival-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 4v6h6" />
@@ -85,6 +105,7 @@
               :correct-option="lastResult.correctOption"
               :explanation="lastResult.explanation"
               :can-revive="gameStore.revivalRemaining > 0 && !lastResult.correct"
+              :is-abyss-mode="gameStore.mode === 'ABYSS'"
               @revive="handleRevive"
               @next="handleNext"
             />
@@ -99,7 +120,10 @@
                 :class="{ 'btn-ready': currentSelected }"
                 @click="handleSubmit"
               >
-                <template v-if="gameStore.isLastQuestion">
+                <template v-if="gameStore.mode === 'ABYSS'">
+                  确认答案
+                </template>
+                <template v-else-if="gameStore.isLastQuestion">
                   提交答卷
                 </template>
                 <template v-else>
@@ -121,20 +145,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/gameStore'
 import { useQuiz } from '@/composables/useQuiz'
 import { useTimer } from '@/composables/useTimer'
 import { formatTime } from '@/utils/format'
 import { showSuccessToast, showFailToast, showToast, showConfirmDialog } from 'vant'
+import { getAlbumInfo } from '@/utils/albums'
 import QuestionCard from '@/components/quiz/QuestionCard.vue'
 import FeedbackBar from '@/components/quiz/FeedbackBar.vue'
 
 const router = useRouter()
 const gameStore = useGameStore()
-const { submitAnswer, reviveCurrent, finishAndSubmit } = useQuiz()
+const { submitAnswer, submitAbyssAnswer, reviveCurrent, finishAndSubmit, prefetchAbyssBatch } = useQuiz()
 const { elapsed, start: startTimer, stop: stopTimer } = useTimer()
+
+// --- 专辑标签 ---
+const albumDisplayName = computed(() => {
+  if (!gameStore.albumKey) return ''
+  return getAlbumInfo(gameStore.albumKey)?.displayName || gameStore.albumKey
+})
 
 // --- 本地状态 ---
 const loading = ref(false)
@@ -145,6 +176,8 @@ const lastResult = ref<{
   correctOption: string
   explanation: string
 } | null>(null)
+
+const isAbyss = computed(() => gameStore.mode === 'ABYSS')
 
 // --- 生命周期 ---
 onMounted(() => {
@@ -162,6 +195,13 @@ watch(() => gameStore.phase, (val) => {
   }
 })
 
+// 深渊模式：自动预加载下一批题目（倒数第 2 题时触发）
+watch(() => gameStore.currentIndex, (newVal) => {
+  if (isAbyss.value && newVal >= gameStore.totalQuestions - 2 && !gameStore.prefetching) {
+    prefetchAbyssBatch()
+  }
+})
+
 // --- 选项交互 ---
 function handleSelect(option: string) {
   if (!showFeedback.value) {
@@ -174,7 +214,9 @@ async function handleSubmit() {
   if (!currentSelected.value) return
   loading.value = true
   try {
-    const result = await submitAnswer(currentSelected.value)
+    const result = isAbyss.value
+      ? await submitAbyssAnswer(currentSelected.value)
+      : await submitAnswer(currentSelected.value)
     lastResult.value = result
     showFeedback.value = true
   } catch (e: any) {
@@ -184,7 +226,7 @@ async function handleSubmit() {
   }
 }
 
-// --- 复活 ---
+// --- 复活（深渊模式不可用） ---
 async function handleRevive() {
   loading.value = true
   try {
@@ -204,9 +246,24 @@ async function handleRevive() {
   }
 }
 
-// --- 下一题 / 完成 ---
+// --- 下一题 / 完成 / 堕入深渊 ---
 async function handleNext() {
-  if (gameStore.isLastQuestion) {
+  // 深渊模式答错 → 游戏结束
+  if (isAbyss.value && lastResult.value && !lastResult.value.correct) {
+    loading.value = true
+    try {
+      await finishAndSubmit()
+      router.replace('/result')
+    } catch (e: any) {
+      showFailToast(e.message || '提交失败')
+    } finally {
+      loading.value = false
+    }
+    return
+  }
+
+  // 经典/专辑模式最后一题 或 深渊模式答错（已在上方处理）
+  if (!isAbyss.value && gameStore.isLastQuestion) {
     loading.value = true
     try {
       await finishAndSubmit()
@@ -217,6 +274,7 @@ async function handleNext() {
       loading.value = false
     }
   } else {
+    // 下一题
     gameStore.nextQuestion()
     showFeedback.value = false
     currentSelected.value = null
@@ -228,10 +286,12 @@ async function handleNext() {
 async function handleExit() {
   try {
     await showConfirmDialog({
-      title: '确认退出',
-      message: '当前进度不会保存，确定退出吗？',
-      confirmButtonText: '确定退出',
-      cancelButtonText: '继续答题',
+      title: isAbyss.value ? '逃离深渊' : '确认退出',
+      message: isAbyss.value
+        ? '一旦逃离深渊，当前进度不会保存，确定要逃离吗？'
+        : '当前进度不会保存，确定退出吗？',
+      confirmButtonText: isAbyss.value ? '逃离深渊' : '确定退出',
+      cancelButtonText: isAbyss.value ? '继续深入' : '继续答题',
     })
     gameStore.resetGame()
     router.replace('/')
@@ -254,8 +314,13 @@ async function handleExit() {
     height: 200px;
     top: -40px;
     right: -40px;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--app-accent-rgb), 0.08) 0%, transparent 70%);
   }
+}
+
+/* 深渊模式背景微调 */
+.abyss-mode .bg-orb--top {
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
 }
 
 /* ======== 页面 ======== */
@@ -290,7 +355,7 @@ async function handleExit() {
   height: 36px;
   border: none;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(var(--app-surface-rgb), 0.05);
   color: var(--app-text-secondary);
   cursor: pointer;
   transition: all 0.25s ease;
@@ -302,7 +367,7 @@ async function handleExit() {
 
   &:hover {
     background: rgba(239, 68, 68, 0.15);
-    color: #f87171;
+    color: var(--app-error);
   }
 
   &:active {
@@ -311,7 +376,7 @@ async function handleExit() {
 }
 
 .progress-text {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--app-font-display), sans-serif;
   font-size: 16px;
   letter-spacing: 1px;
 }
@@ -332,6 +397,54 @@ async function handleExit() {
   font-weight: 500;
 }
 
+/* 深渊模式进度文本 */
+.abyss-progress {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.abyss-label {
+  font-size: 14px;
+  color: var(--app-text-secondary);
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.abyss-streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(124, 58, 237, 0.15);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  color: var(--app-info);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--app-font-display), sans-serif;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.album-badge {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--app-gold);
+  background: rgba(var(--app-accent-rgb), 0.1);
+  border: 1px solid rgba(var(--app-accent-rgb), 0.2);
+  padding: 4px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .timer-display {
   display: flex;
   align-items: center;
@@ -347,7 +460,7 @@ async function handleExit() {
 }
 
 .timer-text {
-  font-family: 'Poppins', monospace;
+  font-family: var(--app-font-display), monospace;
   font-size: 14px;
   font-weight: 500;
   color: var(--app-text-secondary);
@@ -355,14 +468,14 @@ async function handleExit() {
   transition: color 0.3s;
 
   &.timer-warn {
-    color: #f87171;
+    color: var(--app-error);
   }
 }
 
 /* 进度条 */
 .progress-track {
   height: 3px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--app-surface-rgb), 0.06);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -372,6 +485,11 @@ async function handleExit() {
   background: var(--app-gold-gradient);
   border-radius: 2px;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.progress-abyss {
+    background: linear-gradient(90deg, #7c3aed, var(--app-info), #dc2626);
+    animation: abyss-progress-pulse 2s ease-in-out infinite;
+  }
 }
 
 /* 复活指示器 */
@@ -385,7 +503,7 @@ async function handleExit() {
   border-radius: 8px;
   background: rgba(234, 179, 8, 0.08);
   border: 1px solid rgba(234, 179, 8, 0.15);
-  color: #facc15;
+  color: var(--app-warning);
   font-size: 12px;
   font-weight: 500;
 }
@@ -393,7 +511,7 @@ async function handleExit() {
 .revival-icon {
   width: 14px;
   height: 14px;
-  color: #facc15;
+  color: var(--app-warning);
 }
 
 /* ======== 加载状态 ======== */
@@ -457,18 +575,18 @@ async function handleExit() {
   cursor: pointer;
   transition: all 0.3s ease;
   color: var(--app-text-muted);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--app-surface-rgb), 0.06);
   border: 1px solid var(--app-border);
 
   &.btn-ready {
-    color: #1a1a2e;
+    color: var(--app-text-on-accent);
     background: var(--app-gold-gradient);
     border-color: transparent;
-    box-shadow: 0 4px 20px rgba(201, 168, 76, 0.25);
+    box-shadow: 0 4px 20px rgba(var(--app-accent-rgb), 0.25);
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 28px rgba(201, 168, 76, 0.4);
+      box-shadow: 0 6px 28px rgba(var(--app-accent-rgb), 0.4);
     }
 
     &:active {
@@ -511,7 +629,7 @@ async function handleExit() {
   transition: all 0.25s ease;
 
   &:hover {
-    background: rgba(201, 168, 76, 0.1);
+    background: rgba(var(--app-accent-rgb), 0.1);
   }
 }
 
@@ -581,5 +699,10 @@ async function handleExit() {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes abyss-progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 </style>

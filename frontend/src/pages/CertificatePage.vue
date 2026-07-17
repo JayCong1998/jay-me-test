@@ -148,7 +148,7 @@ import { showSuccessToast, showToast } from 'vant'
 import { useGameStore } from '@/stores/gameStore'
 import { useUserStore } from '@/stores/userStore'
 import { formatDate } from '@/utils/format'
-import { LEVELS, SHARE_TEXT_TEMPLATE } from '@/utils/constants'
+import { LEVELS, ABYSS_LEVELS, SHARE_TEXT_TEMPLATE, ABYSS_SHARE_TEXT_TEMPLATE } from '@/utils/constants'
 import { renderCertificate, downloadCertificate } from '@/utils/certificate'
 import type { CertData } from '@/utils/certificate'
 
@@ -181,6 +181,24 @@ const result = computed(() => {
 })
 
 const levelConfig = computed(() => {
+  // 深渊模式：优先用服务端返回的 level，降级用 ABYSS_LEVELS
+  if (gameStore.mode === 'ABYSS') {
+    const serverResult = gameStore.lastGameResult
+    if (serverResult?.level) {
+      const match = ABYSS_LEVELS.find(l => l.key === serverResult.level)
+      if (match) return match
+    }
+    return ABYSS_LEVELS.find(
+      l => gameStore.abyssStreak >= l.minStreak && gameStore.abyssStreak <= l.maxStreak
+    ) || ABYSS_LEVELS[0]
+  }
+
+  // 经典/专辑模式：优先用服务端返回的 level，降级用 LEVELS
+  const serverResult = gameStore.lastGameResult
+  if (serverResult?.level) {
+    const match = LEVELS.find(l => l.key === serverResult.level)
+    if (match) return match
+  }
   return LEVELS.find(
     l => result.value.correctCount >= l.minScore && result.value.correctCount <= l.maxScore
   ) || LEVELS[0]
@@ -225,7 +243,10 @@ async function handleSaveImage() {
 }
 
 async function handleShare() {
-  const shareText = SHARE_TEXT_TEMPLATE.replace('{level}', levelConfig.value.title)
+  const shareTemplate = gameStore.mode === 'ABYSS' ? ABYSS_SHARE_TEXT_TEMPLATE : SHARE_TEXT_TEMPLATE
+  const shareText = shareTemplate
+    .replace('{level}', levelConfig.value.title)
+    .replace('{streak}', String(gameStore.abyssStreak))
   const shareUrl = window.location.origin + '/#/'
 
   // Tier 1: Web Share API
@@ -269,7 +290,7 @@ async function handleShare() {
     height: 200px;
     top: -40px;
     right: -60px;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--app-accent-rgb), 0.1) 0%, transparent 70%);
   }
 
   &--bottom {
@@ -277,7 +298,7 @@ async function handleShare() {
     height: 180px;
     bottom: 15%;
     left: -50px;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.06) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--app-accent-rgb), 0.06) 0%, transparent 70%);
   }
 }
 
@@ -350,7 +371,7 @@ async function handleShare() {
   width: 100%;
   aspect-ratio: 340 / 478;
   background: linear-gradient(180deg, #0a0a18 0%, #111128 40%, #0f1a2e 70%, #0a0a18 100%);
-  border: 2px solid rgba(201, 168, 76, 0.25);
+  border: 2px solid rgba(var(--app-accent-rgb), 0.25);
   border-radius: 20px;
   overflow: hidden;
   position: relative;
@@ -360,7 +381,7 @@ async function handleShare() {
 .cert-inner {
   position: absolute;
   inset: 16px;
-  border: 1px solid rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(var(--app-accent-rgb), 0.1);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -379,7 +400,7 @@ async function handleShare() {
   font-family: 'Poppins', sans-serif;
   font-size: 52px;
   font-weight: 900;
-  color: rgba(201, 168, 76, 0.04);
+  color: rgba(var(--app-accent-rgb), 0.04);
   transform: rotate(-25deg);
   pointer-events: none;
   white-space: nowrap;
@@ -477,7 +498,7 @@ async function handleShare() {
   .sep-line {
     flex: 1;
     height: 1px;
-    background: rgba(201, 168, 76, 0.2);
+    background: rgba(var(--app-accent-rgb), 0.2);
   }
 
   .sep-diamond {
@@ -523,7 +544,7 @@ async function handleShare() {
   .deco-note-sm {
     width: 16px;
     height: 16px;
-    color: rgba(201, 168, 76, 0.15);
+    color: rgba(var(--app-accent-rgb), 0.15);
   }
 }
 
@@ -551,9 +572,9 @@ async function handleShare() {
   letter-spacing: 1px;
   cursor: pointer;
   font-family: inherit;
-  color: #1a1a2e;
+  color: var(--app-text-on-accent);
   background: var(--app-gold-gradient);
-  box-shadow: 0 4px 20px rgba(201, 168, 76, 0.3);
+  box-shadow: 0 4px 20px rgba(var(--app-accent-rgb), 0.3);
   transition: all 0.3s ease;
 
   svg {
@@ -563,7 +584,7 @@ async function handleShare() {
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 28px rgba(201, 168, 76, 0.45);
+    box-shadow: 0 6px 28px rgba(var(--app-accent-rgb), 0.45);
   }
 
   &:disabled {
@@ -579,9 +600,9 @@ async function handleShare() {
   gap: 8px;
   width: 100%;
   height: 48px;
-  border: 1.5px solid rgba(201, 168, 76, 0.3);
+  border: 1.5px solid rgba(var(--app-accent-rgb), 0.3);
   border-radius: 14px;
-  background: rgba(201, 168, 76, 0.06);
+  background: rgba(var(--app-accent-rgb), 0.06);
   color: var(--app-gold);
   font-size: 16px;
   font-weight: 600;
@@ -595,8 +616,8 @@ async function handleShare() {
   }
 
   &:hover {
-    background: rgba(201, 168, 76, 0.12);
-    border-color: rgba(201, 168, 76, 0.5);
+    background: rgba(var(--app-accent-rgb), 0.12);
+    border-color: rgba(var(--app-accent-rgb), 0.5);
   }
 }
 
@@ -605,7 +626,7 @@ async function handleShare() {
   width: 20px;
   height: 20px;
   border: 2px solid rgba(26, 26, 46, 0.2);
-  border-top-color: #1a1a2e;
+  border-top-color: var(--app-text-on-accent);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -625,8 +646,8 @@ async function handleShare() {
 
 .share-guide {
   margin-top: 12px;
-  background: #1a1a2e;
-  border: 1px solid rgba(201, 168, 76, 0.2);
+  background: var(--app-text-on-accent);
+  border: 1px solid rgba(var(--app-accent-rgb), 0.2);
   border-radius: 20px;
   padding: 32px 28px 24px;
   text-align: center;
@@ -672,7 +693,7 @@ async function handleShare() {
   border: none;
   border-radius: 12px;
   background: var(--app-gold-gradient);
-  color: #1a1a2e;
+  color: var(--app-text-on-accent);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;

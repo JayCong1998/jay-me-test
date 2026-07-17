@@ -20,13 +20,10 @@ public class SaTokenConfig implements WebMvcConfigurer {
         return new StpLogicJwtForSimple();
     }
 
-    /** 注册 Sa-Token 拦截器 */
+    /** 注册 Sa-Token 拦截器（注解模式：仅 @SaCheckLogin / @SaCheckRole 等方法校验登录） */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new SaInterceptor(handle -> {
-                    // 注解鉴权由 @SaCheckLogin 处理，
-                    // 这里只做拦截器注册，不做额外逻辑
-                }))
+        registry.addInterceptor(new SaInterceptor())
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         "/api/auth/login",

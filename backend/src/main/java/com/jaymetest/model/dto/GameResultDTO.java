@@ -42,4 +42,7 @@ public class GameResultDTO {
 
     /** 总玩家数 */
     private long totalPlayers;
+
+    /** 专辑闯关结果（仅 ALBUM 模式非 null） */
+    private AlbumResultDTO albumResult;
 }

@@ -40,6 +40,9 @@ public class LeaderboardController {
                 }
                 result = leaderboardService.getLevelLeaderboard(level, limit);
                 break;
+            case "abyss":
+                result = leaderboardService.getAbyssLeaderboard(limit);
+                break;
             default:
                 result = leaderboardService.getTotalLeaderboard(limit);
         }

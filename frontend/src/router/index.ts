@@ -42,7 +42,13 @@ const routes: RouteRecordRaw[] = [
     path: '/leaderboard',
     name: 'Leaderboard',
     component: () => import('@/pages/LeaderboardPage.vue'),
-    meta: { title: '排行榜' },
+    meta: { title: '排行榜', requiresAuth: true },
+  },
+  {
+    path: '/albums',
+    name: 'Albums',
+    component: () => import('@/pages/AlbumListPage.vue'),
+    meta: { title: '专辑闯关', requiresAuth: true },
   },
 ]
 
@@ -51,9 +57,26 @@ const router = createRouter({
   routes,
 })
 
-// 全局路由守卫 - 设置页面标题
+// 全局路由守卫 - 设置页面标题 + 登录校验
 router.beforeEach((to, _from, next) => {
   document.title = (to.meta.title as string) || '杰迷结业考试'
+
+  // 需要登录的页面，检查是否有有效 token
+  if (to.meta.requiresAuth) {
+    try {
+      const saved = localStorage.getItem('jaymetest_auth')
+      const auth = saved ? JSON.parse(saved) : null
+      if (!auth?.token) {
+        // 未登录，跳转到首页
+        next({ name: 'Home' })
+        return
+      }
+    } catch {
+      next({ name: 'Home' })
+      return
+    }
+  }
+
   next()
 })
 

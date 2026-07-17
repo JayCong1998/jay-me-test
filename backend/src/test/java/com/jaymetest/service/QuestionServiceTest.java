@@ -4,10 +4,11 @@ import com.jaymetest.mapper.QuestionMapper;
 import com.jaymetest.model.dto.AnswerResultDTO;
 import com.jaymetest.model.dto.RoundDTO;
 import com.jaymetest.model.entity.Question;
+import com.jaymetest.model.enums.GameMode;
+import com.jaymetest.service.game.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -24,13 +25,30 @@ class QuestionServiceTest {
     @Mock
     private QuestionMapper questionMapper;
 
-    @InjectMocks
+    @Mock
+    private GameStrategyFactory strategyFactory;
+
+    @Mock
+    private RoundCacheManager cacheManager;
+
+    @Mock
+    private ClassicGameStrategy classicStrategy;
+
+    @Mock
+    private AlbumGameStrategy albumStrategy;
+
+    @Mock
+    private AbyssGameStrategy abyssStrategy;
+
     private QuestionService questionService;
 
     private List<Question> mockQuestions;
 
     @BeforeEach
     void setUp() {
+        questionService = new QuestionService(questionMapper, strategyFactory,
+                cacheManager, classicStrategy, albumStrategy, abyssStrategy);
+
         mockQuestions = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
             Question q = new Question();
@@ -49,17 +67,37 @@ class QuestionServiceTest {
     }
 
     @Test
-    void testGenerateRound() {
-        when(questionMapper.selectRandomByDifficulty(eq("EASY"), anyInt()))
-                .thenReturn(mockQuestions.subList(0, 6));
-        when(questionMapper.selectRandomByDifficulty(eq("MEDIUM"), anyInt()))
-                .thenReturn(mockQuestions.subList(6, 10));
+    void testGenerateRound_classicMode_delegatesToClassicStrategy() {
+        RoundDTO expected = new RoundDTO();
+        expected.setRoundId("test-round-id");
+        when(classicStrategy.generateRound(eq(10), isNull(), any(RoundCacheManager.class)))
+                .thenReturn(expected);
 
-        RoundDTO result = questionService.generateRound(10);
+        RoundDTO result = questionService.generateRound(10, null);
 
         assertNotNull(result);
-        assertNotNull(result.getRoundId());
-        assertFalse(result.getRoundId().isEmpty());
-        assertNotNull(result.getQuestions());
+        assertEquals("test-round-id", result.getRoundId());
+    }
+
+    @Test
+    void testGenerateRound_albumMode_delegatesToAlbumStrategy() {
+        RoundDTO expected = new RoundDTO();
+        expected.setRoundId("album-round-id");
+        when(albumStrategy.generateRound(eq(10), eq("JAY"), any(RoundCacheManager.class)))
+                .thenReturn(expected);
+
+        RoundDTO result = questionService.generateRound(10, "JAY");
+
+        assertNotNull(result);
+        assertEquals("album-round-id", result.getRoundId());
+    }
+
+    @Test
+    void testStrategyAccessors() {
+        assertSame(classicStrategy, questionService.classic());
+        assertSame(albumStrategy, questionService.album());
+        assertSame(abyssStrategy, questionService.abyss());
+        assertSame(cacheManager, questionService.cacheManager());
+        assertSame(strategyFactory, questionService.factory());
     }
 }

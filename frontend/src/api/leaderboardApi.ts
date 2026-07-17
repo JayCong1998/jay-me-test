@@ -18,7 +18,7 @@ export interface LeaderboardResult {
  * 获取排行榜
  */
 export async function fetchLeaderboard(
-  type: 'total' | 'daily' | 'level' = 'total',
+  type: 'total' | 'daily' | 'level' | 'abyss' = 'total',
   limit: number = 50,
   level?: string
 ): Promise<LeaderboardResult> {

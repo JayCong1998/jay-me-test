@@ -124,6 +124,32 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
                       @Param("maxScore") int maxScore);
 
     /**
+     * 深渊排行榜：按 streak（correct_count）降序 + 用时升序，每人只取最佳记录
+     */
+    @Select("SELECT t.`rank`, t.nickname, t.correct_count AS correctCount, " +
+            "t.time_spent_secs AS timeSpentSecs " +
+            "FROM (SELECT gr.nickname, gr.correct_count, gr.time_spent_secs, " +
+            "ROW_NUMBER() OVER (ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC) AS `rank`, " +
+            "ROW_NUMBER() OVER (PARTITION BY CASE WHEN gr.user_id IS NOT NULL THEN gr.user_id ELSE -gr.id END " +
+            "ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC) AS rn " +
+            "FROM game_record gr WHERE gr.mode = #{abyssMode}) t " +
+            "WHERE t.rn = 1 ORDER BY t.`rank` LIMIT #{limit}")
+    List<Map<String, Object>> selectAbyssLeaderboard(@Param("limit") int limit, @Param("abyssMode") String abyssMode);
+
+    /**
+     * 获取深渊榜上当前用户的排名
+     */
+    @Select("SELECT COUNT(*) + 1 FROM " +
+            "(SELECT CASE WHEN gr.user_id IS NOT NULL THEN gr.user_id ELSE -gr.id END AS uid, " +
+            "MAX(gr.correct_count) AS best, MIN(gr.time_spent_secs) AS fastest " +
+            "FROM game_record gr WHERE gr.mode = #{abyssMode} GROUP BY uid) u " +
+            "WHERE u.best > #{correctCount} " +
+            "OR (u.best = #{correctCount} AND u.fastest < #{timeSpentSecs})")
+    long getAbyssRank(@Param("correctCount") int correctCount,
+                      @Param("timeSpentSecs") int timeSpentSecs,
+                      @Param("abyssMode") String abyssMode);
+
+    /**
      * 查询指定用户的考试记录
      */
     @Select("SELECT * FROM game_record WHERE user_id = #{userId} ORDER BY created_at DESC LIMIT #{limit}")

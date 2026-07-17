@@ -1,12 +1,26 @@
 import client from './client'
 import type { R } from '@/utils/constants'
 
+export interface AlbumResult {
+  albumKey: string
+  albumDisplayName: string
+  passed: boolean
+  albumBestScore: number
+  isNewRecord: boolean
+  unlockedNext: boolean
+  nextAlbumKey?: string
+  nextAlbumDisplayName?: string
+}
+
 export interface GameSubmitRequest {
   roundId: string
   correctCount: number
   timeSpentSecs: number
   usedRevival: number
   nickname?: string
+  mode?: string
+  albumKey?: string
+  totalQuestions?: number
 }
 
 export interface GameResult {
@@ -20,6 +34,7 @@ export interface GameResult {
   levelDescription: string
   beatPercentage: number
   totalPlayers: number
+  albumResult?: AlbumResult
 }
 
 export interface StatsOverview {

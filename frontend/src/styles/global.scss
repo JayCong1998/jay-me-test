@@ -3,47 +3,305 @@
 // UI 组件库: Vant 4 | 设计系统: ui-ux-pro-max
 // ========================================
 
-// Google Fonts: Poppins (ui-ux-pro-max 推荐音乐/娱乐调性字体)
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+// Google Fonts — 4 套主题所需字体（Poppins 保留用于数字/英文回退）
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 // ========================================
 // 设计 Token（自定义属性）
+// 默认 = 新中式典雅（无 class 或 .theme-chinese）
 // ========================================
-:root {
-  // Vant 主题色覆盖（对齐品牌金）
-  --van-primary-color: #c9a84c;
-  --van-primary-color-end: #b8973b;
-  --van-dialog-background: #141428;
-  --van-dialog-text-color: #f0ead6;
-  --van-toast-background: rgba(20, 20, 40, 0.95);
-  --van-toast-text-color: #f0ead6;
-  --van-tag-primary-color: #c9a84c;
+:root,
+html.theme-chinese {
+  // Vant 主题色覆盖
+  --van-primary-color: #CA8A04;
+  --van-dialog-background: #FFFFFF;
+  --van-dialog-text-color: #020617;
+  --van-toast-background: rgba(15, 23, 42, 0.92);
+  --van-toast-text-color: #F8FAFC;
+  --van-tag-primary-color: #CA8A04;
 
   // 品牌色
-  --app-gold: #c9a84c;
-  --app-gold-light: #e0cc8e;
-  --app-gold-dark: #a08030;
-  --app-bg-color: #0a0a14;
-  --app-bg-deep: #0a0a14;
-  --app-bg-card: rgba(255, 255, 255, 0.04);
-  --app-bg-card-hover: rgba(255, 255, 255, 0.07);
-  --app-border: rgba(255, 255, 255, 0.08);
-  --app-text-primary: #f0ead6;
-  --app-text-secondary: #9ca3af;
-  --app-text-muted: #6b7280;
+  --app-accent: #CA8A04;
+  --app-accent-rgb: 202, 138, 4;
+  --app-accent-light: #E2B93B;
+  --app-accent-dark: #9A6B03;
+  --app-gold: #CA8A04;
+  --app-gold-light: #E2B93B;
+  --app-gold-dark: #9A6B03;
+
+  // 背景
+  --app-bg-color: #F8FAFC;
+  --app-bg-deep: #F1F5F9;
+  --app-bg-card: #FFFFFF;
+  --app-bg-card-hover: #F8FAFC;
+  --app-bg-input: rgba(15, 23, 42, 0.03);
+  --app-bg-input-focus: rgba(15, 23, 42, 0.05);
+
+  // 边框
+  --app-border: rgba(15, 23, 42, 0.08);
+  --app-border-accent: rgba(202, 138, 4, 0.3);
+  --app-border-light: rgba(15, 23, 42, 0.04);
+
+  // 文字
+  --app-text-primary: #020617;
+  --app-text-secondary: #475569;
+  --app-text-muted: #94a3b8;
+  --app-text-on-accent: #0F172A;
+
+  // 语义色
+  --app-success: #15803D;
+  --app-error: #B91C1C;
+  --app-warning: #CA8A04;
+  --app-info: #1E3A8A;
 
   // 字体
-  --app-font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --app-font-family: 'Noto Sans TC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --app-font-heading: 'Noto Serif TC', 'PingFang SC', serif;
+  --app-font-display: 'Noto Serif TC', serif;
 
   // 渐变
-  --app-bg-gradient: linear-gradient(180deg, #0a0a18 0%, #111128 30%, #0f1a2e 60%, #0a0a18 100%);
-  --app-gold-gradient: linear-gradient(135deg, #c9a84c 0%, #e0cc8e 50%, #b8973b 100%);
-  --app-gold-gradient-horizontal: linear-gradient(90deg, #c9a84c 0%, #e0cc8e 50%, #c9a84c 100%);
+  --app-bg-gradient: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 50%, #F8FAFC 100%);
+  --app-accent-gradient: linear-gradient(135deg, #CA8A04 0%, #E2B93B 50%, #9A6B03 100%);
+  --app-accent-gradient-horizontal: linear-gradient(90deg, #CA8A04 0%, #E2B93B 50%, #CA8A04 100%);
+  --app-gold-gradient: linear-gradient(135deg, #CA8A04 0%, #E2B93B 50%, #9A6B03 100%);
+  --app-gold-gradient-horizontal: linear-gradient(90deg, #CA8A04 0%, #E2B93B 50%, #CA8A04 100%);
 
-  // 发光
-  --app-glow-gold: 0 0 20px rgba(201, 168, 76, 0.3);
-  --app-glow-gold-strong: 0 0 40px rgba(201, 168, 76, 0.5);
+  // 阴影
+  --app-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --app-shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --app-shadow-btn: 0 4px 16px rgba(202, 138, 4, 0.25);
+  --app-shadow-btn-hover: 0 6px 24px rgba(202, 138, 4, 0.35);
+
+  // 发光（新中式用柔光代替霓虹）
+  --app-glow-accent: 0 0 20px rgba(202, 138, 4, 0.15);
+  --app-glow-accent-strong: 0 0 40px rgba(202, 138, 4, 0.25);
+  --app-glow-gold: 0 0 20px rgba(202, 138, 4, 0.15);
+  --app-glow-gold-strong: 0 0 40px rgba(202, 138, 4, 0.25);
+
+  // 圆角
+  --app-radius-card: 16px;
+  --app-radius-btn: 14px;
+  --app-radius-input: 12px;
+  --app-radius-tag: 20px;
+  --app-radius-option: 12px;
+  --app-radius-mode: 14px;
+
+  // 装饰球（浅色主题下降低透明度）
+  --app-surface-rgb: 0, 0, 0;
+  --app-orb-opacity: 0.06;
+}
+
+// ========================================
+// 主题 B: 潮玩卡牌
+// ========================================
+html.theme-playful {
+  --van-primary-color: #EC4899;
+  --van-dialog-background: #FFFFFF;
+  --van-dialog-text-color: #831843;
+  --van-toast-background: rgba(131, 24, 67, 0.92);
+  --van-toast-text-color: #FDF2F8;
+  --van-tag-primary-color: #EC4899;
+
+  --app-accent: #EC4899;
+  --app-accent-rgb: 236, 72, 153;
+  --app-accent-light: #F472B6;
+  --app-accent-dark: #DB2777;
+  --app-gold: #EC4899;
+  --app-gold-light: #F472B6;
+  --app-gold-dark: #DB2777;
+
+  --app-bg-color: #FDF2F8;
+  --app-bg-deep: #FCE7F3;
+  --app-bg-card: #FFFFFF;
+  --app-bg-card-hover: #FDF2F8;
+  --app-bg-input: rgba(236, 72, 153, 0.04);
+  --app-bg-input-focus: rgba(236, 72, 153, 0.08);
+
+  --app-border: rgba(236, 72, 153, 0.12);
+  --app-border-accent: rgba(236, 72, 153, 0.4);
+  --app-border-light: rgba(236, 72, 153, 0.06);
+
+  --app-text-primary: #831843;
+  --app-text-secondary: #9D174D;
+  --app-text-muted: #BE6D8A;
+  --app-text-on-accent: #FFFFFF;
+
+  --app-success: #10B981;
+  --app-error: #EF4444;
+  --app-warning: #F59E0B;
+  --app-info: #06B6D4;
+
+  --app-font-family: 'Nunito', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --app-font-heading: 'Fredoka', 'PingFang SC', sans-serif;
+  --app-font-display: 'Fredoka', sans-serif;
+
+  --app-bg-gradient: linear-gradient(180deg, #FDF2F8 0%, #FCE7F3 50%, #FDF2F8 100%);
+  --app-accent-gradient: linear-gradient(135deg, #EC4899 0%, #F472B6 50%, #DB2777 100%);
+  --app-accent-gradient-horizontal: linear-gradient(90deg, #EC4899 0%, #F472B6 50%, #EC4899 100%);
+  --app-gold-gradient: linear-gradient(135deg, #EC4899 0%, #F472B6 50%, #DB2777 100%);
+  --app-gold-gradient-horizontal: linear-gradient(90deg, #EC4899 0%, #F472B6 50%, #EC4899 100%);
+
+  --app-shadow-card: 0 2px 8px rgba(236, 72, 153, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --app-shadow-card-hover: 0 6px 20px rgba(236, 72, 153, 0.14);
+  --app-shadow-btn: 0 4px 16px rgba(236, 72, 153, 0.3);
+  --app-shadow-btn-hover: 0 6px 24px rgba(236, 72, 153, 0.4);
+
+  --app-glow-accent: 0 0 20px rgba(236, 72, 153, 0.2);
+  --app-glow-accent-strong: 0 0 40px rgba(236, 72, 153, 0.35);
+  --app-glow-gold: 0 0 20px rgba(236, 72, 153, 0.2);
+  --app-glow-gold-strong: 0 0 40px rgba(236, 72, 153, 0.35);
+
+  --app-radius-card: 20px;
+  --app-radius-btn: 18px;
+  --app-radius-input: 14px;
+  --app-radius-tag: 14px;
+  --app-radius-option: 14px;
+  --app-radius-mode: 16px;
+
+  --app-surface-rgb: 0, 0, 0;
+  --app-orb-opacity: 0.08;
+}
+
+// ========================================
+// 主题 C: 赛博摩登
+// ========================================
+html.theme-cyberpunk {
+  --van-primary-color: #22D3EE;
+  --van-dialog-background: #141428;
+  --van-dialog-text-color: #F8FAFC;
+  --van-toast-background: rgba(15, 15, 35, 0.95);
+  --van-toast-text-color: #F8FAFC;
+  --van-tag-primary-color: #22D3EE;
+
+  --app-accent: #22D3EE;
+  --app-accent-rgb: 34, 211, 238;
+  --app-accent-light: #67E8F9;
+  --app-accent-dark: #06B6D4;
+  --app-gold: #22D3EE;
+  --app-gold-light: #67E8F9;
+  --app-gold-dark: #06B6D4;
+
+  --app-bg-color: #0F0F23;
+  --app-bg-deep: #0A0A18;
+  --app-bg-card: rgba(255, 255, 255, 0.04);
+  --app-bg-card-hover: rgba(255, 255, 255, 0.07);
+  --app-bg-input: rgba(255, 255, 255, 0.05);
+  --app-bg-input-focus: rgba(255, 255, 255, 0.08);
+
+  --app-border: rgba(255, 255, 255, 0.08);
+  --app-border-accent: rgba(34, 211, 238, 0.4);
+  --app-border-light: rgba(255, 255, 255, 0.04);
+
+  --app-text-primary: #F8FAFC;
+  --app-text-secondary: #94a3b8;
+  --app-text-muted: #64748b;
+  --app-text-on-accent: #0F0F23;
+
+  --app-success: #4ADE80;
+  --app-error: #F87171;
+  --app-warning: #FBBF24;
+  --app-info: #A78BFA;
+
+  --app-font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --app-font-heading: 'Inter', 'PingFang SC', sans-serif;
+  --app-font-display: 'Inter', sans-serif;
+
+  --app-bg-gradient: linear-gradient(180deg, #0A0A18 0%, #0F0F23 40%, #0F1A2E 70%, #0A0A18 100%);
+  --app-accent-gradient: linear-gradient(135deg, #0891B2 0%, #22D3EE 50%, #06B6D4 100%);
+  --app-accent-gradient-horizontal: linear-gradient(90deg, #0891B2 0%, #22D3EE 50%, #0891B2 100%);
+  --app-gold-gradient: linear-gradient(135deg, #0891B2 0%, #22D3EE 50%, #06B6D4 100%);
+  --app-gold-gradient-horizontal: linear-gradient(90deg, #0891B2 0%, #22D3EE 50%, #0891B2 100%);
+
+  --app-shadow-card: 0 0 20px rgba(34, 211, 238, 0.05);
+  --app-shadow-card-hover: 0 0 30px rgba(34, 211, 238, 0.12);
+  --app-shadow-btn: 0 0 20px rgba(34, 211, 238, 0.25);
+  --app-shadow-btn-hover: 0 0 30px rgba(34, 211, 238, 0.4);
+
+  --app-glow-accent: 0 0 20px rgba(34, 211, 238, 0.3);
+  --app-glow-accent-strong: 0 0 40px rgba(34, 211, 238, 0.5);
+  --app-glow-gold: 0 0 20px rgba(34, 211, 238, 0.3);
+  --app-glow-gold-strong: 0 0 40px rgba(34, 211, 238, 0.5);
+
+  --app-radius-card: 16px;
+  --app-radius-btn: 14px;
+  --app-radius-input: 12px;
+  --app-radius-tag: 20px;
+  --app-radius-option: 12px;
+  --app-radius-mode: 14px;
+
+  --app-surface-rgb: 255, 255, 255;
+  --app-orb-opacity: 0.08;
+}
+
+// ========================================
+// 主题 D: iOS 原生
+// ========================================
+html.theme-ios {
+  --van-primary-color: #007AFF;
+  --van-dialog-background: #FFFFFF;
+  --van-dialog-text-color: #000000;
+  --van-toast-background: rgba(28, 28, 30, 0.92);
+  --van-toast-text-color: #FFFFFF;
+  --van-tag-primary-color: #007AFF;
+
+  --app-accent: #007AFF;
+  --app-accent-rgb: 0, 122, 255;
+  --app-accent-light: #409CFF;
+  --app-accent-dark: #0055CC;
+  --app-gold: #007AFF;
+  --app-gold-light: #409CFF;
+  --app-gold-dark: #0055CC;
+
+  --app-bg-color: #F2F2F7;
+  --app-bg-deep: #E5E5EA;
+  --app-bg-card: #FFFFFF;
+  --app-bg-card-hover: #F2F2F7;
+  --app-bg-input: #F2F2F7;
+  --app-bg-input-focus: #E5E5EA;
+
+  --app-border: rgba(60, 60, 67, 0.10);
+  --app-border-accent: rgba(0, 122, 255, 0.3);
+  --app-border-light: rgba(60, 60, 67, 0.06);
+
+  --app-text-primary: #000000;
+  --app-text-secondary: #3C3C43;
+  --app-text-muted: #8E8E93;
+  --app-text-on-accent: #FFFFFF;
+
+  --app-success: #34C759;
+  --app-error: #FF3B30;
+  --app-warning: #FF9500;
+  --app-info: #5856D6;
+
+  --app-font-family: -apple-system, 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --app-font-heading: -apple-system, 'Inter', 'PingFang SC', sans-serif;
+  --app-font-display: -apple-system, 'Inter', sans-serif;
+
+  --app-bg-gradient: linear-gradient(180deg, #F2F2F7 0%, #E5E5EA 100%);
+  --app-accent-gradient: linear-gradient(180deg, #007AFF 0%, #0055CC 100%);
+  --app-accent-gradient-horizontal: linear-gradient(90deg, #007AFF 0%, #409CFF 100%);
+  --app-gold-gradient: linear-gradient(180deg, #007AFF 0%, #0055CC 100%);
+  --app-gold-gradient-horizontal: linear-gradient(90deg, #007AFF 0%, #409CFF 100%);
+
+  --app-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --app-shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --app-shadow-btn: none;
+  --app-shadow-btn-hover: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  --app-glow-accent: none;
+  --app-glow-accent-strong: none;
+  --app-glow-gold: none;
+  --app-glow-gold-strong: none;
+
+  --app-radius-card: 12px;
+  --app-radius-btn: 12px;
+  --app-radius-input: 10px;
+  --app-radius-tag: 6px;
+  --app-radius-option: 10px;
+  --app-radius-mode: 12px;
+
+  --app-surface-rgb: 0, 0, 0;
+  --app-orb-opacity: 0;
 }
 
 // ========================================
@@ -83,7 +341,7 @@ button, a, .clickable {
   width: 4px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(201, 168, 76, 0.3);
+  background: rgba(var(--app-accent-rgb), 0.3);
   border-radius: 2px;
 }
 ::-webkit-scrollbar-track {
@@ -91,7 +349,7 @@ button, a, .clickable {
 }
 
 // ========================================
-// Vant 组件暗色主题覆盖
+// Vant 组件主题覆盖（跟随 CSS 变量自动切换）
 // ========================================
 
 // Dialog（确认弹窗）
@@ -132,14 +390,14 @@ button, a, .clickable {
   }
 
   .van-dialog__cancel {
-    background: rgba(255, 255, 255, 0.06) !important;
+    background: var(--app-bg-input) !important;
     color: var(--app-text-secondary) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid var(--app-border) !important;
   }
 
   .van-dialog__confirm {
-    background: var(--app-gold-gradient) !important;
-    color: #1a1a2e !important;
+    background: var(--app-accent-gradient) !important;
+    color: var(--app-text-on-accent) !important;
     border: none !important;
   }
 }
@@ -177,7 +435,7 @@ button, a, .clickable {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--app-border);
-  border-radius: 16px;
+  border-radius: var(--app-radius-card);
 }
 
 // ========================================
@@ -199,8 +457,8 @@ button, a, .clickable {
 }
 
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(201, 168, 76, 0.2); }
-  50% { box-shadow: 0 0 40px rgba(201, 168, 76, 0.5), 0 0 80px rgba(201, 168, 76, 0.15); }
+  0%, 100% { box-shadow: 0 0 20px rgba(var(--app-accent-rgb), 0.2); }
+  50% { box-shadow: 0 0 40px rgba(var(--app-accent-rgb), 0.5), 0 0 80px rgba(var(--app-accent-rgb), 0.15); }
 }
 
 @keyframes shimmer {

@@ -22,6 +22,9 @@ public class Question implements Serializable {
     /** 分类: LYRICS | ALBUM */
     private String category;
 
+    /** 所属专辑 (NULL = 跨专辑通用) */
+    private String album;
+
     /** 难度: EASY | MEDIUM */
     private String difficulty;
 

@@ -39,9 +39,9 @@
 
     <!-- 操作按钮 -->
     <div class="feedback-actions">
-      <!-- 复活按钮 -->
+      <!-- 复活按钮（深渊模式不显示） -->
       <button
-        v-if="canRevive && !correct"
+        v-if="canRevive && !correct && !isAbyssMode"
         class="btn-revive"
         @click="$emit('revive')"
       >
@@ -53,13 +53,24 @@
         使用复活（{{ 1 }}次）
       </button>
 
-      <!-- 下一题按钮 -->
-      <button class="btn-next" @click="$emit('next')">
-        <span>下一题</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      <!-- 下一题 / 深渊模式按钮 -->
+      <button
+        class="btn-next"
+        :class="{ 'btn-abyss-fall': isAbyssMode && !correct }"
+        @click="$emit('next')"
+      >
+        <span v-if="isAbyssMode && !correct">堕入深渊</span>
+        <span v-else-if="isAbyssMode && correct">继续深入</span>
+        <span v-else>下一题</span>
+        <svg v-if="!isAbyssMode || correct" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
           stroke-linecap="round" stroke-linejoin="round">
           <line x1="5" y1="12" x2="19" y2="12" />
           <polyline points="12 5 19 12 12 19" />
+        </svg>
+        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <polyline points="19 12 12 19 12 19" />
         </svg>
       </button>
     </div>
@@ -72,6 +83,7 @@ defineProps<{
   correctOption: string
   explanation: string
   canRevive: boolean
+  isAbyssMode?: boolean
 }>()
 
 defineEmits<{
@@ -117,12 +129,12 @@ defineEmits<{
 
   &.icon-correct {
     background: rgba(34, 197, 94, 0.15);
-    color: #4ade80;
+    color: var(--app-success);
   }
 
   &.icon-wrong {
     background: rgba(239, 68, 68, 0.15);
-    color: #f87171;
+    color: var(--app-error);
   }
 }
 
@@ -150,8 +162,8 @@ defineEmits<{
   gap: 8px;
   padding: 6px 16px;
   border-radius: 8px;
-  background: rgba(201, 168, 76, 0.1);
-  border: 1px solid rgba(201, 168, 76, 0.2);
+  background: rgba(var(--app-accent-rgb), 0.1);
+  border: 1px solid rgba(var(--app-accent-rgb), 0.2);
   margin-bottom: 12px;
 
   .answer-label {
@@ -160,7 +172,7 @@ defineEmits<{
   }
 
   .answer-value {
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--app-font-display), sans-serif;
     font-size: 18px;
     font-weight: 700;
     color: var(--app-gold);
@@ -203,7 +215,7 @@ defineEmits<{
   border: 1.5px solid rgba(234, 179, 8, 0.3);
   border-radius: 12px;
   background: rgba(234, 179, 8, 0.08);
-  color: #facc15;
+  color: var(--app-warning);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -235,12 +247,12 @@ defineEmits<{
   border: none;
   border-radius: 12px;
   background: var(--app-gold-gradient);
-  color: #1a1a2e;
+  color: var(--app-text-on-accent);
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 4px 16px rgba(201, 168, 76, 0.3);
+  box-shadow: 0 4px 16px rgba(var(--app-accent-rgb), 0.3);
   transition: all 0.25s ease;
 
   svg {
@@ -251,7 +263,7 @@ defineEmits<{
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(201, 168, 76, 0.45);
+    box-shadow: 0 6px 24px rgba(var(--app-accent-rgb), 0.45);
 
     svg {
       transform: translateX(3px);
@@ -260,6 +272,17 @@ defineEmits<{
 
   &:active {
     transform: scale(0.97);
+  }
+
+  /* 深渊模式答错：堕入深渊按钮 */
+  &.btn-abyss-fall {
+    background: linear-gradient(135deg, #7c3aed 0%, #dc2626 100%);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+
+    &:hover {
+      box-shadow: 0 6px 28px rgba(220, 38, 38, 0.5);
+    }
   }
 }
 

@@ -1,12 +1,13 @@
 package com.jaymetest.model.enums;
 
+import com.jaymetest.service.game.LevelInfo;
 import lombok.Getter;
 
 /**
  * 粉丝等级枚举 (5 级)
  */
 @Getter
-public enum FanLevel {
+public enum FanLevel implements LevelInfo {
     PASSERBY("路人粉", "🌱 路人粉", "刚刚路过，杰伦的歌还等你发现", 0, 2),
     JUNIOR("初级杰迷", "🎤 初级杰迷", "入门粉丝，继续加油解锁更多杰伦冷知识", 3, 4),
     INTERMEDIATE("中级杰迷", "🎧 中级杰迷", "资深听友，离骨灰粉只差一张专辑的距离", 5, 6),

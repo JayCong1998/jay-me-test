@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>杰迷结业考试 — UI 风格对比演示</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Righteous&display=swap" rel="stylesheet">
+<style>
+/* ========== Global Reset ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ========== Top Header ========== */
+.demo-header {
+  width: 100%;
+  max-width: 1100px;
+  padding: 32px 20px 0;
+  text-align: center;
+}
+.demo-header h1 {
+  font-family: 'Righteous', 'Poppins', sans-serif;
+  font-size: 32px;
+  color: #f0ead6;
+  margin-bottom: 8px;
+}
+.demo-header p {
+  font-size: 15px;
+  color: #9ca3af;
+  margin-bottom: 24px;
+}
+
+/* ========== Demo Container ========== */
+.demo-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  padding: 0 20px 60px;
+}
+
+/* 2x2 grid */
+.demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  justify-items: center;
+}
+
+.phone-frame {
+  width: 390px;
+  max-width: 100%;
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.1);
+  position: relative;
+}
+
+.phone-frame .frame-label {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 4px 14px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+/* ========== Phone Inner Content ========== */
+.phone-inner {
+  height: 760px;
+  overflow-y: auto;
+  padding: 44px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ========== Section Labels ========== */
+.section-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; margin-bottom: 2px; margin-top: 2px;
+}
+
+/* ============================================ */
+/* STYLE A: Neo-Chinese Elegance 新中式典雅     */
+/* ============================================ */
+.style-a { --bg: #F8FAFC; --bg-card: #FFFFFF; --bg-input: rgba(15,23,42,0.03); --text: #020617; --text-secondary: #475569; --text-muted: #94a3b8; --accent: #CA8A04; --accent-light: #E2B93B; --accent-dark: #9A6B03; --primary: #0F172A; --secondary: #1E3A8A; --border: rgba(15,23,42,0.08); --border-accent: rgba(202,138,4,0.3); --success: #15803D; --error: #B91C1C; --card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); --card-shadow-hover: 0 4px 12px rgba(0,0,0,0.08); --section-label-color: #94a3b8; --radius-card: 16px; --radius-btn: 14px; --radius-input: 12px; --radius-tag: 20px; --radius-option: 12px; --radius-opt-letter: 10px; --radius-mode: 14px; --font-heading: 'Noto Serif TC', 'PingFang SC', serif; --font-body: 'Noto Sans TC', 'PingFang SC', 'Microsoft YaHei', sans-serif; --font-display: 'Noto Serif TC', serif; }
+.style-a .frame-label { background: rgba(255,255,255,0.85); color: #0F172A; }
+.style-a { font-family: var(--font-body); }
+.style-a .heading, .style-a .logo-text { font-family: var(--font-heading); }
+
+/* ============================================ */
+/* STYLE B: Trendy Playful 潮玩卡牌             */
+/* ============================================ */
+.style-b { --bg: #FDF2F8; --bg-card: #FFFFFF; --bg-input: rgba(236,72,153,0.04); --text: #831843; --text-secondary: #9D174D; --text-muted: #BE6D8A; --accent: #EC4899; --accent-light: #F472B6; --accent-dark: #DB2777; --primary: #831843; --secondary: #06B6D4; --border: rgba(236,72,153,0.12); --border-accent: rgba(236,72,153,0.4); --success: #10B981; --error: #EF4444; --card-shadow: 0 2px 8px rgba(236,72,153,0.08), 0 1px 3px rgba(0,0,0,0.04); --card-shadow-hover: 0 6px 20px rgba(236,72,153,0.14); --section-label-color: #BE6D8A; --radius-card: 20px; --radius-btn: 18px; --radius-input: 14px; --radius-tag: 14px; --radius-option: 14px; --radius-opt-letter: 50%; --radius-mode: 16px; --font-heading: 'Fredoka', 'PingFang SC', sans-serif; --font-body: 'Nunito', 'PingFang SC', 'Microsoft YaHei', sans-serif; --font-display: 'Fredoka', sans-serif; }
+.style-b .frame-label { background: rgba(236,72,153,0.15); color: #EC4899; }
+.style-b { font-family: var(--font-body); }
+.style-b .heading, .style-b .logo-text { font-family: var(--font-heading); }
+
+/* ============================================ */
+/* STYLE C: Cyberpunk Lite 赛博摩登             */
+/* ============================================ */
+.style-c { --bg: #0F0F23; --bg-card: rgba(255,255,255,0.04); --bg-input: rgba(255,255,255,0.05); --text: #F8FAFC; --text-secondary: #94a3b8; --text-muted: #64748b; --accent: #22D3EE; --accent-light: #67E8F9; --accent-dark: #06B6D4; --primary: #F8FAFC; --secondary: #A78BFA; --border: rgba(255,255,255,0.08); --border-accent: rgba(34,211,238,0.4); --success: #4ADE80; --error: #F87171; --card-shadow: 0 0 20px rgba(34,211,238,0.05); --card-shadow-hover: 0 0 30px rgba(34,211,238,0.12); --section-label-color: #64748B; --radius-card: 16px; --radius-btn: 14px; --radius-input: 12px; --radius-tag: 20px; --radius-option: 12px; --radius-opt-letter: 10px; --radius-mode: 14px; --font-heading: 'Inter', 'PingFang SC', sans-serif; --font-body: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif; --font-display: 'Inter', sans-serif; }
+.style-c .frame-label { background: rgba(15,15,35,0.85); color: #22D3EE; }
+.style-c { font-family: var(--font-body); }
+.style-c .heading, .style-c .logo-text { font-family: var(--font-heading); }
+
+/* ============================================ */
+/* STYLE D: iOS Native 苹果原生风格             */
+/* ============================================ */
+.style-d { --bg: #F2F2F7; --bg-card: #FFFFFF; --bg-input: #F2F2F7; --text: #000000; --text-secondary: #3C3C43; --text-muted: #8E8E93; --accent: #007AFF; --accent-light: #409CFF; --accent-dark: #0055CC; --primary: #000000; --secondary: #5856D6; --border: rgba(60,60,67,0.10); --border-accent: rgba(0,122,255,0.3); --success: #34C759; --error: #FF3B30; --card-shadow: 0 1px 3px rgba(0,0,0,0.04); --card-shadow-hover: 0 2px 8px rgba(0,0,0,0.08); --section-label-color: #8E8E93; --radius-card: 12px; --radius-btn: 12px; --radius-input: 10px; --radius-tag: 6px; --radius-option: 10px; --radius-opt-letter: 8px; --radius-mode: 12px; --font-heading: -apple-system, 'Inter', 'PingFang SC', sans-serif; --font-body: -apple-system, 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif; --font-display: -apple-system, 'Inter', sans-serif; }
+.style-d .frame-label { background: rgba(255,255,255,0.8); color: #007AFF; }
+.style-d { font-family: var(--font-body); }
+.style-d .heading, .style-d .logo-text { font-family: var(--font-heading); }
+
+/* ========== Phone bg ========== */
+.phone-inner { background: var(--bg); color: var(--text); }
+
+/* ========== Decorative BG Elements ========== */
+.style-a .phone-inner::before {
+  content: ''; position: absolute; top: -60px; right: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(202,138,4,0.06) 0%, transparent 70%);
+  border-radius: 50%; pointer-events: none;
+}
+.style-b .phone-inner::before {
+  content: ''; position: absolute; top: -40px; right: -30px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(236,72,153,0.12) 0%, rgba(6,182,212,0.06) 50%, transparent 70%);
+  border-radius: 50%; pointer-events: none;
+}
+.style-c .phone-inner::before {
+  content: ''; position: absolute; top: -50px; left: -30px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(34,211,238,0.08) 0%, transparent 60%);
+  border-radius: 50%; pointer-events: none;
+}
+/* Style D: no decorative orb — iOS is clean */
+
+/* ========== Logo / Header ========== */
+.app-logo {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 4px; position: relative; z-index: 1;
+}
+.app-logo .logo-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.app-logo .logo-text { font-size: 20px; font-weight: 700; line-height: 1.2; }
+.app-logo .logo-sub { font-size: 11px; opacity: 0.6; font-weight: 400; }
+
+.style-a .logo-icon { background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #CA8A04; }
+.style-a .logo-text { color: #0F172A; }
+.style-b .logo-icon { background: linear-gradient(135deg, #EC4899, #F472B6); color: #fff; border-radius: 16px; }
+.style-b .logo-text { color: #831843; }
+.style-c .logo-icon { background: rgba(34,211,238,0.15); color: #22D3EE; border: 1px solid rgba(34,211,238,0.3); }
+.style-c .logo-text { color: #F8FAFC; }
+.style-d .logo-icon { background: #007AFF; color: #fff; border-radius: 12px; }
+.style-d .logo-text { color: #000; font-size: 22px; font-weight: 800; }
+
+/* ========== Cards ========== */
+.card {
+  border-radius: var(--radius-card); padding: 18px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  box-shadow: var(--card-shadow);
+  position: relative; z-index: 1;
+  transition: all 0.2s ease;
+}
+.style-c .card { backdrop-filter: blur(20px); }
+.card:hover { box-shadow: var(--card-shadow-hover); }
+.style-d .card { padding: 16px; }
+
+/* ========== iOS-style Navigation Title ========== */
+.nav-title {
+  font-size: 32px; font-weight: 900; letter-spacing: -0.5px;
+  margin-bottom: 4px; position: relative; z-index: 1;
+  color: var(--text);
+}
+.style-a .nav-title, .style-b .nav-title, .style-c .nav-title { display: none; }
+.style-d .nav-title { display: block; }
+.style-d .app-logo { display: none; }
+/* hide app-logo for D (iOS uses large title), show for A/B/C */
+
+/* ========== Input ========== */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.form-input {
+  height: 48px; padding: 0 16px;
+  border-radius: var(--radius-input);
+  border: 1.5px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text); font-size: 16px;
+  font-family: inherit; outline: none;
+  transition: all 0.2s ease;
+}
+.form-input:focus { border-color: var(--accent); }
+.style-c .form-input:focus { box-shadow: 0 0 0 3px rgba(34,211,238,0.15); }
+.style-a .form-input:focus { box-shadow: 0 0 0 3px rgba(202,138,4,0.1); }
+.style-b .form-input:focus { box-shadow: 0 0 0 3px rgba(236,72,153,0.12); }
+.style-d .form-input:focus { box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
+.style-d .form-label { font-size: 12px; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.5px; }
+.style-d .form-input { border-radius: 10px; background: #F2F2F7; border: none; height: 44px; font-size: 17px; }
+.form-input::placeholder { color: var(--text-muted); }
+
+/* ========== Buttons ========== */
+.btn {
+  height: 48px; border-radius: var(--radius-btn);
+  border: none; font-size: 16px; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s ease; font-family: inherit; width: 100%;
+}
+.style-a .btn-primary { background: linear-gradient(135deg, #CA8A04, #E2B93B); color: #0F172A; box-shadow: 0 4px 16px rgba(202,138,4,0.25); }
+.style-a .btn-primary:hover { box-shadow: 0 6px 24px rgba(202,138,4,0.35); transform: translateY(-1px); }
+.style-b .btn-primary { background: linear-gradient(135deg, #EC4899, #F472B6); color: #fff; box-shadow: 0 4px 16px rgba(236,72,153,0.3); }
+.style-b .btn-primary:hover { box-shadow: 0 6px 24px rgba(236,72,153,0.4); transform: translateY(-2px) scale(1.02); }
+.style-c .btn-primary { background: linear-gradient(135deg, #0891B2, #22D3EE); color: #0F0F23; box-shadow: 0 0 20px rgba(34,211,238,0.25); }
+.style-c .btn-primary:hover { box-shadow: 0 0 30px rgba(34,211,238,0.4); }
+.style-d .btn-primary { background: #007AFF; color: #fff; height: 50px; border-radius: 14px; font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
+.style-d .btn-primary:hover { background: #0066D6; }
+
+/* Outline buttons */
+.btn-outline { background: transparent; }
+.style-a .btn-outline { border: 1.5px solid rgba(202,138,4,0.3); color: #CA8A04; }
+.style-a .btn-outline:hover { border-color: #CA8A04; background: rgba(202,138,4,0.05); }
+.style-b .btn-outline { border: 2px solid rgba(236,72,153,0.25); color: #EC4899; }
+.style-b .btn-outline:hover { border-color: #EC4899; background: rgba(236,72,153,0.06); }
+.style-c .btn-outline { border: 1.5px solid rgba(34,211,238,0.3); color: #22D3EE; }
+.style-c .btn-outline:hover { border-color: #22D3EE; background: rgba(34,211,238,0.06); box-shadow: 0 0 12px rgba(34,211,238,0.1); }
+.style-d .btn-outline { border: none; color: #007AFF; font-weight: 500; }
+.style-d .btn-outline:hover { background: rgba(0,122,255,0.06); }
+
+/* ========== Mode Selector ========== */
+.mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mode-card {
+  border-radius: var(--radius-mode); padding: 14px;
+  border: 1.5px solid var(--border); cursor: pointer;
+  text-align: center; transition: all 0.2s ease;
+  background: var(--bg-card);
+}
+.mode-card:hover { border-color: var(--border-accent); }
+.mode-card.selected { border-color: var(--accent); }
+.style-a .mode-card.selected { background: rgba(202,138,4,0.05); }
+.style-b .mode-card.selected { background: rgba(236,72,153,0.06); }
+.style-c .mode-card.selected { background: rgba(34,211,238,0.06); }
+.style-d .mode-card { border: none; background: #F2F2F7; border-radius: 12px; }
+.style-d .mode-card.selected { background: #007AFF; }
+.style-d .mode-card.selected .mode-name { color: #fff; }
+.style-d .mode-card.selected .mode-desc { color: rgba(255,255,255,0.8); }
+.mode-card .mode-icon { font-size: 26px; margin-bottom: 6px; }
+.mode-card .mode-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.mode-card .mode-desc { font-size: 11px; color: var(--text-muted); }
+
+/* ========== Question Card ========== */
+.question-header { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.tag {
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: var(--radius-tag);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.style-a .tag-difficulty { background: rgba(21,128,61,0.08); color: #15803D; }
+.style-a .tag-category { background: rgba(202,138,4,0.08); color: #9A6B03; }
+.style-b .tag-difficulty { background: rgba(16,185,129,0.1); color: #059669; }
+.style-b .tag-category { background: rgba(6,182,212,0.1); color: #0891B2; }
+.style-c .tag-difficulty { background: rgba(74,222,128,0.1); color: #4ADE80; border: 1px solid rgba(74,222,128,0.2); }
+.style-c .tag-category { background: rgba(34,211,238,0.1); color: #22D3EE; border: 1px solid rgba(34,211,238,0.2); }
+.style-d .tag-difficulty { background: rgba(52,199,89,0.1); color: #34C759; border-radius: 6px; font-size: 10px; }
+.style-d .tag-category { background: rgba(0,122,255,0.08); color: #007AFF; border-radius: 6px; font-size: 10px; }
+
+.question-progress { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.progress-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.style-d .progress-bar { height: 4px; border-radius: 2px; background: rgba(60,60,67,0.12); }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+.style-a .progress-fill { background: linear-gradient(90deg, #CA8A04, #E2B93B); }
+.style-b .progress-fill { background: linear-gradient(90deg, #EC4899, #06B6D4); }
+.style-c .progress-fill { background: linear-gradient(90deg, #22D3EE, #A78BFA); }
+.style-d .progress-fill { background: #007AFF; border-radius: 2px; }
+.progress-num { font-size: 12px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+
+.question-text {
+  font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 14px;
+}
+.style-d .question-text { font-size: 19px; font-weight: 500; }
+
+.option-list { display: flex; flex-direction: column; gap: 8px; }
+.style-d .option-list { gap: 6px; }
+.option-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-option);
+  border: 1.5px solid var(--border);
+  cursor: pointer; transition: all 0.2s ease;
+  background: var(--bg-card);
+}
+.style-a .option-item:hover { border-color: rgba(202,138,4,0.3); background: rgba(202,138,4,0.03); }
+.style-b .option-item:hover { border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.04); transform: translateX(4px); }
+.style-c .option-item:hover { border-color: rgba(34,211,238,0.3); background: rgba(34,211,238,0.04); }
+.style-d .option-item { border: none; background: #F2F2F7; border-radius: 10px; padding: 13px 15px; }
+.style-d .option-item:hover { background: #E5E5EA; }
+.option-item.selected { border-color: var(--accent); }
+.style-a .option-item.selected { background: rgba(202,138,4,0.08); }
+.style-b .option-item.selected { background: rgba(236,72,153,0.08); }
+.style-c .option-item.selected { background: rgba(34,211,238,0.08); }
+.style-d .option-item.selected { background: #007AFF; border: none; }
+.style-d .option-item.selected .option-text { color: #fff; }
+.style-d .option-item.selected .option-letter { background: rgba(255,255,255,0.2); color: #fff; }
+
+.option-letter {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-opt-letter);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px; flex-shrink: 0;
+}
+.style-a .option-letter { background: rgba(15,23,42,0.06); color: #0F172A; }
+.style-a .option-item:hover .option-letter { background: rgba(202,138,4,0.12); color: #9A6B03; }
+.style-a .option-item.selected .option-letter { background: #CA8A04; color: #fff; }
+.style-b .option-letter { background: rgba(236,72,153,0.08); color: #BE6D8A; }
+.style-b .option-item:hover .option-letter { background: #EC4899; color: #fff; }
+.style-b .option-item.selected .option-letter { background: #EC4899; color: #fff; }
+.style-c .option-letter { background: rgba(255,255,255,0.06); color: #94a3b8; }
+.style-c .option-item:hover .option-letter { background: rgba(34,211,238,0.15); color: #22D3EE; }
+.style-c .option-item.selected .option-letter { background: #22D3EE; color: #0F0F23; box-shadow: 0 0 8px rgba(34,211,238,0.3); }
+.style-d .option-letter { background: rgba(0,0,0,0.04); color: #3C3C43; border-radius: 8px; }
+.style-d .option-item:hover .option-letter { background: rgba(0,0,0,0.08); }
+.style-d .option-item.selected .option-letter { background: rgba(255,255,255,0.2); color: #fff; }
+.option-text { font-size: 15px; font-weight: 500; flex: 1; }
+.style-d .option-text { font-size: 17px; font-weight: 400; }
+
+/* ========== Result Section ========== */
+.result-score-ring {
+  width: 110px; height: 110px; border-radius: 50%;
+  margin: 0 auto 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative;
+}
+.style-a .result-score-ring { background: radial-gradient(circle at 50% 40%, rgba(202,138,4,0.08), rgba(202,138,4,0.02)); border: 3px solid #CA8A04; }
+.style-b .result-score-ring { background: radial-gradient(circle at 50% 40%, rgba(236,72,153,0.1), rgba(6,182,212,0.04)); border: 3px solid #EC4899; }
+.style-c .result-score-ring { background: radial-gradient(circle at 50% 40%, rgba(34,211,238,0.08), transparent); border: 3px solid #22D3EE; box-shadow: 0 0 20px rgba(34,211,238,0.2); }
+.style-d .result-score-ring { background: #F2F2F7; border: none; width: 100px; height: 100px; }
+
+.score-num { font-size: 40px; font-weight: 800; line-height: 1; }
+.style-d .score-num { font-size: 40px; font-weight: 900; letter-spacing: -1px; }
+.score-total { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.level-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 20px; border-radius: 20px;
+  font-weight: 700; font-size: 15px; margin: 0 auto 10px;
+}
+.style-a .level-badge { background: linear-gradient(135deg, #CA8A04, #E2B93B); color: #0F172A; }
+.style-b .level-badge { background: linear-gradient(135deg, #EC4899, #F472B6); color: #fff; font-family: 'Fredoka', sans-serif; }
+.style-c .level-badge { background: rgba(34,211,238,0.12); color: #22D3EE; border: 1px solid rgba(34,211,238,0.3); }
+.style-d .level-badge { background: #007AFF; color: #fff; border-radius: 20px; font-size: 14px; }
+
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
+.style-d .stats-row { gap: 6px; }
+.stat-item { text-align: center; padding: 12px 8px; border-radius: 10px; background: var(--bg-input); }
+.style-d .stat-item { background: #F2F2F7; border-radius: 10px; padding: 10px 6px; }
+.stat-value { font-size: 20px; font-weight: 800; line-height: 1.2; }
+.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.style-d .stat-value { font-size: 20px; font-weight: 700; }
+
+/* ========== Album Card ========== */
+.album-card {
+  border-radius: var(--radius-card); overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-card); cursor: pointer;
+  transition: all 0.2s ease; box-shadow: var(--card-shadow);
+}
+.style-d .album-card { border: none; }
+.album-cover { height: 90px; display: flex; align-items: flex-end; padding: 14px; position: relative; }
+.album-year { font-size: 26px; font-weight: 800; line-height: 1; color: rgba(255,255,255,0.9); }
+.album-info { padding: 12px 14px; }
+.album-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.album-meta { font-size: 12px; color: var(--text-muted); }
+.album-best { margin-top: 6px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.style-a .album-best { color: #CA8A04; }
+.style-b .album-best { color: #EC4899; }
+.style-c .album-best { color: #22D3EE; }
+.style-d .album-best { color: #007AFF; }
+
+.album-grad-a { background: linear-gradient(135deg, #1a1a2e, #2d2d44); }
+.album-grad-b { background: linear-gradient(135deg, #EC4899, #A855F7); }
+.album-grad-c { background: linear-gradient(135deg, #0F172A, #0891B2); }
+.album-grad-d { background: linear-gradient(135deg, #1C1C1E, #3A3A3C); }
+
+/* ========== Responsive ========== */
+@media (max-width: 900px) {
+  .demo-grid { grid-template-columns: 1fr; gap: 24px; }
+  .phone-frame { width: 100%; max-width: 390px; }
+}
+
+/* ========== Segmented Control (iOS only) ========== */
+.segmented-control {
+  display: flex; background: rgba(60,60,67,0.08); border-radius: 9px;
+  padding: 2px; margin-bottom: 8px;
+}
+.segmented-item {
+  flex: 1; text-align: center; padding: 7px 0;
+  font-size: 13px; font-weight: 600; border-radius: 7px;
+  cursor: pointer; transition: all 0.2s ease;
+  color: var(--text);
+}
+.segmented-item.active { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06); }
+
+/* ========== iOS-style Table Row (Style D) ========== */
+.table-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 0.5px solid rgba(60,60,67,0.12);
+  font-size: 17px;
+}
+.table-row:last-child { border-bottom: none; }
+.table-row .row-label { color: #000; }
+.table-row .row-value { color: #8E8E93; }
+.table-row .row-arrow { color: #C7C7CC; font-size: 14px; }
+
+/* ========== iOS-style Chevrion (Style D) ========== */
+.chevron-right {
+  width: 8px; height: 8px; border-right: 2px solid #C7C7CC;
+  border-top: 2px solid #C7C7CC; transform: rotate(45deg);
+  display: inline-block;
+}
+</style>
+</head>
+<body>
+
+<div class="demo-header">
+  <h1>杰迷结业考试 · UI 风格演示</h1>
+  <p>四种风格 2×2 对比 — 每个手机框展示该风格的核心页面组件</p>
+</div>
+
+<div class="demo-wrapper">
+  <div class="demo-grid">
+
+    <!-- ================================ -->
+    <!-- STYLE A: Neo-Chinese Elegance   -->
+    <!-- ================================ -->
+    <div class="phone-frame">
+      <div class="frame-label">A · 新中式典雅</div>
+      <div class="phone-inner style-a">
+        <div class="app-logo">
+          <div class="logo-icon">🎵</div>
+          <div><div class="logo-text">杰迷结业考试</div><div class="logo-sub">Jay Chou Fan Quiz</div></div>
+        </div>
+        <div class="nav-title">答题</div>
+        <div class="section-label" style="color:var(--section-label-color)">📝 首页 · 开始答题</div>
+        <div class="card">
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">你的昵称</label>
+            <input class="form-input" placeholder="输入昵称开始挑战..." value="晴天">
+          </div>
+          <div class="mode-grid" style="margin-bottom:14px">
+            <div class="mode-card selected"><div class="mode-icon">🎤</div><div class="mode-name">经典模式</div><div class="mode-desc">10 道随机题</div></div>
+            <div class="mode-card"><div class="mode-icon">💿</div><div class="mode-name">专辑闯关</div><div class="mode-desc">15 张专辑</div></div>
+          </div>
+          <button class="btn btn-primary">开始答题</button>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">🎯 答题页 · 第 3/10 题</div>
+        <div class="card">
+          <div class="question-header">
+            <span class="tag tag-difficulty">● 简单</span><span class="tag tag-category">◇ 歌词</span>
+          </div>
+          <div class="question-progress"><div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div><span class="progress-num">3/10</span></div>
+          <div class="question-text">"天青色等烟雨，而我在等你" 出自哪首歌？</div>
+          <div class="option-list">
+            <div class="option-item selected"><span class="option-letter">A</span><span class="option-text">青花瓷</span></div>
+            <div class="option-item"><span class="option-letter">B</span><span class="option-text">东风破</span></div>
+            <div class="option-item"><span class="option-letter">C</span><span class="option-text">发如雪</span></div>
+            <div class="option-item"><span class="option-letter">D</span><span class="option-text">兰亭序</span></div>
+          </div>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">🏆 结果页</div>
+        <div class="card" style="text-align:center">
+          <div class="result-score-ring"><span class="score-num">9</span><span class="score-total">/ 10</span></div>
+          <div class="level-badge">👑 终极杰迷</div>
+          <div class="stats-row">
+            <div class="stat-item"><div class="stat-value">95%</div><div class="stat-label">超越</div></div>
+            <div class="stat-item"><div class="stat-value">2'18"</div><div class="stat-label">用时</div></div>
+            <div class="stat-item"><div class="stat-value">3</div><div class="stat-label">连胜</div></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-outline" style="flex:1">再答一次</button>
+            <button class="btn btn-primary" style="flex:1">查看证书</button>
+          </div>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">💿 专辑卡片</div>
+        <div class="album-card">
+          <div class="album-cover album-grad-a"><div class="album-year">2000</div></div>
+          <div class="album-info"><div class="album-name">Jay</div><div class="album-meta">首张专辑 · 10 首</div><div class="album-best">🏆 最高分 9/10</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- STYLE B: Trendy Playful         -->
+    <!-- ================================ -->
+    <div class="phone-frame">
+      <div class="frame-label">B · 潮玩卡牌</div>
+      <div class="phone-inner style-b">
+        <div class="app-logo">
+          <div class="logo-icon">🎵</div>
+          <div><div class="logo-text">杰迷结业考试</div><div class="logo-sub">Jay Chou Fan Quiz</div></div>
+        </div>
+        <div class="nav-title">答题</div>
+        <div class="section-label" style="color:var(--section-label-color)">📝 首页 · 开始答题</div>
+        <div class="card">
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">你的昵称</label>
+            <input class="form-input" placeholder="输入昵称开始挑战..." value="小公举">
+          </div>
+          <div class="mode-grid" style="margin-bottom:14px">
+            <div class="mode-card selected"><div class="mode-icon">🎤</div><div class="mode-name">经典模式</div><div class="mode-desc">10 道随机题</div></div>
+            <div class="mode-card"><div class="mode-icon">💿</div><div class="mode-name">专辑闯关</div><div class="mode-desc">15 张专辑</div></div>
+          </div>
+          <button class="btn btn-primary">🎯 开始答题</button>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">🎯 答题页 · 第 3/10 题</div>
+        <div class="card">
+          <div class="question-header">
+            <span class="tag tag-difficulty">● 简单</span><span class="tag tag-category">◇ 歌词</span>
+          </div>
+          <div class="question-progress"><div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div><span class="progress-num">3/10</span></div>
+          <div class="question-text">"天青色等烟雨，而我在等你" 出自哪首歌？</div>
+          <div class="option-list">
+            <div class="option-item selected"><span class="option-letter">A</span><span class="option-text">青花瓷</span></div>
+            <div class="option-item"><span class="option-letter">B</span><span class="option-text">东风破</span></div>
+            <div class="option-item"><span class="option-letter">C</span><span class="option-text">发如雪</span></div>
+            <div class="option-item"><span class="option-letter">D</span><span class="option-text">兰亭序</span></div>
+          </div>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">🏆 结果页</div>
+        <div class="card" style="text-align:center">
+          <div class="result-score-ring"><span class="score-num">9</span><span class="score-total">/ 10</span></div>
+          <div class="level-badge">👑 终极杰迷</div>
+          <div class="stats-row">
+            <div class="stat-item"><div class="stat-value">95%</div><div class="stat-label">超越</div></div>
+            <div class="stat-item"><div class="stat-value">2'18"</div><div class="stat-label">用时</div></div>
+            <div class="stat-item"><div class="stat-value">3</div><div class="stat-label">连胜</div></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-outline" style="flex:1">再答一次</button>
+            <button class="btn btn-primary" style="flex:1">查看证书</button>
+          </div>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">💿 专辑卡片</div>
+        <div class="album-card">
+          <div class="album-cover album-grad-b"><div class="album-year">2000</div></div>
+          <div class="album-info"><div class="album-name">Jay</div><div class="album-meta">首张专辑 · 10 首</div><div class="album-best">🏆 最高分 9/10</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- STYLE C: Cyberpunk Lite         -->
+    <!-- ================================ -->
+    <div class="phone-frame">
+      <div class="frame-label">C · 赛博摩登</div>
+      <div class="phone-inner style-c">
+        <div class="app-logo">
+          <div class="logo-icon">🎵</div>
+          <div><div class="logo-text">杰迷结业考试</div><div class="logo-sub">Jay Chou Fan Quiz</div></div>
+        </div>
+        <div class="nav-title">答题</div>
+        <div class="section-label" style="color:var(--section-label-color)">📝 首页 · 开始答题</div>
+        <div class="card">
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">你的昵称</label>
+            <input class="form-input" placeholder="输入昵称开始挑战..." value="夜曲">
+          </div>
+          <div class="mode-grid" style="margin-bottom:14px">
+            <div class="mode-card selected"><div class="mode-icon">🎤</div><div class="mode-name">经典模式</div><div class="mode-desc">10 道随机题</div></div>
+            <div class="mode-card"><div class="mode-icon">💿</div><div class="mode-name">专辑闯关</div><div class="mode-desc">15 张专辑</div></div>
+          </div>
+          <button class="btn btn-primary">开始答题</button>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">🎯 答题页 · 第 3/10 题</div>
+        <div class="card">
+          <div class="question-header">
+            <span class="tag tag-difficulty">● 简单</span><span class="tag tag-category">◇ 歌词</span>
+          </div>
+          <div class="question-progress"><div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div><span class="progress-num">3/10</span></div>
+          <div class="question-text">"天青色等烟雨，而我在等你" 出自哪首歌？</div>
+          <div class="option-list">
+            <div class="option-item selected"><span class="option-letter">A</span><span class="option-text">青花瓷</span></div>
+            <div class="option-item"><span class="option-letter">B</span><span class="option-text">东风破</span></div>
+            <div class="option-item"><span class="option-letter">C</span><span class="option-text">发如雪</span></div>
+            <div class="option-item"><span class="option-letter">D</span><span class="option-text">兰亭序</span></div>
+          </div>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">🏆 结果页</div>
+        <div class="card" style="text-align:center">
+          <div class="result-score-ring"><span class="score-num">9</span><span class="score-total">/ 10</span></div>
+          <div class="level-badge">👑 终极杰迷</div>
+          <div class="stats-row">
+            <div class="stat-item"><div class="stat-value">95%</div><div class="stat-label">超越</div></div>
+            <div class="stat-item"><div class="stat-value">2'18"</div><div class="stat-label">用时</div></div>
+            <div class="stat-item"><div class="stat-value">3</div><div class="stat-label">连胜</div></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-outline" style="flex:1">再答一次</button>
+            <button class="btn btn-primary" style="flex:1">查看证书</button>
+          </div>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">💿 专辑卡片</div>
+        <div class="album-card">
+          <div class="album-cover album-grad-c"><div class="album-year">2000</div></div>
+          <div class="album-info"><div class="album-name">Jay</div><div class="album-meta">首张专辑 · 10 首</div><div class="album-best">🏆 最高分 9/10</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- STYLE D: iOS Native             -->
+    <!-- ================================ -->
+    <div class="phone-frame">
+      <div class="frame-label">D · iOS 原生</div>
+      <div class="phone-inner style-d">
+        <div class="app-logo">
+          <div class="logo-icon">🎵</div>
+          <div><div class="logo-text">杰迷结业考试</div><div class="logo-sub">Jay Chou Fan Quiz</div></div>
+        </div>
+        <div class="nav-title">答题</div>
+
+        <div class="section-label" style="color:var(--section-label-color)">📝 首页 · 开始答题</div>
+        <div class="card">
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">你的昵称</label>
+            <input class="form-input" placeholder="输入昵称开始挑战..." value="七里香">
+          </div>
+          <div class="mode-grid" style="margin-bottom:14px">
+            <div class="mode-card selected"><div class="mode-icon">🎤</div><div class="mode-name">经典模式</div><div class="mode-desc">10 道随机题</div></div>
+            <div class="mode-card"><div class="mode-icon">💿</div><div class="mode-name">专辑闯关</div><div class="mode-desc">15 张专辑</div></div>
+          </div>
+          <button class="btn btn-primary">开始答题</button>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">🎯 答题页 · 第 3/10 题</div>
+        <div class="card">
+          <div class="question-header">
+            <span class="tag tag-difficulty">● 简单</span><span class="tag tag-category">◇ 歌词</span>
+          </div>
+          <div class="question-progress"><div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div><span class="progress-num">3/10</span></div>
+          <div class="question-text">"天青色等烟雨，而我在等你" 出自哪首歌？</div>
+          <div class="option-list">
+            <div class="option-item selected"><span class="option-letter">A</span><span class="option-text">青花瓷</span></div>
+            <div class="option-item"><span class="option-letter">B</span><span class="option-text">东风破</span></div>
+            <div class="option-item"><span class="option-letter">C</span><span class="option-text">发如雪</span></div>
+            <div class="option-item"><span class="option-letter">D</span><span class="option-text">兰亭序</span></div>
+          </div>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">🏆 结果页</div>
+        <div class="card" style="text-align:center">
+          <div class="result-score-ring"><span class="score-num">9</span><span class="score-total">/ 10</span></div>
+          <div class="level-badge">👑 终极杰迷</div>
+          <div class="stats-row">
+            <div class="stat-item"><div class="stat-value">95%</div><div class="stat-label">超越</div></div>
+            <div class="stat-item"><div class="stat-value">2'18"</div><div class="stat-label">用时</div></div>
+            <div class="stat-item"><div class="stat-value">3</div><div class="stat-label">连胜</div></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-outline" style="flex:1">再答一次</button>
+            <button class="btn btn-primary" style="flex:1">查看证书</button>
+          </div>
+        </div>
+
+        <!-- iOS 特色：排行榜用 TableView 风格 -->
+        <div class="section-label" style="color:var(--section-label-color)">📊 排行榜（iOS 列表风格）</div>
+        <div class="card">
+          <div class="table-row">
+            <span class="row-label">🥇 晴天</span>
+            <span class="row-value">9/10 <span class="chevron-right"></span></span>
+          </div>
+          <div class="table-row">
+            <span class="row-label">🥈 夜曲</span>
+            <span class="row-value">8/10 <span class="chevron-right"></span></span>
+          </div>
+          <div class="table-row">
+            <span class="row-label">🥉 七里香</span>
+            <span class="row-value">8/10 <span class="chevron-right"></span></span>
+          </div>
+          <div class="table-row">
+            <span class="row-label">4 稻香</span>
+            <span class="row-value">7/10 <span class="chevron-right"></span></span>
+          </div>
+        </div>
+
+        <div class="section-label" style="color:var(--section-label-color)">💿 专辑卡片</div>
+        <div class="album-card">
+          <div class="album-cover album-grad-d"><div class="album-year">2000</div></div>
+          <div class="album-info"><div class="album-name">Jay</div><div class="album-meta">首张专辑 · 10 首</div><div class="album-best">🏆 最高分 9/10</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

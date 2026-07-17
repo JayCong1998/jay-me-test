@@ -9,6 +9,17 @@ export interface Question {
   options: string[]
 }
 
+export interface AlbumResult {
+  albumKey: string
+  albumDisplayName: string
+  passed: boolean
+  albumBestScore: number
+  isNewRecord: boolean
+  unlockedNext: boolean
+  nextAlbumKey?: string
+  nextAlbumDisplayName?: string
+}
+
 export interface GameResult {
   score: number
   correctCount: number
@@ -20,9 +31,11 @@ export interface GameResult {
   levelDescription: string
   beatPercentage: number
   totalPlayers: number
+  albumResult?: AlbumResult
 }
 
 export type GamePhase = 'idle' | 'playing' | 'finished'
+export type GameMode = 'CLASSIC' | 'ALBUM' | 'ABYSS'
 
 export const useGameStore = defineStore('game', () => {
   // --- State ---
@@ -36,6 +49,12 @@ export const useGameStore = defineStore('game', () => {
   const endTime = ref<number | null>(null)
   const phase = ref<GamePhase>('idle')
   const lastGameResult = ref<GameResult | null>(null)
+  const mode = ref<GameMode>('CLASSIC')
+  const albumKey = ref<string | null>(null)
+
+  // 深渊模式专用
+  const abyssStreak = ref(0)
+  const prefetching = ref(false)
 
   // --- Getters ---
   const totalQuestions = computed(() => questions.value.length)
@@ -58,7 +77,7 @@ export const useGameStore = defineStore('game', () => {
   })
 
   // --- Actions ---
-  function startGame(rid: string, qs: Question[]) {
+  function startGame(rid: string, qs: Question[], albumKeyParam?: string, gameMode?: GameMode) {
     roundId.value = rid
     questions.value = qs
     currentIndex.value = 0
@@ -68,6 +87,16 @@ export const useGameStore = defineStore('game', () => {
     startTime.value = Date.now()
     endTime.value = null
     phase.value = 'playing'
+    abyssStreak.value = 0
+    prefetching.value = false
+    if (gameMode) {
+      mode.value = gameMode
+    } else if (albumKeyParam) {
+      mode.value = 'ALBUM'
+    } else {
+      mode.value = 'CLASSIC'
+    }
+    albumKey.value = albumKeyParam || null
   }
 
   function submitAnswer(questionIndex: number, option: string, isCorrect: boolean) {
@@ -97,6 +126,14 @@ export const useGameStore = defineStore('game', () => {
     phase.value = 'finished'
   }
 
+  function appendQuestions(qs: Question[]) {
+    questions.value.push(...qs)
+  }
+
+  function setAbyssStreak(streak: number) {
+    abyssStreak.value = streak
+  }
+
   function resetGame() {
     roundId.value = null
     questions.value = []
@@ -108,6 +145,10 @@ export const useGameStore = defineStore('game', () => {
     endTime.value = null
     phase.value = 'idle'
     lastGameResult.value = null
+    mode.value = 'CLASSIC'
+    albumKey.value = null
+    abyssStreak.value = 0
+    prefetching.value = false
   }
 
   function setLastGameResult(result: GameResult) {
@@ -117,11 +158,13 @@ export const useGameStore = defineStore('game', () => {
   return {
     // state
     roundId, questions, currentIndex, answers, results,
-    revivalRemaining, startTime, endTime, phase,
+    revivalRemaining, startTime, endTime, phase, mode, albumKey,
+    abyssStreak, prefetching,
     // getters + data
     totalQuestions, currentQuestion, progress, correctCount,
     isLastQuestion, elapsedSeconds, lastGameResult,
     // actions
     startGame, submitAnswer, useRevival, nextQuestion, finishGame, resetGame, setLastGameResult,
+    appendQuestions, setAbyssStreak,
   }
 })

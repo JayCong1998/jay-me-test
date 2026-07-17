@@ -1,10 +1,17 @@
-import { LEVELS, type LevelConfig } from './constants'
+import { LEVELS, ABYSS_LEVELS, type LevelConfig, type AbyssLevelConfig } from './constants'
 
 /**
  * 根据答对题数获取等级配置
  */
 export function getLevelByScore(score: number): LevelConfig {
   return LEVELS.find(l => score >= l.minScore && score <= l.maxScore) || LEVELS[0]
+}
+
+/**
+ * 根据深渊 streak 获取等级配置
+ */
+export function getAbyssLevelByStreak(streak: number): AbyssLevelConfig {
+  return ABYSS_LEVELS.find(l => streak >= l.minStreak && streak <= l.maxStreak) || ABYSS_LEVELS[0]
 }
 
 /**

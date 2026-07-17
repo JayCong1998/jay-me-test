@@ -68,39 +68,55 @@
         </div>
       </section>
 
-      <!-- ===== CTA 按钮 ===== -->
-      <section class="action-section">
-        <button
-          class="cta-button"
-          :disabled="loading"
-          @click="handleStart"
-        >
-          <span v-if="!loading" class="cta-content">
-            <svg class="cta-play-icon" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5.14v14l11-7-11-7z" />
-            </svg>
-            {{ authStore.isLoggedIn ? '开始考试' : '游客模式' }}
-          </span>
-          <span v-else class="cta-content">
-            <svg class="cta-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
-              <path d="M12 2a10 10 0 019.95 9" stroke-linecap="round" />
-            </svg>
-            加载题目中...
-          </span>
-        </button>
-        <p class="cta-hint">约 2 分钟 · 10 道单选题 · 免登录</p>
+      <!-- ===== 模式选择 ===== -->
+      <section class="mode-section">
+        <div class="mode-cards">
+          <!-- 经典模式 -->
+          <button class="mode-card glass-card" :disabled="loading" @click="handleStart">
+            <div class="mode-icon mode-icon--classic">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 6h16v2H4zm0 5h12v2H4zm0 5h8v2H4z"/>
+              </svg>
+            </div>
+            <h3 class="mode-title">经典模式</h3>
+            <p class="mode-desc">
+              <template v-if="loading">
+                <span class="loading-dot"></span> 加载中...
+              </template>
+              <template v-else>
+                随机 10 题 · 游客可玩
+              </template>
+            </p>
+          </button>
 
-        <!-- 登录用户额外入口 -->
-        <div v-if="authStore.isLoggedIn" class="auth-links">
-          <button class="btn-secondary" @click="router.push('/leaderboard')">
-            🏆 排行榜
+          <!-- 专辑闯关 -->
+          <button class="mode-card glass-card mode-card--album" @click="handleAlbumMode">
+            <div class="mode-icon mode-icon--album">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="10" opacity="0.15"/>
+                <circle cx="12" cy="12" r="5"/>
+                <circle cx="12" cy="4" r="1.5"/>
+              </svg>
+            </div>
+            <h3 class="mode-title">专辑闯关</h3>
+            <p class="mode-desc">
+              15 张专辑 · 8/10 解锁下一关<template v-if="authStore.isGuest"> · 需登录</template>
+            </p>
+          </button>
+
+          <!-- 无尽深渊 -->
+          <button class="mode-card glass-card mode-card--abyss" :disabled="loading" @click="handleAbyssStart">
+            <div class="mode-icon mode-icon--abyss">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 22h20L12 2zm0 4l7 14H5l7-14z"/>
+              </svg>
+            </div>
+            <h3 class="mode-title">无尽深渊</h3>
+            <p class="mode-desc">
+              一错即坠 · 无限挑战<template v-if="authStore.isGuest"> · 需登录</template>
+            </p>
           </button>
         </div>
-        <!-- 游客登录引导 -->
-        <p v-else class="login-hint">
-          已有账号？<router-link to="/login" class="login-link">登录上榜 →</router-link>
-        </p>
       </section>
 
       <!-- ===== 全局统计 ===== -->
@@ -119,6 +135,11 @@
             <span class="stat-label">平均分</span>
           </div>
         </div>
+      </section>
+
+      <!-- ===== 主题切换 ===== -->
+      <section class="theme-section">
+        <ThemeSwitcher />
       </section>
 
       <!-- ===== 考试记录 ===== -->
@@ -167,12 +188,13 @@ import { fetchOverview, fetchMyRecords } from '@/api/statsApi'
 import { showFailToast } from 'vant'
 import { getLevelByScore } from '@/utils/levels'
 import { LEVELS } from '@/utils/constants'
+import ThemeSwitcher from '@/components/common/ThemeSwitcher.vue'
 import type { StatsOverview } from '@/api/statsApi'
 
 const router = useRouter()
 const userStore = useUserStore()
 const authStore = useAuthStore()
-const { startNewRound } = useQuiz()
+const { startNewRound, startAbyssRound } = useQuiz()
 
 // --- 状态 ---
 const loading = ref(false)
@@ -228,7 +250,32 @@ function formatNumber(n: number): string {
 
 function getLevelColor(score: number): string {
   const level = LEVELS.find(l => score >= l.minScore && score <= l.maxScore)
-  return level?.color || '#909399'
+  return level?.color || 'var(--app-text-muted)'
+}
+
+function handleAlbumMode() {
+  if (authStore.isGuest) {
+    router.push('/login?redirect=' + encodeURIComponent('/albums'))
+    return
+  }
+  router.push('/albums')
+}
+
+async function handleAbyssStart() {
+  if (authStore.isGuest) {
+    router.push('/login?redirect=' + encodeURIComponent('/quiz') + '&mode=abyss')
+    return
+  }
+
+  loading.value = true
+  try {
+    await startAbyssRound()
+    router.push('/quiz')
+  } catch (e: any) {
+    showFailToast(e.message || '加载题目失败，请重试')
+  } finally {
+    loading.value = false
+  }
 }
 
 function handleLogout() {
@@ -258,7 +305,7 @@ function formatDuration(secs: number): string {
     height: 280px;
     top: -80px;
     right: -60px;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.12) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--app-accent-rgb), 0.12) 0%, transparent 70%);
   }
 
   &--bottom {
@@ -266,7 +313,7 @@ function formatDuration(secs: number): string {
     height: 240px;
     bottom: 10%;
     left: -80px;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--app-accent-rgb), 0.08) 0%, transparent 70%);
   }
 }
 
@@ -309,7 +356,7 @@ function formatDuration(secs: number): string {
 }
 
 .app-title {
-  font-family: 'Poppins', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: var(--app-font-heading), 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 32px;
   font-weight: 800;
   letter-spacing: 3px;
@@ -338,7 +385,7 @@ function formatDuration(secs: number): string {
 
   &:hover {
     background: var(--app-bg-card-hover);
-    border-color: rgba(201, 168, 76, 0.2);
+    border-color: rgba(var(--app-accent-rgb), 0.2);
   }
 
   &:active {
@@ -363,8 +410,8 @@ function formatDuration(secs: number): string {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: rgba(201, 168, 76, 0.12);
-  border: 1.5px solid rgba(201, 168, 76, 0.25);
+  background: rgba(var(--app-accent-rgb), 0.12);
+  border: 1.5px solid rgba(var(--app-accent-rgb), 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -380,7 +427,7 @@ function formatDuration(secs: number): string {
   .avatar-text {
     font-size: 20px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: var(--app-text-on-accent);
     line-height: 1;
   }
 
@@ -425,7 +472,7 @@ function formatDuration(secs: number): string {
   }
 
   .badge-score {
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--app-font-display), sans-serif;
     font-size: 13px;
   }
 
@@ -440,94 +487,154 @@ function formatDuration(secs: number): string {
 }
 
 /* ========================================
-   CTA 按钮
+   模式选择
    ======================================== */
-.action-section {
-  text-align: center;
+.mode-section {
   margin-bottom: 32px;
   animation: fade-in-up 0.7s ease-out 0.2s both;
 }
 
-.cta-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 300px;
-  height: 56px;
-  border: none;
-  border-radius: 28px;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  cursor: pointer;
-  color: #1a1a2e;
-  background: var(--app-gold-gradient);
-  box-shadow: var(--app-glow-gold);
-  transition: all 0.3s ease;
-  animation: glow-pulse 3s ease-in-out infinite;
-  position: relative;
-  overflow: hidden;
+.mode-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
+  /* 第三个卡片（深渊）独占一行 */
+  .mode-card:nth-child(3):last-child {
+    grid-column: 1 / -1;
   }
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 20px;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  background: var(--app-bg-card);
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  transition: all 0.3s ease;
+  text-align: center;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: var(--app-glow-gold-strong);
-
-    &::after {
-      left: 100%;
-    }
+    border-color: rgba(var(--app-accent-rgb), 0.25);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
+    transform: scale(0.97);
   }
 
   &:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: not-allowed;
-    animation: none;
+  }
+
+  &--album {
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: 'NEW';
+      position: absolute;
+      top: 8px;
+      right: -24px;
+      padding: 2px 28px;
+      background: var(--app-gold-gradient);
+      color: var(--app-text-on-accent);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      transform: rotate(45deg);
+    }
+  }
+
+  &--abyss {
+    position: relative;
+    overflow: hidden;
+    border-color: rgba(124, 58, 237, 0.2);
+
+    &::before {
+      content: 'NEW';
+      position: absolute;
+      top: 8px;
+      right: -24px;
+      padding: 2px 28px;
+      background: linear-gradient(135deg, #7c3aed, #dc2626);
+      color: var(--app-text-on-accent);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      transform: rotate(45deg);
+      z-index: 1;
+    }
+
+    &:hover:not(:disabled) {
+      border-color: rgba(124, 58, 237, 0.4);
+      box-shadow: 0 6px 24px rgba(124, 58, 237, 0.15);
+    }
   }
 }
 
-.cta-content {
-  display: inline-flex;
+.mode-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  position: relative;
-  z-index: 1;
-}
+  justify-content: center;
+  margin-bottom: 12px;
 
-.cta-play-icon {
-  width: 22px;
-  height: 22px;
-}
+  svg {
+    width: 24px;
+    height: 24px;
+  }
 
-.cta-spinner {
-  width: 22px;
-  height: 22px;
-  animation: spin 0.8s linear infinite;
+  &--classic {
+    background: rgba(64, 158, 255, 0.12);
+    color: var(--app-info);
+  }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  &--album {
+    background: rgba(var(--app-accent-rgb), 0.12);
+    color: var(--app-gold);
+  }
+
+  &--abyss {
+    background: rgba(124, 58, 237, 0.12);
+    color: var(--app-info);
   }
 }
 
-.cta-hint {
-  margin-top: 12px;
+.mode-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--app-text-primary);
+  margin-bottom: 6px;
+}
+
+.mode-desc {
   font-size: 12px;
   color: var(--app-text-muted);
-  letter-spacing: 0.5px;
+  line-height: 1.5;
+}
+
+.loading-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--app-gold);
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
 }
 
 /* ========================================
@@ -553,7 +660,7 @@ function formatDuration(secs: number): string {
 }
 
 .stat-number {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--app-font-display), sans-serif;
   font-size: 24px;
   font-weight: 700;
   color: var(--app-text-primary);
@@ -571,6 +678,10 @@ function formatDuration(secs: number): string {
 /* ========================================
    考试记录
    ======================================== */
+.theme-section {
+  margin-bottom: 20px;
+}
+
 .history-section {
   margin-bottom: 20px;
   animation: fade-in-up 0.7s ease-out 0.4s both;
@@ -591,7 +702,7 @@ function formatDuration(secs: number): string {
 }
 
 .section-count {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--app-font-display), sans-serif;
   font-size: 12px;
   color: var(--app-text-muted);
 }
@@ -640,7 +751,7 @@ function formatDuration(secs: number): string {
 }
 
 .history-score {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--app-font-display), sans-serif;
   font-size: 20px;
   font-weight: 700;
   color: var(--app-gold);
@@ -663,9 +774,9 @@ function formatDuration(secs: number): string {
   padding: 4px 12px;
   font-size: 12px;
   font-weight: 500;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(var(--app-surface-rgb),0.1);
   border-radius: 8px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(var(--app-surface-rgb),0.04);
   color: var(--app-text-muted);
   cursor: pointer;
   font-family: inherit;
@@ -673,7 +784,7 @@ function formatDuration(secs: number): string {
   margin-right: 8px;
 
   &:hover {
-    color: #f56c6c;
+    color: var(--app-error);
     border-color: rgba(245,108,108,0.3);
   }
 }
@@ -687,9 +798,9 @@ function formatDuration(secs: number): string {
 
 .btn-secondary {
   padding: 10px 28px;
-  border: 1px solid rgba(201,168,76,0.3);
+  border: 1px solid rgba(var(--app-accent-rgb),0.3);
   border-radius: 12px;
-  background: rgba(201,168,76,0.06);
+  background: rgba(var(--app-accent-rgb),0.06);
   color: var(--app-gold);
   font-size: 14px;
   font-weight: 600;
@@ -698,7 +809,7 @@ function formatDuration(secs: number): string {
   transition: all 0.2s;
 
   &:hover {
-    background: rgba(201,168,76,0.12);
+    background: rgba(var(--app-accent-rgb),0.12);
     border-color: var(--app-gold);
   }
 }
