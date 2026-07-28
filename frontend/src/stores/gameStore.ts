@@ -1,5 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import type { GameMode, GameResult } from '@/api/statsApi'
+
+export type { GameMode, GameResult } from '@/api/statsApi'
 
 export interface Question {
   id: number
@@ -9,33 +12,7 @@ export interface Question {
   options: string[]
 }
 
-export interface AlbumResult {
-  albumKey: string
-  albumDisplayName: string
-  passed: boolean
-  albumBestScore: number
-  isNewRecord: boolean
-  unlockedNext: boolean
-  nextAlbumKey?: string
-  nextAlbumDisplayName?: string
-}
-
-export interface GameResult {
-  score: number
-  correctCount: number
-  totalQuestions: number
-  accuracy: number
-  timeSpentSecs: number
-  level: string
-  levelTitle: string
-  levelDescription: string
-  beatPercentage: number
-  totalPlayers: number
-  albumResult?: AlbumResult
-}
-
 export type GamePhase = 'idle' | 'playing' | 'finished'
-export type GameMode = 'CLASSIC' | 'ALBUM' | 'ABYSS'
 
 export const useGameStore = defineStore('game', () => {
   // --- State ---

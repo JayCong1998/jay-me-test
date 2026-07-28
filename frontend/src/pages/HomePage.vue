@@ -1,195 +1,120 @@
 <template>
-  <div class="home-page page-bg">
-    <!-- 背景装饰光斑 -->
-    <div class="bg-orb bg-orb--top"></div>
-    <div class="bg-orb bg-orb--bottom"></div>
+  <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+    <div class="home-page page-bg">
+      <!-- 背景装饰光斑 -->
+      <div class="bg-orb bg-orb--top"></div>
+      <div class="bg-orb bg-orb--bottom"></div>
 
-    <div class="home-content">
-      <!-- ===== Hero 区域 ===== -->
-      <section class="hero-section">
-        <div class="logo-wrapper">
-          <svg class="logo-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#c9a84c" />
-                <stop offset="50%" stop-color="#e0cc8e" />
-                <stop offset="100%" stop-color="#b8973b" />
-              </linearGradient>
-            </defs>
-            <circle cx="40" cy="40" r="38" stroke="url(#gold-grad)" stroke-width="1.5" fill="none" opacity="0.3" />
-            <circle cx="40" cy="40" r="30" stroke="url(#gold-grad)" stroke-width="1" fill="none" opacity="0.15" />
-            <!-- 音符 -->
-            <g transform="translate(26, 20)" fill="url(#gold-grad)">
-              <ellipse cx="10" cy="32" rx="8" ry="6" />
-              <rect x="17" y="4" width="3" height="28" rx="1.5" />
-              <path d="M20 4 Q28 8 24 18 Q22 22 20 24" fill="url(#gold-grad)" />
-            </g>
-          </svg>
-        </div>
-        <h1 class="app-title text-gold">杰迷结业考试</h1>
-        <p class="app-subtitle">测试你的杰伦知识储备，解锁专属杰迷等级</p>
-      </section>
-
-      <!-- ===== 用户身份卡片 ===== -->
-      <!-- 登录用户 -->
-      <section v-if="authStore.isLoggedIn" class="user-card glass-card">
-        <div class="user-avatar has-name">
-          <span class="avatar-text">{{ authStore.user!.nickname.charAt(0) }}</span>
-        </div>
-        <div class="user-info">
-          <span class="user-name">Hi, {{ authStore.user!.nickname }}</span>
-          <span class="user-hint">已登录 · 可参与排行榜</span>
-        </div>
-        <button class="btn-logout" @click="handleLogout">退出</button>
-        <!-- 历史最佳标签 -->
-        <van-tag
-          v-if="userStore.bestScore > 0"
-          class="best-badge"
-          type="primary"
-          round
-        >
-          <span class="badge-label">最佳</span>
-          <span class="badge-score">{{ userStore.bestScore }}/10</span>
-          <span class="badge-divider">·</span>
-          <span class="badge-level">{{ getLevelByScore(userStore.bestScore).title }}</span>
-        </van-tag>
-      </section>
-      <!-- 游客 -->
-      <section v-else class="user-card glass-card guest-card">
-        <div class="user-avatar">
-          <svg viewBox="0 0 24 24" class="avatar-icon" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-              d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-          </svg>
-        </div>
-        <div class="user-info">
-          <span class="user-name">游客模式</span>
-          <span class="user-hint">登录后可编辑昵称，参与排行榜</span>
-        </div>
-      </section>
-
-      <!-- ===== 模式选择 ===== -->
-      <section class="mode-section">
-        <div class="mode-cards">
-          <!-- 经典模式 -->
-          <button class="mode-card glass-card" :disabled="loading" @click="handleStart">
-            <div class="mode-icon mode-icon--classic">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M4 6h16v2H4zm0 5h12v2H4zm0 5h8v2H4z"/>
-              </svg>
-            </div>
-            <h3 class="mode-title">经典模式</h3>
-            <p class="mode-desc">
-              <template v-if="loading">
-                <span class="loading-dot"></span> 加载中...
-              </template>
-              <template v-else>
-                随机 10 题 · 游客可玩
-              </template>
-            </p>
-          </button>
-
-          <!-- 专辑闯关 -->
-          <button class="mode-card glass-card mode-card--album" @click="handleAlbumMode">
-            <div class="mode-icon mode-icon--album">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="12" r="10" opacity="0.15"/>
-                <circle cx="12" cy="12" r="5"/>
-                <circle cx="12" cy="4" r="1.5"/>
-              </svg>
-            </div>
-            <h3 class="mode-title">专辑闯关</h3>
-            <p class="mode-desc">
-              15 张专辑 · 8/10 解锁下一关<template v-if="authStore.isGuest"> · 需登录</template>
-            </p>
-          </button>
-
-          <!-- 无尽深渊 -->
-          <button class="mode-card glass-card mode-card--abyss" :disabled="loading" @click="handleAbyssStart">
-            <div class="mode-icon mode-icon--abyss">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L2 22h20L12 2zm0 4l7 14H5l7-14z"/>
-              </svg>
-            </div>
-            <h3 class="mode-title">无尽深渊</h3>
-            <p class="mode-desc">
-              一错即坠 · 无限挑战<template v-if="authStore.isGuest"> · 需登录</template>
-            </p>
-          </button>
-        </div>
-      </section>
-
-      <!-- ===== 全局统计 ===== -->
-      <section class="stats-section" v-if="overview">
-        <div class="stats-grid">
-          <div class="stat-card glass-card">
-            <span class="stat-number">{{ formatNumber(overview.totalGames) }}</span>
-            <span class="stat-label">累计考试</span>
+      <div class="home-content">
+        <!-- ===== Hero 区域 ===== -->
+        <section class="hero-section">
+          <div class="logo-wrapper">
+            <svg class="logo-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#c9a84c" />
+                  <stop offset="50%" stop-color="#e0cc8e" />
+                  <stop offset="100%" stop-color="#b8973b" />
+                </linearGradient>
+              </defs>
+              <circle cx="40" cy="40" r="38" stroke="url(#gold-grad)" stroke-width="1.5" fill="none" opacity="0.3" />
+              <circle cx="40" cy="40" r="30" stroke="url(#gold-grad)" stroke-width="1" fill="none" opacity="0.15" />
+              <g transform="translate(26, 20)" fill="url(#gold-grad)">
+                <ellipse cx="10" cy="32" rx="8" ry="6" />
+                <rect x="17" y="4" width="3" height="28" rx="1.5" />
+                <path d="M20 4 Q28 8 24 18 Q22 22 20 24" fill="url(#gold-grad)" />
+              </g>
+            </svg>
           </div>
-          <div class="stat-card glass-card">
-            <span class="stat-number">{{ formatNumber(overview.totalPlayers) }}</span>
-            <span class="stat-label">考生人数</span>
-          </div>
-          <div class="stat-card glass-card">
-            <span class="stat-number stat-number--accent">{{ overview.averageScore }}</span>
-            <span class="stat-label">平均分</span>
-          </div>
-        </div>
-      </section>
+          <h1 class="app-title text-gold">杰迷结业考试</h1>
+          <p class="app-subtitle">测试你的杰伦知识储备，解锁专属杰迷等级</p>
+        </section>
 
-      <!-- ===== 主题切换 ===== -->
-      <section class="theme-section">
-        <ThemeSwitcher />
-      </section>
+        <!-- ===== 模式选择 ===== -->
+        <section class="mode-section">
+          <div class="mode-cards">
+            <!-- 经典模式 -->
+            <button class="mode-card glass-card" :disabled="loading" @click="handleStart">
+              <div class="mode-icon mode-icon--classic">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M4 6h16v2H4zm0 5h12v2H4zm0 5h8v2H4z"/>
+                </svg>
+              </div>
+              <h3 class="mode-title">经典模式</h3>
+              <p class="mode-desc">
+                <template v-if="loading">
+                  <span class="loading-dot"></span> 加载中...
+                </template>
+                <template v-else>
+                  随机 10 题 · 游客可玩
+                </template>
+              </p>
+            </button>
 
-      <!-- ===== 考试记录 ===== -->
-      <section class="history-section" v-if="userStore.gameHistory.length > 0">
-        <div class="section-header">
-          <h3 class="section-title">考试记录</h3>
-          <span class="section-count">{{ userStore.gameHistory.length }} 场</span>
-        </div>
-        <div class="history-list glass-card">
-          <div
-            v-for="(record, idx) in userStore.gameHistory.slice(0, 8)"
-            :key="idx"
-            class="history-item"
-          >
-            <div class="history-left">
-              <span class="history-date">{{ record.date }}</span>
-              <span class="history-meta">
-                {{ formatDuration(record.timeSpentSecs) }}
-                <template v-if="record.usedRevival"> · 已复活</template>
-              </span>
+            <!-- 专辑闯关 -->
+            <button class="mode-card glass-card mode-card--album" @click="handleAlbumMode">
+              <div class="mode-icon mode-icon--album">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="12" r="10" opacity="0.15"/>
+                  <circle cx="12" cy="12" r="5"/>
+                  <circle cx="12" cy="4" r="1.5"/>
+                </svg>
+              </div>
+              <h3 class="mode-title">专辑闯关</h3>
+              <p class="mode-desc">
+                15 张专辑 · 8/10 解锁下一关<template v-if="authStore.isGuest"> · 需登录</template>
+              </p>
+            </button>
+
+            <!-- 无尽深渊 -->
+            <button class="mode-card glass-card mode-card--abyss" :disabled="loading" @click="handleAbyssStart">
+              <div class="mode-icon mode-icon--abyss">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L2 22h20L12 2zm0 4l7 14H5l7-14z"/>
+                </svg>
+              </div>
+              <h3 class="mode-title">无尽深渊</h3>
+              <p class="mode-desc">
+                一错即坠 · 无限挑战<template v-if="authStore.isGuest"> · 需登录</template>
+              </p>
+            </button>
+          </div>
+        </section>
+
+        <!-- ===== 全局统计 ===== -->
+        <section class="stats-section" v-if="overview">
+          <div class="stats-grid">
+            <div class="stat-card glass-card">
+              <span class="stat-number">{{ formatNumber(overview.totalGames) }}</span>
+              <span class="stat-label">累计考试</span>
             </div>
-            <div class="history-right">
-              <span class="history-score">{{ record.correctCount }}<small>/10</small></span>
-              <span class="history-level" :style="{ color: getLevelColor(record.correctCount) }">
-                {{ getLevelByScore(record.correctCount).title }}
-              </span>
+            <div class="stat-card glass-card">
+              <span class="stat-number">{{ formatNumber(overview.totalPlayers) }}</span>
+              <span class="stat-label">考生人数</span>
+            </div>
+            <div class="stat-card glass-card">
+              <span class="stat-number stat-number--accent">{{ overview.averageScore }}</span>
+              <span class="stat-label">平均分</span>
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- 底部间距 -->
-      <div class="bottom-spacer"></div>
+        </section>
+      </div>
     </div>
-
-  </div>
+  </van-pull-refresh>
 </template>
 
 <script setup lang="ts">
+defineOptions({ name: 'HomePage' })
+
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useQuiz } from '@/composables/useQuiz'
-import { fetchOverview, fetchMyRecords } from '@/api/statsApi'
+import { fetchOverview } from '@/api/statsApi'
 import { showFailToast } from 'vant'
-import { getLevelByScore } from '@/utils/levels'
-import { LEVELS } from '@/utils/constants'
-import ThemeSwitcher from '@/components/common/ThemeSwitcher.vue'
 import type { StatsOverview } from '@/api/statsApi'
+import { generateGuestNickname } from '@/utils/nickname'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -199,35 +124,35 @@ const { startNewRound, startAbyssRound } = useQuiz()
 // --- 状态 ---
 const loading = ref(false)
 const overview = ref<StatsOverview | null>(null)
+const refreshing = ref(false)
 
 // --- 生命周期 ---
 onMounted(async () => {
-  // 加载全局统计
+  await loadOverview()
+})
+
+async function loadOverview() {
   try {
     overview.value = await fetchOverview()
   } catch {
     // 统计加载失败不阻塞
   }
+}
 
-  // 登录用户从服务端同步考试记录
-  if (authStore.isLoggedIn) {
-    try {
-      const serverRecords = await fetchMyRecords()
-      if (serverRecords.length > 0) {
-        userStore.syncFromServer(serverRecords)
-      }
-    } catch {
-      // 同步失败不阻塞，使用本地记录
-    }
+// --- 下拉刷新 ---
+async function onRefresh() {
+  refreshing.value = true
+  try {
+    await loadOverview()
+  } finally {
+    refreshing.value = false
   }
-})
+}
 
 // --- 方法 ---
 async function handleStart() {
-  // 游客自动生成唯一昵称
   if (!authStore.isLoggedIn) {
-    const ts = Date.now().toString(36).toUpperCase()
-    userStore.setNickname(`游客${ts}`)
+    userStore.setNickname(generateGuestNickname())
   }
 
   loading.value = true
@@ -246,11 +171,6 @@ function formatNumber(n: number): string {
     return (n / 10000).toFixed(1) + '万'
   }
   return n.toLocaleString()
-}
-
-function getLevelColor(score: number): string {
-  const level = LEVELS.find(l => score >= l.minScore && score <= l.maxScore)
-  return level?.color || 'var(--app-text-muted)'
 }
 
 function handleAlbumMode() {
@@ -278,22 +198,10 @@ async function handleAbyssStart() {
   }
 }
 
-function handleLogout() {
-  authStore.logout()
-  userStore.reset()
-}
-
-function formatDuration(secs: number): string {
-  const m = Math.floor(secs / 60)
-  const s = secs % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
 </script>
 
 <style scoped lang="scss">
-/* ========================================
-   背景装饰
-   ======================================== */
+/* ======== 背景装饰 ======== */
 .bg-orb {
   position: fixed;
   border-radius: 50%;
@@ -317,15 +225,12 @@ function formatDuration(secs: number): string {
   }
 }
 
-/* ========================================
-   页面容器
-   ======================================== */
+/* ======== 页面容器 ======== */
 .home-page {
   position: relative;
-  padding: 20px 20px 0;
+  padding: 12px 16px 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .home-content {
@@ -336,170 +241,50 @@ function formatDuration(secs: number): string {
   z-index: 1;
 }
 
-/* ========================================
-   Hero 区域
-   ======================================== */
+/* ======== Hero 区域 ======== */
 .hero-section {
   text-align: center;
-  padding: 48px 0 36px;
+  padding: 20px 0 16px;
   animation: fade-in-up 0.7s ease-out;
 }
 
 .logo-wrapper {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .logo-icon {
-  width: 80px;
-  height: 80px;
+  width: 56px;
+  height: 56px;
   animation: float 3s ease-in-out infinite;
 }
 
 .app-title {
   font-family: var(--app-font-heading), 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 800;
-  letter-spacing: 3px;
-  margin-bottom: 10px;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
   background-size: 200% auto;
   animation: shimmer 4s linear infinite;
 }
 
 .app-subtitle {
-  font-size: 15px;
+  font-size: 13px;
   color: var(--app-text-secondary);
   letter-spacing: 1px;
 }
 
-/* ========================================
-   用户卡片
-   ======================================== */
-.user-card {
-  display: flex;
-  align-items: center;
-  padding: 16px 20px;
-  margin-bottom: 24px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  animation: fade-in-up 0.7s ease-out 0.1s both;
-
-  &:hover {
-    background: var(--app-bg-card-hover);
-    border-color: rgba(var(--app-accent-rgb), 0.2);
-  }
-
-  &:active {
-    transform: scale(0.985);
-  }
-
-  &.guest-card {
-    cursor: default;
-
-    &:hover {
-      background: none;
-      border-color: transparent;
-    }
-
-    &:active {
-      transform: none;
-    }
-  }
-}
-
-.user-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(var(--app-accent-rgb), 0.12);
-  border: 1.5px solid rgba(var(--app-accent-rgb), 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-right: 14px;
-  transition: all 0.3s ease;
-
-  &.has-name {
-    background: var(--app-gold-gradient);
-    border-color: transparent;
-  }
-
-  .avatar-text {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--app-text-on-accent);
-    line-height: 1;
-  }
-
-  .avatar-icon {
-    width: 24px;
-    height: 24px;
-    color: var(--app-text-muted);
-  }
-}
-
-.user-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.user-name {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--app-text-primary);
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.user-hint {
-  font-size: 12px;
-  color: var(--app-text-muted);
-  margin-top: 2px;
-  display: block;
-}
-
-.best-badge {
-  flex-shrink: 0;
-  margin-left: auto;
-  font-weight: 600;
-
-  .badge-label {
-    font-size: 11px;
-    opacity: 0.8;
-    margin-right: 2px;
-  }
-
-  .badge-score {
-    font-family: var(--app-font-display), sans-serif;
-    font-size: 13px;
-  }
-
-  .badge-divider {
-    opacity: 0.4;
-    margin: 0 2px;
-  }
-
-  .badge-level {
-    font-size: 12px;
-  }
-}
-
-/* ========================================
-   模式选择
-   ======================================== */
+/* ======== 模式选择 ======== */
 .mode-section {
-  margin-bottom: 32px;
+  margin-bottom: 20px;
   animation: fade-in-up 0.7s ease-out 0.2s both;
 }
 
 .mode-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 
-  /* 第三个卡片（深渊）独占一行 */
   .mode-card:nth-child(3):last-child {
     grid-column: 1 / -1;
   }
@@ -509,9 +294,9 @@ function formatDuration(secs: number): string {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 16px 20px;
+  padding: 18px 12px 14px;
   border: 1px solid var(--app-border);
-  border-radius: 16px;
+  border-radius: 14px;
   background: var(--app-bg-card);
   cursor: pointer;
   font-family: inherit;
@@ -581,17 +366,17 @@ function formatDuration(secs: number): string {
 }
 
 .mode-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 
   svg {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
   }
 
   &--classic {
@@ -611,16 +396,16 @@ function formatDuration(secs: number): string {
 }
 
 .mode-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--app-text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .mode-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--app-text-muted);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .loading-dot {
@@ -637,31 +422,28 @@ function formatDuration(secs: number): string {
   50% { opacity: 1; }
 }
 
-/* ========================================
-   全局统计
-   ======================================== */
+/* ======== 全局统计 ======== */
 .stats-section {
-  margin-bottom: 28px;
   animation: fade-in-up 0.7s ease-out 0.3s both;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .stat-card {
-  padding: 18px 12px;
+  padding: 14px 10px;
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .stat-number {
   font-family: var(--app-font-display), sans-serif;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--app-text-primary);
 
@@ -671,164 +453,6 @@ function formatDuration(secs: number): string {
 }
 
 .stat-label {
-  font-size: 12px;
-  color: var(--app-text-muted);
-}
-
-/* ========================================
-   考试记录
-   ======================================== */
-.theme-section {
-  margin-bottom: 20px;
-}
-
-.history-section {
-  margin-bottom: 20px;
-  animation: fade-in-up 0.7s ease-out 0.4s both;
-}
-
-.section-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding: 0 4px;
-}
-
-.section-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--app-text-primary);
-}
-
-.section-count {
-  font-family: var(--app-font-display), sans-serif;
-  font-size: 12px;
-  color: var(--app-text-muted);
-}
-
-.history-list {
-  overflow: hidden;
-}
-
-.history-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--app-border);
-  transition: background 0.2s;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &:hover {
-    background: var(--app-bg-card-hover);
-  }
-}
-
-.history-left {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.history-date {
-  font-size: 14px;
-  color: var(--app-text-primary);
-}
-
-.history-meta {
   font-size: 11px;
   color: var(--app-text-muted);
-}
-
-.history-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.history-score {
-  font-family: var(--app-font-display), sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--app-gold);
-
-  small {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--app-text-muted);
-  }
-}
-
-.history-level {
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.btn-logout {
-  flex-shrink: 0;
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid rgba(var(--app-surface-rgb),0.1);
-  border-radius: 8px;
-  background: rgba(var(--app-surface-rgb),0.04);
-  color: var(--app-text-muted);
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.2s;
-  margin-right: 8px;
-
-  &:hover {
-    color: var(--app-error);
-    border-color: rgba(245,108,108,0.3);
-  }
-}
-
-.auth-links {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.btn-secondary {
-  padding: 10px 28px;
-  border: 1px solid rgba(var(--app-accent-rgb),0.3);
-  border-radius: 12px;
-  background: rgba(var(--app-accent-rgb),0.06);
-  color: var(--app-gold);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.2s;
-
-  &:hover {
-    background: rgba(var(--app-accent-rgb),0.12);
-    border-color: var(--app-gold);
-  }
-}
-
-.login-hint {
-  margin-top: 14px;
-  font-size: 13px;
-  color: var(--app-text-muted);
-}
-
-.login-link {
-  color: var(--app-gold);
-  text-decoration: none;
-  font-weight: 600;
-
-  &:hover { text-decoration: underline; }
-}
-
-.bottom-spacer {
-  height: 40px;
-}
-</style>
+}</style>

@@ -325,18 +325,18 @@ async function handleExit() {
 
 /* ======== 页面 ======== */
 .quiz-page {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* ======== 顶部栏 ======== */
 .quiz-header {
-  margin: 12px 12px 0;
-  padding: 12px 16px 10px;
-  position: sticky;
-  top: 12px;
+  margin: 0 8px;
+  padding: 10px 16px 8px;
+  flex-shrink: 0;
   z-index: 20;
 }
 
@@ -544,17 +544,22 @@ async function handleExit() {
 /* ======== 题目区域 ======== */
 .question-area {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 20px 16px 24px;
+  overflow: hidden;
+  padding: 12px 16px 16px;
   position: relative;
   z-index: 1;
 }
 
 .question-inner {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ======== 提交按钮 ======== */
@@ -582,11 +587,11 @@ async function handleExit() {
     color: var(--app-text-on-accent);
     background: var(--app-gold-gradient);
     border-color: transparent;
-    box-shadow: 0 4px 20px rgba(var(--app-accent-rgb), 0.25);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 28px rgba(var(--app-accent-rgb), 0.4);
+      filter: brightness(1.03);
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
     }
 
     &:active {
@@ -704,5 +709,46 @@ async function handleExit() {
 @keyframes abyss-progress-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+
+/* ======== 短屏适配 ======== */
+@media (max-height: 667px) {
+  .quiz-header {
+    padding: 6px 12px 6px;
+    margin: 0 4px;
+  }
+
+  .header-row {
+    margin-bottom: 6px;
+  }
+
+  .question-area {
+    padding: 8px 12px 12px;
+  }
+
+  .meta-tag {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .question-body {
+    margin-bottom: 16px;
+  }
+
+  .question-text {
+    font-size: 17px;
+  }
+}
+
+@media (max-height: 568px) {
+  .question-text {
+    font-size: 15px;
+  }
+
+  .option-item {
+    padding: 10px 14px;
+    min-height: 48px;
+    gap: 8px;
+  }
 }
 </style>

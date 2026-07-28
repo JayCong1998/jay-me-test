@@ -4,6 +4,7 @@ import cn.dev33.satoken.exception.NotLoginException;
 import com.jaymetest.model.dto.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -38,6 +39,13 @@ public class GlobalExceptionHandler {
                 .orElse("参数校验失败");
         log.warn("参数校验失败: {}", msg);
         return R.fail(400, msg);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public R<Void> handleUnreadableMessage(HttpMessageNotReadableException e) {
+        log.warn("请求参数格式错误: {}", e.getMessage());
+        return R.fail(400, "请求参数格式错误");
     }
 
     @ExceptionHandler(Exception.class)

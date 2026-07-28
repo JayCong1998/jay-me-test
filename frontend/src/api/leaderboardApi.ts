@@ -1,12 +1,23 @@
 import client from './client'
 import type { R } from '@/utils/constants'
 
+export type LeaderboardType = 'classic' | 'album' | 'abyss'
+
 export interface LeaderboardEntry {
   rank: number
   nickname: string
-  correctCount: number
+  correctCount?: number
   timeSpentSecs: number
-  levelTitle: string
+  levelTitle?: string
+  createdAt?: string
+  summaryText?: string
+  detailText?: string
+  scoreText?: string
+  completedAlbumCount?: number
+  totalAlbumTimeSecs?: number
+  bestAlbumKey?: string
+  bestAlbumName?: string
+  streak?: number
 }
 
 export interface LeaderboardResult {
@@ -15,15 +26,15 @@ export interface LeaderboardResult {
 }
 
 /**
- * 获取排行榜
+ * 获取排行榜（分页）
  */
 export async function fetchLeaderboard(
-  type: 'total' | 'daily' | 'level' | 'abyss' = 'total',
+  type: LeaderboardType = 'classic',
   limit: number = 50,
-  level?: string
+  page: number = 1,
+  size: number = 20
 ): Promise<LeaderboardResult> {
-  const params: Record<string, any> = { type, limit }
-  if (level) params.level = level
+  const params: Record<string, any> = { type, limit, page, size }
   const res = await client.get<R<LeaderboardResult>>('/leaderboard', { params })
   return res.data.data
 }

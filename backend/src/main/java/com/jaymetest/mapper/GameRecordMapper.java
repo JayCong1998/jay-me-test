@@ -33,6 +33,15 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
     @Select("SELECT COALESCE(AVG(correct_count * 10.0), 0) FROM game_record")
     double selectAverageScore();
 
+    @Select("SELECT COALESCE(AVG(correct_count), 0) FROM game_record")
+    double selectAverageCorrectCount();
+
+    @Select("SELECT COUNT(*) FROM game_record WHERE DATE(created_at) = CURDATE()")
+    long countToday();
+
+    @Select("SELECT mode, COUNT(*) as cnt FROM game_record GROUP BY mode ORDER BY cnt DESC")
+    List<Map<String, Object>> selectModeDistribution();
+
     /**
      * 统计各等级分布
      */
@@ -149,9 +158,250 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
                       @Param("timeSpentSecs") int timeSpentSecs,
                       @Param("abyssMode") String abyssMode);
 
+    @Select("""
+            SELECT ranked.`rank`, ranked.nickname, ranked.correct_count AS correctCount,
+                   ranked.time_spent_secs AS timeSpentSecs, ranked.created_at AS createdAt
+            FROM (
+                SELECT best.*,
+                       ROW_NUMBER() OVER (
+                           ORDER BY best.correct_count DESC, best.time_spent_secs ASC, best.created_at ASC, best.user_id ASC
+                       ) AS `rank`
+                FROM (
+                    SELECT gr.user_id, gr.nickname, gr.correct_count, gr.time_spent_secs, gr.created_at,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY gr.user_id
+                               ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC, gr.created_at ASC, gr.id ASC
+                           ) AS rn
+                    FROM game_record gr
+                    WHERE gr.mode = #{classicMode}
+                      AND gr.user_id IS NOT NULL
+                ) best
+                WHERE best.rn = 1
+            ) ranked
+            ORDER BY ranked.`rank`
+            LIMIT #{limit} OFFSET #{offset}
+            """)
+    List<Map<String, Object>> selectClassicLeaderboardPaged(@Param("limit") int limit,
+                                                            @Param("offset") int offset,
+                                                            @Param("classicMode") String classicMode);
+
+    @Select("""
+            SELECT ranked.`rank`
+            FROM (
+                SELECT best.user_id,
+                       ROW_NUMBER() OVER (
+                           ORDER BY best.correct_count DESC, best.time_spent_secs ASC, best.created_at ASC, best.user_id ASC
+                       ) AS `rank`
+                FROM (
+                    SELECT gr.user_id, gr.correct_count, gr.time_spent_secs, gr.created_at,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY gr.user_id
+                               ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC, gr.created_at ASC, gr.id ASC
+                           ) AS rn
+                    FROM game_record gr
+                    WHERE gr.mode = #{classicMode}
+                      AND gr.user_id IS NOT NULL
+                ) best
+                WHERE best.rn = 1
+            ) ranked
+            WHERE ranked.user_id = #{userId}
+            """)
+    Long selectMyClassicRank(@Param("userId") long userId, @Param("classicMode") String classicMode);
+
+    @Select("""
+            SELECT ranked.`rank`, ranked.nickname,
+                   ranked.completedAlbumCount AS completedAlbumCount,
+                   ranked.totalAlbumTimeSecs AS totalAlbumTimeSecs,
+                   ranked.totalAlbumTimeSecs AS timeSpentSecs,
+                   ranked.bestAlbumKey AS bestAlbumKey,
+                   ranked.created_at AS createdAt
+            FROM (
+                SELECT agg.*,
+                       ROW_NUMBER() OVER (
+                           ORDER BY completed_album_count DESC, total_album_time_secs ASC, created_at ASC, user_id ASC
+                       ) AS `rank`
+                FROM (
+                    SELECT picked.user_id,
+                           SUBSTRING_INDEX(GROUP_CONCAT(picked.nickname ORDER BY picked.created_at DESC, picked.id DESC), ',', 1) AS nickname,
+                           COUNT(*) AS completedAlbumCount,
+                           COUNT(*) AS completed_album_count,
+                           SUM(time_spent_secs) AS totalAlbumTimeSecs,
+                           SUM(time_spent_secs) AS total_album_time_secs,
+                           SUBSTRING_INDEX(GROUP_CONCAT(picked.album_key ORDER BY picked.created_at DESC, picked.id DESC), ',', 1) AS bestAlbumKey,
+                           MAX(picked.created_at) AS created_at
+                    FROM (
+                        SELECT album_best.*
+                        FROM (
+                            SELECT gr.id, gr.user_id, gr.nickname, gr.album_key, gr.correct_count,
+                                   gr.time_spent_secs, gr.created_at,
+                                   ROW_NUMBER() OVER (
+                                       PARTITION BY gr.user_id, gr.album_key
+                                       ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC, gr.created_at ASC, gr.id ASC
+                                   ) AS rn
+                            FROM game_record gr
+                            WHERE gr.mode = #{albumMode}
+                              AND gr.user_id IS NOT NULL
+                              AND gr.album_key IS NOT NULL
+                              AND gr.correct_count >= #{completionScore}
+                        ) album_best
+                        WHERE album_best.rn = 1
+                    ) picked
+                    GROUP BY picked.user_id
+                ) agg
+            ) ranked
+            ORDER BY ranked.`rank`
+            LIMIT #{limit} OFFSET #{offset}
+            """)
+    List<Map<String, Object>> selectAlbumLeaderboardPaged(@Param("limit") int limit,
+                                                          @Param("offset") int offset,
+                                                          @Param("albumMode") String albumMode,
+                                                          @Param("completionScore") int completionScore);
+
+    @Select("""
+            SELECT ranked.`rank`
+            FROM (
+                SELECT agg.user_id,
+                       ROW_NUMBER() OVER (
+                           ORDER BY completed_album_count DESC, total_album_time_secs ASC, created_at ASC, user_id ASC
+                       ) AS `rank`
+                FROM (
+                    SELECT picked.user_id,
+                           COUNT(*) AS completed_album_count,
+                           SUM(time_spent_secs) AS total_album_time_secs,
+                           MAX(picked.created_at) AS created_at
+                    FROM (
+                        SELECT album_best.*
+                        FROM (
+                            SELECT gr.id, gr.user_id, gr.album_key, gr.correct_count,
+                                   gr.time_spent_secs, gr.created_at,
+                                   ROW_NUMBER() OVER (
+                                       PARTITION BY gr.user_id, gr.album_key
+                                       ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC, gr.created_at ASC, gr.id ASC
+                                   ) AS rn
+                            FROM game_record gr
+                            WHERE gr.mode = #{albumMode}
+                              AND gr.user_id IS NOT NULL
+                              AND gr.album_key IS NOT NULL
+                              AND gr.correct_count >= #{completionScore}
+                        ) album_best
+                        WHERE album_best.rn = 1
+                    ) picked
+                    GROUP BY picked.user_id
+                ) agg
+            ) ranked
+            WHERE ranked.user_id = #{userId}
+            """)
+    Long selectMyAlbumRank(@Param("userId") long userId,
+                           @Param("albumMode") String albumMode,
+                           @Param("completionScore") int completionScore);
+
+    @Select("""
+            SELECT ranked.`rank`
+            FROM (
+                SELECT best.user_id,
+                       ROW_NUMBER() OVER (
+                           ORDER BY best.correct_count DESC, best.time_spent_secs ASC, best.created_at ASC, best.user_id ASC
+                       ) AS `rank`
+                FROM (
+                    SELECT gr.user_id, gr.correct_count, gr.time_spent_secs, gr.created_at,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY gr.user_id
+                               ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC, gr.created_at ASC, gr.id ASC
+                           ) AS rn
+                    FROM game_record gr
+                    WHERE gr.mode = #{abyssMode}
+                      AND gr.user_id IS NOT NULL
+                ) best
+                WHERE best.rn = 1
+            ) ranked
+            WHERE ranked.user_id = #{userId}
+            """)
+    Long selectMyAbyssRank(@Param("userId") long userId, @Param("abyssMode") String abyssMode);
+
     /**
-     * 查询指定用户的考试记录
+     * 查询指定用户的考试记录（分页）
      */
-    @Select("SELECT * FROM game_record WHERE user_id = #{userId} ORDER BY created_at DESC LIMIT #{limit}")
-    List<GameRecord> selectByUserId(@Param("userId") long userId, @Param("limit") int limit);
+    @Select("SELECT * FROM game_record WHERE user_id = #{userId} ORDER BY created_at DESC LIMIT #{limit} OFFSET #{offset}")
+    List<GameRecord> selectByUserId(@Param("userId") long userId, @Param("limit") int limit, @Param("offset") int offset);
+
+    /**
+     * 统计指定用户的考试记录总数
+     */
+    @Select("SELECT COUNT(*) FROM game_record WHERE user_id = #{userId}")
+    long countByUserId(@Param("userId") long userId);
+
+    /**
+     * 总分榜（分页）
+     */
+    @Select("SELECT t.`rank`, t.nickname, t.correct_count AS correctCount, " +
+            "t.time_spent_secs AS timeSpentSecs " +
+            "FROM (SELECT gr.nickname, gr.correct_count, gr.time_spent_secs, " +
+            "ROW_NUMBER() OVER (ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC) AS `rank`, " +
+            "ROW_NUMBER() OVER (PARTITION BY CASE WHEN gr.user_id IS NOT NULL THEN gr.user_id ELSE -gr.id END " +
+            "ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC) AS rn " +
+            "FROM game_record gr) t " +
+            "WHERE t.rn = 1 ORDER BY t.`rank` LIMIT #{limit} OFFSET #{offset}")
+    List<Map<String, Object>> selectTotalLeaderboardPaged(@Param("limit") int limit, @Param("offset") int offset);
+
+    /**
+     * 每日榜（分页）
+     */
+    @Select("SELECT t.`rank`, t.nickname, t.correct_count AS correctCount, " +
+            "t.time_spent_secs AS timeSpentSecs " +
+            "FROM (SELECT gr.nickname, gr.correct_count, gr.time_spent_secs, " +
+            "ROW_NUMBER() OVER (ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC) AS `rank`, " +
+            "ROW_NUMBER() OVER (PARTITION BY CASE WHEN gr.user_id IS NOT NULL THEN gr.user_id ELSE -gr.id END " +
+            "ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC) AS rn " +
+            "FROM game_record gr " +
+            "WHERE DATE(gr.created_at) = CURDATE()) t " +
+            "WHERE t.rn = 1 ORDER BY t.`rank` LIMIT #{limit} OFFSET #{offset}")
+    List<Map<String, Object>> selectDailyLeaderboardPaged(@Param("limit") int limit, @Param("offset") int offset);
+
+    /**
+     * 等级分榜（分页）
+     */
+    @Select("SELECT t.`rank`, t.nickname, t.correct_count AS correctCount, " +
+            "t.time_spent_secs AS timeSpentSecs " +
+            "FROM (SELECT gr.nickname, gr.correct_count, gr.time_spent_secs, " +
+            "ROW_NUMBER() OVER (ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC) AS `rank`, " +
+            "ROW_NUMBER() OVER (PARTITION BY CASE WHEN gr.user_id IS NOT NULL THEN gr.user_id ELSE -gr.id END " +
+            "ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC) AS rn " +
+            "FROM game_record gr " +
+            "WHERE gr.correct_count >= #{minScore} AND gr.correct_count <= #{maxScore}) t " +
+            "WHERE t.rn = 1 ORDER BY t.`rank` LIMIT #{limit} OFFSET #{offset}")
+    List<Map<String, Object>> selectLevelLeaderboardPaged(@Param("minScore") int minScore,
+                                                          @Param("maxScore") int maxScore,
+                                                          @Param("limit") int limit,
+                                                          @Param("offset") int offset);
+
+    /**
+     * 深渊排行榜（分页）
+     */
+    @Select("""
+            SELECT ranked.`rank`, ranked.nickname, ranked.correct_count AS correctCount,
+                   ranked.correct_count AS streak,
+                   ranked.time_spent_secs AS timeSpentSecs, ranked.created_at AS createdAt
+            FROM (
+                SELECT best.*,
+                       ROW_NUMBER() OVER (
+                           ORDER BY best.correct_count DESC, best.time_spent_secs ASC, best.created_at ASC, best.user_id ASC
+                       ) AS `rank`
+                FROM (
+                    SELECT gr.user_id, gr.nickname, gr.correct_count, gr.time_spent_secs, gr.created_at,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY gr.user_id
+                               ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC, gr.created_at ASC, gr.id ASC
+                           ) AS rn
+                    FROM game_record gr
+                    WHERE gr.mode = #{abyssMode}
+                      AND gr.user_id IS NOT NULL
+                ) best
+                WHERE best.rn = 1
+            ) ranked
+            ORDER BY ranked.`rank`
+            LIMIT #{limit} OFFSET #{offset}
+            """)
+    List<Map<String, Object>> selectAbyssLeaderboardPaged(@Param("limit") int limit,
+                                                           @Param("offset") int offset,
+                                                           @Param("abyssMode") String abyssMode);
 }

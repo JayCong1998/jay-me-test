@@ -19,6 +19,11 @@ html.theme-chinese {
   --van-toast-background: rgba(15, 23, 42, 0.92);
   --van-toast-text-color: #F8FAFC;
   --van-tag-primary-color: #CA8A04;
+  --van-tabbar-background: var(--app-bg-card);
+  --van-tabbar-height: 50px;
+  --van-tabbar-item-text-color: var(--app-text-muted);
+  --van-tabbar-item-active-color: var(--app-gold);
+  --van-tabbar-item-active-background: transparent;
 
   // 品牌色
   --app-accent: #CA8A04;
@@ -89,6 +94,9 @@ html.theme-chinese {
   // 装饰球（浅色主题下降低透明度）
   --app-surface-rgb: 0, 0, 0;
   --app-orb-opacity: 0.06;
+
+  // 证书卡片（深色底色保证证书质感，所有主题统一）
+  --app-bg-cert-card: linear-gradient(180deg, #0a0a18 0%, #111128 40%, #0f1a2e 70%, #0a0a18 100%);
 }
 
 // ========================================
@@ -101,6 +109,11 @@ html.theme-playful {
   --van-toast-background: rgba(131, 24, 67, 0.92);
   --van-toast-text-color: #FDF2F8;
   --van-tag-primary-color: #EC4899;
+  --van-tabbar-background: var(--app-bg-card);
+  --van-tabbar-height: 50px;
+  --van-tabbar-item-text-color: var(--app-text-muted);
+  --van-tabbar-item-active-color: var(--app-gold);
+  --van-tabbar-item-active-background: transparent;
 
   --app-accent: #EC4899;
   --app-accent-rgb: 236, 72, 153;
@@ -160,6 +173,8 @@ html.theme-playful {
 
   --app-surface-rgb: 0, 0, 0;
   --app-orb-opacity: 0.08;
+
+  --app-bg-cert-card: linear-gradient(180deg, #0a0a18 0%, #111128 40%, #0f1a2e 70%, #0a0a18 100%);
 }
 
 // ========================================
@@ -172,6 +187,11 @@ html.theme-cyberpunk {
   --van-toast-background: rgba(15, 15, 35, 0.95);
   --van-toast-text-color: #F8FAFC;
   --van-tag-primary-color: #22D3EE;
+  --van-tabbar-background: var(--app-bg-card);
+  --van-tabbar-height: 50px;
+  --van-tabbar-item-text-color: var(--app-text-muted);
+  --van-tabbar-item-active-color: var(--app-gold);
+  --van-tabbar-item-active-background: transparent;
 
   --app-accent: #22D3EE;
   --app-accent-rgb: 34, 211, 238;
@@ -231,6 +251,8 @@ html.theme-cyberpunk {
 
   --app-surface-rgb: 255, 255, 255;
   --app-orb-opacity: 0.08;
+
+  --app-bg-cert-card: linear-gradient(180deg, #0a0a18 0%, #111128 40%, #0f1a2e 70%, #0a0a18 100%);
 }
 
 // ========================================
@@ -243,6 +265,11 @@ html.theme-ios {
   --van-toast-background: rgba(28, 28, 30, 0.92);
   --van-toast-text-color: #FFFFFF;
   --van-tag-primary-color: #007AFF;
+  --van-tabbar-background: var(--app-bg-card);
+  --van-tabbar-height: 50px;
+  --van-tabbar-item-text-color: var(--app-text-muted);
+  --van-tabbar-item-active-color: var(--app-gold);
+  --van-tabbar-item-active-background: transparent;
 
   --app-accent: #007AFF;
   --app-accent-rgb: 0, 122, 255;
@@ -302,6 +329,8 @@ html.theme-ios {
 
   --app-surface-rgb: 0, 0, 0;
   --app-orb-opacity: 0;
+
+  --app-bg-cert-card: linear-gradient(180deg, #0a0a18 0%, #111128 40%, #0f1a2e 70%, #0a0a18 100%);
 }
 
 // ========================================
@@ -315,6 +344,7 @@ html.theme-ios {
 
 html, body {
   height: 100%;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--app-bg-color);
@@ -322,11 +352,9 @@ html, body {
   font-family: var(--app-font-family);
 }
 
-body {
-  font-size: 15px;
-  line-height: 1.6;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+#app {
+  height: 100%;
+  overflow: hidden;
 }
 
 // 移动端触摸优化（ui-ux-pro-max: 触控目标 ≥44x44px, 间距 ≥8px）
@@ -424,7 +452,43 @@ button, a, .clickable {
 // ========================================
 .page-bg {
   background: var(--app-bg-gradient);
-  min-height: 100vh;
+  min-height: 100%;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.view-area > .page-bg,
+.view-area > .van-pull-refresh {
+  flex: 1;
+  min-height: 0;
+}
+
+.view-area > .van-pull-refresh {
+  display: flex;
+  overflow: hidden;
+  background: var(--app-bg-gradient);
+}
+
+.view-area > .van-pull-refresh > .van-pull-refresh__track {
+  flex: 1;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-bg-gradient);
+}
+
+.view-area > .van-pull-refresh > .van-pull-refresh__track > .page-bg {
+  min-height: 100%;
+}
+
+.app-container > .van-tabbar {
+  position: relative !important;
+  flex-shrink: 0;
+  background: var(--app-bg-card) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--app-border);
 }
 
 // ========================================
@@ -483,8 +547,66 @@ button, a, .clickable {
 }
 
 // ========================================
-// 无障碍：偏好减少动画
+// 无障碍：键盘焦点指示 & 系统暗色模式
 // ========================================
+
+// 键盘导航焦点环
+:focus-visible {
+  outline: 2px solid var(--app-gold);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// 系统暗色模式偏好（未手动设置主题时自动匹配）
+@media (prefers-color-scheme: dark) {
+  html:not(.theme-chinese):not(.theme-playful):not(.theme-cyberpunk):not(.theme-ios) {
+    --van-primary-color: #22D3EE;
+    --van-dialog-background: #141428;
+    --van-dialog-text-color: #F8FAFC;
+    --van-toast-background: rgba(15, 15, 35, 0.95);
+    --van-toast-text-color: #F8FAFC;
+    --van-tag-primary-color: #22D3EE;
+    --van-tabbar-background: rgba(255, 255, 255, 0.04);
+    --van-tabbar-item-text-color: #64748b;
+    --van-tabbar-item-active-color: #22D3EE;
+
+    --app-accent: #22D3EE;
+    --app-accent-rgb: 34, 211, 238;
+    --app-gold: #22D3EE;
+    --app-gold-light: #67E8F9;
+    --app-gold-dark: #06B6D4;
+
+    --app-bg-color: #0F0F23;
+    --app-bg-deep: #0A0A18;
+    --app-bg-card: rgba(255, 255, 255, 0.04);
+    --app-bg-card-hover: rgba(255, 255, 255, 0.07);
+    --app-bg-input: rgba(255, 255, 255, 0.05);
+    --app-bg-input-focus: rgba(255, 255, 255, 0.08);
+
+    --app-border: rgba(255, 255, 255, 0.08);
+    --app-border-accent: rgba(34, 211, 238, 0.4);
+    --app-border-light: rgba(255, 255, 255, 0.04);
+
+    --app-text-primary: #F8FAFC;
+    --app-text-secondary: #94a3b8;
+    --app-text-muted: #64748b;
+    --app-text-on-accent: #0F0F23;
+
+    --app-bg-gradient: linear-gradient(180deg, #0A0A18 0%, #0F0F23 40%, #0F1A2E 70%, #0A0A18 100%);
+    --app-accent-gradient: linear-gradient(135deg, #0891B2 0%, #22D3EE 50%, #06B6D4 100%);
+    --app-gold-gradient: linear-gradient(135deg, #0891B2 0%, #22D3EE 50%, #06B6D4 100%);
+    --app-gold-gradient-horizontal: linear-gradient(90deg, #0891B2 0%, #22D3EE 50%, #0891B2 100%);
+
+    --app-surface-rgb: 255, 255, 255;
+    --app-orb-opacity: 0.08;
+    --app-bg-cert-card: linear-gradient(180deg, #0a0a18 0%, #111128 40%, #0f1a2e 70%, #0a0a18 100%);
+  }
+}
+
+// 偏好减少动画
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

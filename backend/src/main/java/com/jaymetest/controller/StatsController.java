@@ -36,10 +36,12 @@ public class StatsController {
         return R.ok(overview);
     }
 
-    @Operation(summary = "获取当前用户的考试记录")
+    @Operation(summary = "获取当前用户的考试记录（分页）")
     @GetMapping("/my-records")
     @SaCheckLogin
-    public R<List<GameRecordDTO>> getMyRecords() {
-        return R.ok(statsService.getMyRecords());
+    public R<List<GameRecordDTO>> getMyRecords(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return R.ok(statsService.getMyRecords(page, size));
     }
 }

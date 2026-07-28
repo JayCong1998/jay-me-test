@@ -96,7 +96,7 @@ defineEmits<{
 /* ======== 容器 ======== */
 .feedback-bar {
   margin-top: auto;
-  padding: 28px 20px;
+  padding: 16px 16px;
   border-radius: 20px;
   animation: feedback-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -115,12 +115,12 @@ defineEmits<{
 .feedback-icon-wrap {
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .feedback-icon-circle {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -139,21 +139,21 @@ defineEmits<{
 }
 
 .feedback-svg {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
 }
 
 /* ======== 文字 ======== */
 .feedback-info {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 }
 
 .feedback-result {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--app-text-primary);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .feedback-answer-block {
@@ -202,7 +202,7 @@ defineEmits<{
 .feedback-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .btn-revive {
@@ -243,7 +243,7 @@ defineEmits<{
   justify-content: center;
   gap: 8px;
   width: 100%;
-  height: 48px;
+  height: 44px;
   border: none;
   border-radius: 12px;
   background: var(--app-gold-gradient);

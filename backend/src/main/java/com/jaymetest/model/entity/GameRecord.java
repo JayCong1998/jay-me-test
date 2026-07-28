@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 游戏记录实体
@@ -45,5 +46,5 @@ public class GameRecord implements Serializable {
     private Integer usedRevival;
 
     /** 创建时间 */
-    private String createdAt;
+    private LocalDateTime createdAt;
 }

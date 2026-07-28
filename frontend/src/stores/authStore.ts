@@ -16,6 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
   // --- State ---
   const token = ref<string | null>(saved.token || null)
   const user = ref<UserInfo | null>(saved.user || null)
+  const sessionExpired = ref(false)
 
   // --- Getters ---
   const isLoggedIn = computed(() => !!token.value && !!user.value)
@@ -25,13 +26,26 @@ export const useAuthStore = defineStore('auth', () => {
   function setAuth(t: string, u: UserInfo) {
     token.value = t
     user.value = u
+    sessionExpired.value = false
     persist()
   }
 
   function logout() {
     token.value = null
     user.value = null
-    persist()
+    sessionExpired.value = false
+    clearPersistedAuth()
+  }
+
+  function expireSession() {
+    token.value = null
+    user.value = null
+    sessionExpired.value = true
+    clearPersistedAuth()
+  }
+
+  function resetSessionExpired() {
+    sessionExpired.value = false
   }
 
   function persist() {
@@ -40,6 +54,14 @@ export const useAuthStore = defineStore('auth', () => {
         token: token.value,
         user: user.value,
       }))
+    } catch {
+      // localStorage 不可用时静默失败
+    }
+  }
+
+  function clearPersistedAuth() {
+    try {
+      localStorage.removeItem(STORAGE_KEY)
     } catch {
       // localStorage 不可用时静默失败
     }
@@ -58,8 +80,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    token, user,
+    token, user, sessionExpired,
     isLoggedIn, isGuest,
-    setAuth, logout,
+    setAuth, logout, expireSession, resetSessionExpired,
   }
 })

@@ -1,211 +1,249 @@
 <template>
-  <div class="lb-page page-bg">
-    <div class="bg-orb bg-orb--top"></div>
-    <div class="bg-orb bg-orb--bottom"></div>
+  <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+    <div ref="scrollRoot" class="lb-page page-bg" @scroll="onScroll">
+      <div class="bg-orb bg-orb--top"></div>
+      <div class="bg-orb bg-orb--bottom"></div>
 
-    <div class="lb-content">
-      <!-- Header -->
-      <section class="lb-header">
-        <button class="btn-back" @click="$router.push('/')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-        </button>
-        <h1 class="lb-title text-gold">🏆 排行榜</h1>
-        <div style="width:36px"></div>
-      </section>
+      <div class="lb-content">
+        <!-- Header -->
+        <section class="lb-header">
+          <h1 class="lb-title text-gold">🏆 排行榜</h1>
+        </section>
 
-      <!-- Tabs -->
-      <section class="lb-tabs">
-        <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          class="lb-tab"
-          :class="{ active: activeTab === tab.key }"
-          @click="switchTab(tab.key)"
-        >{{ tab.label }}</button>
-      </section>
-
-      <!-- Level picker (for 等级榜) -->
-      <section v-if="activeTab === 'level'" class="level-picker">
-        <button
-          v-for="lvl in LEVELS"
-          :key="lvl.key"
-          class="level-btn"
-          :class="{ active: selectedLevel === lvl.key }"
-          :style="selectedLevel === lvl.key ? { borderColor: lvl.color, color: lvl.color } : {}"
-          @click="selectLevel(lvl.key)"
-        >{{ lvl.title }}</button>
-      </section>
-
-      <!-- Loading -->
-      <div v-if="loading" class="lb-loading">
-        <span class="loading-spinner"></span>
-        <p>加载中...</p>
-      </div>
-
-      <!-- Error -->
-      <div v-else-if="errorMsg" class="lb-error">
-        <p>{{ errorMsg }}</p>
-        <button class="btn-retry" @click="loadData">重试</button>
-      </div>
-
-      <!-- Leaderboard -->
-      <template v-else-if="data">
-        <!-- Top 3 podium -->
-        <section v-if="data.list.length >= 3" class="podium-section">
-          <div class="podium">
-            <!-- 2nd -->
-            <div class="podium-item" @click="() => {}">
-              <div class="podium-avatar silver">
-                <span>{{ data.list[1].nickname.charAt(0) }}</span>
-              </div>
-              <div class="podium-card silver-card">
-                <span class="podium-rank">🥈</span>
-                <span class="podium-name">{{ data.list[1].nickname }}</span>
-                <span class="podium-score">{{ isAbyssTab ? data.list[1].correctCount + '连对' : data.list[1].correctCount + '/10' }}</span>
-              </div>
-            </div>
-            <!-- 1st -->
-            <div class="podium-item first">
-              <div class="podium-avatar gold">
-                <span>{{ data.list[0].nickname.charAt(0) }}</span>
-              </div>
-              <div class="podium-card gold-card">
-                <span class="podium-rank">🥇</span>
-                <span class="podium-name">{{ data.list[0].nickname }}</span>
-                <span class="podium-score">{{ isAbyssTab ? data.list[0].correctCount + '连对' : data.list[0].correctCount + '/10' }}</span>
-              </div>
-            </div>
-            <!-- 3rd -->
-            <div class="podium-item">
-              <div class="podium-avatar bronze">
-                <span>{{ data.list[2].nickname.charAt(0) }}</span>
-              </div>
-              <div class="podium-card bronze-card">
-                <span class="podium-rank">🥉</span>
-                <span class="podium-name">{{ data.list[2].nickname }}</span>
-                <span class="podium-score">{{ isAbyssTab ? data.list[2].correctCount + '连对' : data.list[2].correctCount + '/10' }}</span>
-              </div>
-            </div>
+        <section v-if="authStore.isGuest" class="guest-state glass-card">
+          <div class="guest-icon">🏆</div>
+          <h2 class="guest-title">登录后查看排行榜</h2>
+          <p class="guest-desc">保存你的答题成绩，和其他杰迷一起冲榜。</p>
+          <div class="guest-actions">
+            <button class="btn-login" @click="goLogin">登录</button>
+            <button class="btn-register" @click="router.push('/register')">注册</button>
           </div>
         </section>
 
-        <!-- Rank list (4th+) -->
-        <section class="rank-list glass-card">
-          <div
-            v-for="entry in listAfterPodium"
-            :key="entry.rank"
-            class="rank-item"
-          >
-            <span class="rank-num">{{ entry.rank }}</span>
-            <span class="rank-name">{{ entry.nickname }}</span>
-            <span class="rank-level" :style="{ color: getLevelColor(entry.correctCount) }">
-              {{ entry.levelTitle }}
-            </span>
-            <span class="rank-score">{{ isAbyssTab ? entry.correctCount + '连对' : entry.correctCount + '/10' }}</span>
-            <span class="rank-time">{{ formatDuration(entry.timeSpentSecs) }}</span>
-          </div>
-
-          <p v-if="listAfterPodium.length === 0 && data.list.length <= 3" class="empty-hint">
-            暂无更多排名
-          </p>
+        <!-- Tabs -->
+        <section v-if="authStore.isLoggedIn" class="lb-tabs">
+          <button
+            v-for="tab in tabs"
+            :key="tab.key"
+            class="lb-tab"
+            :class="{ active: activeTab === tab.key }"
+            @click="switchTab(tab.key)"
+          >{{ tab.label }}</button>
         </section>
 
-        <!-- My rank -->
-        <section v-if="data.myRank" class="my-rank glass-card">
-          <span class="my-rank-label">我的排名</span>
-          <span class="my-rank-val text-gold">第 {{ data.myRank }} 名</span>
-        </section>
-        <section v-else-if="data.myRank === null && activeTab !== 'level'" class="my-rank glass-card">
-          <span class="my-rank-label">你还没有上榜成绩，快去答题吧！</span>
-        </section>
-      </template>
+        <!-- Loading -->
+        <div v-if="authStore.isLoggedIn && loading" class="lb-loading">
+          <span class="loading-spinner"></span>
+          <p>加载中...</p>
+        </div>
 
-      <!-- Empty -->
-      <div v-else class="lb-empty">
-        <p>暂无排行数据</p>
+        <!-- Error -->
+        <div v-else-if="authStore.isLoggedIn && errorMsg" class="lb-error">
+          <p>{{ errorMsg }}</p>
+          <button class="btn-retry" @click="loadData">重试</button>
+        </div>
+
+        <!-- Leaderboard -->
+        <template v-else-if="authStore.isLoggedIn && allEntries.length > 0">
+          <!-- Top 3 podium -->
+          <section v-if="allEntries.length >= 3" class="podium-section">
+            <div class="podium">
+              <!-- 2nd -->
+              <div class="podium-item">
+                <div class="podium-avatar silver">
+                  <span>{{ allEntries[1].nickname.charAt(0) }}</span>
+                </div>
+                <div class="podium-card silver-card">
+                  <span class="podium-rank">🥈</span>
+                  <span class="podium-name">{{ allEntries[1].nickname }}</span>
+                  <span class="podium-score">{{ formatScore(allEntries[1]) }}</span>
+                  <span class="podium-detail">{{ formatDetail(allEntries[1]) }}</span>
+                </div>
+              </div>
+              <!-- 1st -->
+              <div class="podium-item first">
+                <div class="podium-avatar gold">
+                  <span>{{ allEntries[0].nickname.charAt(0) }}</span>
+                </div>
+                <div class="podium-card gold-card">
+                  <span class="podium-rank">🥇</span>
+                  <span class="podium-name">{{ allEntries[0].nickname }}</span>
+                  <span class="podium-score">{{ formatScore(allEntries[0]) }}</span>
+                  <span class="podium-detail">{{ formatDetail(allEntries[0]) }}</span>
+                </div>
+              </div>
+              <!-- 3rd -->
+              <div class="podium-item">
+                <div class="podium-avatar bronze">
+                  <span>{{ allEntries[2].nickname.charAt(0) }}</span>
+                </div>
+                <div class="podium-card bronze-card">
+                  <span class="podium-rank">🥉</span>
+                  <span class="podium-name">{{ allEntries[2].nickname }}</span>
+                  <span class="podium-score">{{ formatScore(allEntries[2]) }}</span>
+                  <span class="podium-detail">{{ formatDetail(allEntries[2]) }}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Rank list (4th+) -->
+          <section class="rank-list glass-card" v-if="visibleRankList.length > 0">
+            <div
+              v-for="entry in visibleRankList"
+              :key="entry.rank"
+              class="rank-item"
+            >
+              <span class="rank-num">{{ entry.rank }}</span>
+              <span class="rank-name">{{ entry.nickname }}</span>
+              <span class="rank-level" :style="{ color: getLevelColor(entry) }">
+                {{ formatDetail(entry) }}
+              </span>
+              <span class="rank-score">{{ formatScore(entry) }}</span>
+              <span class="rank-time">{{ formatDuration(entry.totalAlbumTimeSecs ?? entry.timeSpentSecs) }}</span>
+            </div>
+
+            <!-- 加载更多 -->
+            <div class="load-more-footer">
+              <div v-if="loadingMore" class="load-more-loading">
+                <span class="loading-spinner"></span>
+                <span>加载中...</span>
+              </div>
+              <p v-else-if="!hasMore" class="load-more-end">— 没有更多了 —</p>
+            </div>
+          </section>
+
+          <!-- My rank -->
+          <section v-if="myRank" class="my-rank glass-card">
+            <span class="my-rank-label">我的排名</span>
+            <span class="my-rank-val text-gold">第 {{ myRank }} 名</span>
+          </section>
+          <section v-else-if="myRank === null" class="my-rank glass-card">
+            <span class="my-rank-label">你还没有上榜成绩，快去答题吧！</span>
+          </section>
+        </template>
+
+        <!-- Empty -->
+        <div v-else-if="authStore.isLoggedIn" class="lb-empty">
+          <p>暂无排行数据</p>
+        </div>
+
+        <div class="bottom-spacer"></div>
       </div>
-
-      <div class="bottom-spacer"></div>
     </div>
-  </div>
+  </van-pull-refresh>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+defineOptions({ name: 'LeaderboardPage' })
+
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import * as leaderboardApi from '@/api/leaderboardApi'
-import type { LeaderboardResult } from '@/api/leaderboardApi'
-import { LEVELS, ABYSS_LEVELS } from '@/utils/constants'
+import type { LeaderboardResult, LeaderboardEntry, LeaderboardType } from '@/api/leaderboardApi'
+import { LEVELS } from '@/utils/constants'
 import { getAbyssLevelByStreak } from '@/utils/levels'
-import { showFailToast } from 'vant'
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const tabs = [
-  { key: 'total' as const, label: '🏆 总分榜' },
-  { key: 'daily' as const, label: '📅 今日榜' },
-  { key: 'level' as const, label: '🎖 等级榜' },
-  { key: 'abyss' as const, label: '🕳️ 深渊榜' },
+  { key: 'classic' as const, label: '经典模式' },
+  { key: 'album' as const, label: '专辑闯关' },
+  { key: 'abyss' as const, label: '无尽深渊' },
 ]
 
-const activeTab = ref<'total' | 'daily' | 'level' | 'abyss'>('total')
-const selectedLevel = ref('ULTIMATE')
-
+const activeTab = ref<LeaderboardType>('classic')
 const isAbyssTab = computed(() => activeTab.value === 'abyss')
-const data = ref<LeaderboardResult | null>(null)
-const loading = ref(false)
-const errorMsg = ref('')
 
-const listAfterPodium = computed(() => {
-  if (!data.value) return []
-  return data.value.list.slice(3)
+const myRank = ref<number | null>(null)
+const scrollRoot = ref<HTMLElement | null>(null)
+
+const {
+  items: allEntries,
+  loading,
+  error: errorMsg,
+  loadingMore,
+  hasMore,
+  refreshing,
+  loadFirstPage,
+  loadMore,
+  onRefresh,
+  reset,
+} = useInfiniteScroll<LeaderboardEntry>({
+  pageSize: 10,
+  fetchPage: async (page) => {
+    const result: LeaderboardResult = await leaderboardApi.fetchLeaderboard(activeTab.value, 10, page, 10)
+    if (page === 1) {
+      myRank.value = result.myRank
+    }
+    return { items: result.list }
+  },
 })
 
-function switchTab(tab: 'total' | 'daily' | 'level' | 'abyss') {
+const visibleRankList = computed(() =>
+  allEntries.value.length >= 3 ? allEntries.value.slice(3) : allEntries.value
+)
+
+function formatScore(entry: LeaderboardEntry): string {
+  if (activeTab.value === 'album') {
+    return `通关 ${entry.completedAlbumCount}/15`
+  }
+  if (activeTab.value === 'abyss') {
+    return `${entry.streak ?? entry.correctCount} 连对`
+  }
+  return `${entry.correctCount}/10`
+}
+
+function formatDetail(entry: LeaderboardEntry): string {
+  if (activeTab.value === 'album') {
+    return entry.bestAlbumName ? `最近 ${entry.bestAlbumName}` : '专辑闯关'
+  }
+  return entry.levelTitle || entry.detailText || ''
+}
+
+function switchTab(tab: LeaderboardType) {
   activeTab.value = tab
   loadData()
 }
 
-function selectLevel(key: string) {
-  selectedLevel.value = key
-  loadData()
-}
-
 async function loadData() {
-  // 未登录重定向
   if (!authStore.isLoggedIn) {
-    router.push('/login?redirect=leaderboard')
     return
   }
-
-  loading.value = true
-  errorMsg.value = ''
-
-  try {
-    if (activeTab.value === 'level') {
-      data.value = await leaderboardApi.fetchLeaderboard('level', 50, selectedLevel.value)
-    } else {
-      data.value = await leaderboardApi.fetchLeaderboard(activeTab.value, 50)
-    }
-  } catch (e: any) {
-    if (e.response?.status === 401 || e.message?.includes('登录')) {
-      router.push('/login?redirect=leaderboard')
-      return
-    }
-    errorMsg.value = e.message || '加载排行榜失败'
-  } finally {
-    loading.value = false
-  }
+  await loadFirstPage()
 }
 
-function getLevelColor(score: number): string {
+function goLogin() {
+  router.push('/login?redirect=' + encodeURIComponent('/leaderboard'))
+}
+
+// 滚动触底 - rAF 节流
+let scrollPending = false
+function onScroll() {
+  if (scrollPending) return
+  scrollPending = true
+  requestAnimationFrame(() => {
+    scrollPending = false
+    const el = scrollRoot.value
+    if (!el) return
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
+      loadMore()
+    }
+  })
+}
+
+function getLevelColor(entry: LeaderboardEntry): string {
   if (isAbyssTab.value) {
+    const score = entry.streak ?? entry.correctCount ?? 0
     return getAbyssLevelByStreak(score).color
   }
+  if (activeTab.value === 'album') {
+    return 'var(--app-gold)'
+  }
+  const score = entry.correctCount ?? 0
   const level = LEVELS.find(l => score >= l.minScore && score <= l.maxScore)
   return level?.color || 'var(--app-text-muted)'
 }
@@ -216,9 +254,18 @@ function formatDuration(secs: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-onMounted(() => {
-  loadData()
-})
+watch(
+  () => authStore.isLoggedIn,
+  (isLoggedIn) => {
+    if (isLoggedIn) {
+      loadData()
+    } else {
+      reset()
+      myRank.value = null
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped lang="scss">
@@ -240,11 +287,12 @@ onMounted(() => {
 }
 
 .lb-page {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .lb-content {
@@ -259,21 +307,8 @@ onMounted(() => {
 .lb-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   margin-bottom: 16px;
-}
-
-.btn-back {
-  width: 36px; height: 36px;
-  border: none; background: rgba(var(--app-surface-rgb),0.06);
-  border-radius: 50%;
-  color: var(--app-text-secondary);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-
-  svg { width: 20px; height: 20px; }
-  &:hover { background: rgba(var(--app-surface-rgb),0.12); color: var(--app-gold); }
 }
 
 .lb-title {
@@ -310,32 +345,59 @@ onMounted(() => {
   }
 }
 
-/* ======== Level Picker ======== */
-.level-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 16px;
-  animation: fade-in-up 0.5s ease-out 0.05s;
+/* ======== Guest State ======== */
+.guest-state {
+  padding: 28px 22px;
+  text-align: center;
+  animation: fade-in-up 0.5s ease-out;
 }
 
-.level-btn {
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid rgba(var(--app-surface-rgb),0.1);
-  border-radius: 20px;
-  background: rgba(var(--app-surface-rgb),0.03);
+.guest-icon {
+  font-size: 42px;
+  margin-bottom: 12px;
+}
+
+.guest-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--app-text-primary);
+}
+
+.guest-desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
   color: var(--app-text-secondary);
-  cursor: pointer;
+}
+
+.guest-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.btn-login,
+.btn-register {
+  flex: 1;
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
   font-family: inherit;
-  transition: all 0.2s;
+  cursor: pointer;
+}
 
-  &.active {
-    background: rgba(var(--app-accent-rgb),0.1);
-  }
+.btn-login {
+  color: var(--app-text-on-accent);
+  background: linear-gradient(135deg, var(--app-gold), var(--app-accent));
+}
 
-  &:hover { border-color: rgba(var(--app-surface-rgb),0.2); }
+.btn-register {
+  color: var(--app-gold);
+  background: rgba(var(--app-accent-rgb),0.08);
+  border: 1px solid rgba(var(--app-accent-rgb),0.22);
 }
 
 /* ======== Podium ======== */
@@ -391,6 +453,7 @@ onMounted(() => {
 .podium-rank { font-size: 20px; display: block; }
 .podium-name { font-size: 13px; font-weight: 600; color: var(--app-text-primary); display: block; margin: 2px 0; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .podium-score { font-size: 13px; font-weight: 700; color: var(--app-gold); font-family: 'Poppins', sans-serif; }
+.podium-detail { display: block; max-width: 88px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: var(--app-text-muted); }
 
 /* ======== Rank List ======== */
 .rank-list {
@@ -452,11 +515,25 @@ onMounted(() => {
   text-align: right;
 }
 
-.empty-hint {
+/* ======== Load More ======== */
+.load-more-footer {
+  padding: 16px;
   text-align: center;
-  padding: 20px;
+}
+
+.load-more-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   color: var(--app-text-muted);
   font-size: 13px;
+}
+
+.load-more-end {
+  font-size: 12px;
+  color: var(--app-text-muted);
+  opacity: 0.6;
 }
 
 /* ======== My Rank ======== */
@@ -483,19 +560,18 @@ onMounted(() => {
 /* ======== Loading / Error / Empty ======== */
 .lb-loading, .lb-error, .lb-empty {
   text-align: center;
-  padding: 60px 20px;
+  padding: 40px 20px;
   color: var(--app-text-muted);
   animation: fade-in-up 0.5s ease-out;
 }
 
 .loading-spinner {
   display: inline-block;
-  width: 32px; height: 32px;
+  width: 24px; height: 24px;
   border: 2px solid rgba(var(--app-accent-rgb),0.2);
   border-top-color: var(--app-gold);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
-  margin-bottom: 12px;
 }
 
 .btn-retry {
@@ -513,10 +589,6 @@ onMounted(() => {
 .bottom-spacer { height: 40px; }
 
 /* ======== 动画 ======== */
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 
 @keyframes spin {
   to { transform: rotate(360deg); }

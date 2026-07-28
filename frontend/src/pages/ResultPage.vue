@@ -240,7 +240,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/gameStore'
-import { useUserStore } from '@/stores/userStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useQuiz } from '@/composables/useQuiz'
 import { showFailToast } from 'vant'
@@ -252,7 +251,6 @@ import type { GameResult } from '@/stores/gameStore'
 
 const router = useRouter()
 const gameStore = useGameStore()
-const userStore = useUserStore()
 const authStore = useAuthStore()
 const { startNewRound, startAlbumRound, startAbyssRound } = useQuiz()
 
@@ -270,30 +268,7 @@ const dashOffset = computed(() => {
 
 // 结果数据
 const result = computed<GameResult | null>(() => {
-  // 优先使用 API 返回的完整结果
-  if (gameStore.lastGameResult) {
-    return gameStore.lastGameResult
-  }
-  // 降级：从 userStore 最新记录构建
-  const latest = userStore.latestRecord
-  if (latest) {
-    const lvl = LEVELS.find(
-      l => latest.correctCount >= l.minScore && latest.correctCount <= l.maxScore
-    ) || LEVELS[0]
-    return {
-      score: latest.score,
-      correctCount: latest.correctCount,
-      totalQuestions: latest.totalQuestions,
-      accuracy: latest.correctCount / latest.totalQuestions,
-      timeSpentSecs: latest.timeSpentSecs,
-      level: latest.level,
-      levelTitle: latest.levelTitle,
-      levelDescription: lvl.description,
-      beatPercentage: 0,
-      totalPlayers: 0,
-    }
-  }
-  return null
+  return gameStore.lastGameResult
 })
 
 const levelKey = computed(() => {
@@ -314,11 +289,7 @@ const levelColor = computed(() => {
 })
 
 const usedRevival = computed(() => {
-  // 优先使用最新记录判断
-  const latest = userStore.latestRecord
-  if (latest) return latest.usedRevival
-  // 降级：检查 gameStore
-  return gameStore.revivalRemaining === 0
+  return result.value?.usedRevival ?? (gameStore.revivalRemaining === 0)
 })
 
 onMounted(() => {
@@ -419,11 +390,12 @@ function goHome() {
 
 /* ======== 页面 ======== */
 .result-page {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .result-content {
@@ -964,10 +936,6 @@ function goHome() {
 }
 
 /* ======== 动画 ======== */
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 
 @keyframes spin {
   to { transform: rotate(360deg); }

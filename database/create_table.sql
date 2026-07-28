@@ -52,16 +52,21 @@ CREATE TABLE IF NOT EXISTS user (
 CREATE TABLE IF NOT EXISTS game_record (
     id               BIGINT PRIMARY KEY AUTO_INCREMENT,
     round_id         VARCHAR(36)  NOT NULL COMMENT 'UUID 去重',
-    mode             VARCHAR(20)  NOT NULL DEFAULT 'CLASSIC' COMMENT '游戏模式: CLASSIC | ALBUM | ABYSS',
+    mode             VARCHAR(20)  NOT NULL COMMENT '游戏模式: CLASSIC | ALBUM | ABYSS',
     album_key        VARCHAR(50)  NULL     COMMENT '专辑模式下的专辑标识（中文名）',
     user_id          BIGINT       NULL     COMMENT 'FK→user.id，游客为NULL',
     nickname         VARCHAR(50)  NULL     COMMENT '昵称快照，冗余避免JOIN',
     total_questions  INT          NOT NULL DEFAULT 10,
-    correct_count    INT          NOT NULL COMMENT '答对数量 0-10',
+    correct_count    INT          NOT NULL COMMENT '答对数量；深渊模式为连续答对数',
     time_spent_secs  INT          NOT NULL COMMENT '答题总用时（秒）',
     used_revival     TINYINT      NOT NULL DEFAULT 0 COMMENT '0=未使用 1=已使用',
     created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uk_round_id UNIQUE (round_id),
+    CONSTRAINT chk_game_record_mode CHECK (mode IN ('CLASSIC', 'ALBUM', 'ABYSS')),
+    CONSTRAINT chk_game_record_album CHECK (
+        (mode = 'ALBUM' AND album_key IS NOT NULL AND TRIM(album_key) <> '')
+        OR (mode IN ('CLASSIC', 'ABYSS') AND album_key IS NULL)
+    ),
     INDEX idx_gr_score (correct_count),
     INDEX idx_gr_created (created_at),
     INDEX idx_gr_mode (mode),

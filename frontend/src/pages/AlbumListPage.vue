@@ -1,71 +1,75 @@
 <template>
-  <div class="album-page page-bg">
-    <!-- 背景光斑 -->
-    <div class="bg-orb bg-orb--top"></div>
+  <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+    <div class="album-page page-bg">
+      <!-- 背景光斑 -->
+      <div class="bg-orb bg-orb--top"></div>
 
-    <div class="album-content">
-      <!-- ===== 页面标题 ===== -->
-      <header class="album-header">
-        <button class="btn-back" @click="router.push('/')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-        <div class="header-title">
-          <h1 class="page-title">🎵 专辑闯关</h1>
-          <p class="page-subtitle">
-            答对 <strong>{{ UNLOCK_THRESHOLD }}/10</strong> 解锁下一张专辑
-          </p>
+      <div class="album-content">
+        <!-- ===== 页面标题 ===== -->
+        <header class="album-header">
+          <div class="header-title">
+            <h1 class="page-title">🎵 专辑闯关</h1>
+            <p class="page-subtitle">
+              答对 <strong>{{ UNLOCK_THRESHOLD }}/10</strong> 解锁下一张专辑
+            </p>
+          </div>
+          <!-- 进度概览 -->
+          <div v-if="albumStore.progressSummary.total > 0" class="progress-badge">
+            {{ albumStore.progressSummary.unlocked }}/{{ albumStore.progressSummary.total }}
+          </div>
+        </header>
+
+        <!-- ===== 加载态 ===== -->
+        <div v-if="albumStore.loading" class="loading-state">
+          <div class="loading-spinner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10" stroke-opacity="0.15" />
+              <path d="M12 2a10 10 0 019.95 9" stroke-linecap="round" />
+            </svg>
+          </div>
+          <p>加载专辑列表中...</p>
         </div>
-        <!-- 进度概览 -->
-        <div v-if="albumStore.progressSummary.total > 0" class="progress-badge">
-          {{ albumStore.progressSummary.unlocked }}/{{ albumStore.progressSummary.total }}
+
+        <!-- ===== 错误态 ===== -->
+        <div v-else-if="albumStore.error" class="error-state">
+          <p class="error-text">{{ albumStore.error }}</p>
+          <button class="btn-retry" @click="loadAlbums">重新加载</button>
         </div>
-      </header>
 
-      <!-- ===== 加载态 ===== -->
-      <div v-if="albumStore.loading" class="loading-state">
-        <div class="loading-spinner">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="12" cy="12" r="10" stroke-opacity="0.15" />
-            <path d="M12 2a10 10 0 019.95 9" stroke-linecap="round" />
-          </svg>
+        <!-- ===== 空状态 ===== -->
+        <div v-else-if="albumStore.albums.length === 0" class="empty-state">
+          <p class="empty-text">暂无专辑数据</p>
+          <button class="btn-retry" @click="loadAlbums">重新加载</button>
         </div>
-        <p>加载专辑列表中...</p>
-      </div>
 
-      <!-- ===== 错误态 ===== -->
-      <div v-else-if="albumStore.error" class="error-state">
-        <p class="error-text">{{ albumStore.error }}</p>
-        <button class="btn-retry" @click="loadAlbums">重新加载</button>
-      </div>
+        <!-- ===== 专辑网格 ===== -->
+        <div v-else class="album-grid">
+          <AlbumCard
+            v-for="album in albumStore.albums"
+            :key="album.albumKey"
+            :album="album"
+            @click="handleAlbumClick"
+          />
+        </div>
 
-      <!-- ===== 专辑网格 ===== -->
-      <div v-else class="album-grid">
-        <AlbumCard
-          v-for="album in albumStore.albums"
-          :key="album.albumKey"
-          :album="album"
-          @click="handleAlbumClick"
-        />
-      </div>
-
-      <!-- ===== 底部说明 ===== -->
-      <div class="album-footer">
-        <p>🎧 不熟的专辑？去听听歌再来挑战吧！</p>
+        <!-- ===== 底部说明 ===== -->
+        <div class="album-footer">
+          <p>🎧 不熟的专辑？去听听歌再来挑战吧！</p>
+        </div>
       </div>
     </div>
-  </div>
+  </van-pull-refresh>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+defineOptions({ name: 'AlbumListPage' })
+
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAlbumStore } from '@/stores/albumStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useQuiz } from '@/composables/useQuiz'
-import { showFailToast, showToast } from 'vant'
+import { showFailToast } from 'vant'
 import { UNLOCK_THRESHOLD } from '@/utils/albums'
 import AlbumCard from '@/components/album/AlbumCard.vue'
 
@@ -73,6 +77,8 @@ const router = useRouter()
 const albumStore = useAlbumStore()
 const authStore = useAuthStore()
 const { startAlbumRound } = useQuiz()
+
+const refreshing = ref(false)
 
 onMounted(async () => {
   // 未登录重定向
@@ -88,6 +94,16 @@ async function loadAlbums() {
     await albumStore.fetchAlbums()
   } catch {
     // error is already set in store
+  }
+}
+
+// 下拉刷新
+async function onRefresh() {
+  refreshing.value = true
+  try {
+    await loadAlbums()
+  } finally {
+    refreshing.value = false
   }
 }
 
@@ -119,10 +135,11 @@ async function handleAlbumClick(albumKey: string) {
 }
 
 .album-page {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .album-content {
@@ -141,34 +158,10 @@ async function handleAlbumClick(albumKey: string) {
   padding: 8px 0;
 }
 
-.btn-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(var(--app-surface-rgb), 0.05);
-  color: var(--app-text-secondary);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.2s;
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  &:hover {
-    background: rgba(var(--app-surface-rgb), 0.1);
-    color: var(--app-text-primary);
-  }
-}
-
 .header-title {
   flex: 1;
   min-width: 0;
+  text-align: center;
 }
 
 .page-title {
@@ -232,6 +225,22 @@ async function handleAlbumClick(albumKey: string) {
   align-items: center;
   justify-content: center;
   gap: 16px;
+}
+
+/* ======== 空状态 ======== */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.empty-text {
+  font-size: 15px;
+  color: var(--app-text-secondary);
+  text-align: center;
 }
 
 .error-text {

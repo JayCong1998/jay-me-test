@@ -1,5 +1,7 @@
 package com.jaymetest.model.dto;
 
+import com.jaymetest.model.enums.GameMode;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -23,11 +25,21 @@ public class GameSubmitRequest {
     private Integer usedRevival = 0;
 
     /** 游戏模式: CLASSIC | ALBUM | ABYSS */
-    private String mode = "CLASSIC";
+    @NotNull(message = "mode 不能为空")
+    private GameMode mode;
 
     /** 专辑模式下的专辑标识 */
     private String albumKey;
 
     /** 昵称快照（游客时前端生成 "杰迷XXXX"） */
     private String nickname;
+
+    @AssertTrue(message = "albumKey 与 mode 不匹配")
+    public boolean isAlbumKeyValid() {
+        if (mode == null) {
+            return true;
+        }
+        boolean hasAlbumKey = albumKey != null && !albumKey.isBlank();
+        return (mode == GameMode.ALBUM) == hasAlbumKey;
+    }
 }

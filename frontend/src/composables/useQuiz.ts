@@ -1,27 +1,16 @@
 import { useGameStore } from '@/stores/gameStore'
-import { useUserStore } from '@/stores/userStore'
 import { useAuthStore } from '@/stores/authStore'
 import * as questionApi from '@/api/questionApi'
 import * as statsApi from '@/api/statsApi'
 import * as albumApi from '@/api/albumApi'
 import { getLevelByScore, getAbyssLevelByStreak, calcScore } from '@/utils/levels'
-import { formatDate } from '@/utils/format'
-import type { GameRecord } from '@/stores/userStore'
-
-/**
- * 生成游客昵称：游客 + 时间戳36进制（保证唯一）
- */
-function generateGuestNickname(): string {
-  const ts = Date.now().toString(36).toUpperCase()
-  return `游客${ts}`
-}
+import { generateGuestNickname } from '@/utils/nickname'
 
 /**
  * 答题流程编排 composable
  */
 export function useQuiz() {
   const gameStore = useGameStore()
-  const userStore = useUserStore()
   const authStore = useAuthStore()
 
   /**
@@ -178,30 +167,22 @@ export function useQuiz() {
       // 保存 API 结果到 gameStore，供结果页使用
       gameStore.setLastGameResult(result)
 
-      // 保存到用户历史
-      const record: GameRecord = {
-        date: formatDate(),
-        score: result.score,
-        correctCount: result.correctCount,
-        totalQuestions: result.totalQuestions,
-        level: result.level,
-        levelTitle: result.levelTitle,
-        timeSpentSecs: result.timeSpentSecs,
-        usedRevival: gameStore.revivalRemaining === 0,
-      }
-      userStore.addGameRecord(record)
-
       return result
     } catch (e: any) {
       // 即使提交失败也要返回本地计算结果
       if (isAbyss) {
         const abyssLevel = getAbyssLevelByStreak(gameStore.correctCount)
         const fallback = {
+          roundId: gameStore.roundId!,
+          mode: gameStore.mode,
+          albumKey: gameStore.albumKey,
           score: gameStore.correctCount,
           correctCount: gameStore.correctCount,
           totalQuestions: gameStore.answers.size || (gameStore.correctCount + 1),
           accuracy: gameStore.answers.size > 0 ? gameStore.correctCount / gameStore.answers.size : 0,
           timeSpentSecs: gameStore.elapsedSeconds,
+          usedRevival: false,
+          createdAt: new Date().toISOString(),
           level: abyssLevel.key,
           levelTitle: abyssLevel.title,
           levelDescription: abyssLevel.description,
@@ -214,11 +195,16 @@ export function useQuiz() {
 
       const level = getLevelByScore(gameStore.correctCount)
       const fallback = {
+        roundId: gameStore.roundId!,
+        mode: gameStore.mode,
+        albumKey: gameStore.albumKey,
         score: calcScore(gameStore.correctCount),
         correctCount: gameStore.correctCount,
         totalQuestions: gameStore.totalQuestions,
         accuracy: gameStore.totalQuestions > 0 ? gameStore.correctCount / gameStore.totalQuestions : 0,
         timeSpentSecs: gameStore.elapsedSeconds,
+        usedRevival: gameStore.revivalRemaining === 0,
+        createdAt: new Date().toISOString(),
         level: level.key,
         levelTitle: level.title,
         levelDescription: level.description,

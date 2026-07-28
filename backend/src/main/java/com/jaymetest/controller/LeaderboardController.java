@@ -21,30 +21,31 @@ public class LeaderboardController {
 
     private final LeaderboardService leaderboardService;
 
-    @Operation(summary = "获取排行榜")
+    @Operation(summary = "获取排行榜（分页）")
     @GetMapping
     @SaCheckLogin
     public R<LeaderboardResult> getLeaderboard(
-            @Parameter(description = "排行类型: total / daily / level") @RequestParam(defaultValue = "total") String type,
+            @Parameter(description = "排行榜类型: classic / album / abyss") @RequestParam(defaultValue = "classic") String type,
             @Parameter(description = "返回条数") @RequestParam(defaultValue = "50") int limit,
-            @Parameter(description = "等级名（type=level 时必填）") @RequestParam(required = false) String level) {
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页条数") @RequestParam(defaultValue = "20") int size) {
+
+        int offset = (page - 1) * size;
+        int queryLimit = size > 0 ? size : limit;
 
         LeaderboardResult result;
         switch (type) {
-            case "daily":
-                result = leaderboardService.getDailyLeaderboard(limit);
-                break;
-            case "level":
-                if (level == null || level.isEmpty()) {
-                    return R.fail(400, "level 榜需要指定 level 参数");
-                }
-                result = leaderboardService.getLevelLeaderboard(level, limit);
+            case "album":
+                result = leaderboardService.getAlbumLeaderboard(queryLimit, offset);
                 break;
             case "abyss":
-                result = leaderboardService.getAbyssLeaderboard(limit);
+                result = leaderboardService.getAbyssLeaderboard(queryLimit, offset);
+                break;
+            case "classic":
+                result = leaderboardService.getClassicLeaderboard(queryLimit, offset);
                 break;
             default:
-                result = leaderboardService.getTotalLeaderboard(limit);
+                return R.fail(400, "不支持的排行榜类型");
         }
         return R.ok(result);
     }

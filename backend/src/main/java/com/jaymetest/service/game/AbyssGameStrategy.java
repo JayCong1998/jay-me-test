@@ -9,7 +9,6 @@ import com.jaymetest.model.dto.QuestionDTO;
 import com.jaymetest.model.dto.RoundDTO;
 import com.jaymetest.model.entity.Question;
 import com.jaymetest.model.enums.AbyssLevel;
-import com.jaymetest.model.enums.DifficultyLevel;
 import com.jaymetest.model.enums.GameMode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +32,7 @@ public class AbyssGameStrategy implements GameStrategy {
     private static final int BATCH_SIZE = 5;
 
     private final QuestionMapper questionMapper;
+    private final AbyssDifficultyPolicy difficultyPolicy;
 
     @Override
     public GameMode getMode() {
@@ -80,14 +80,13 @@ public class AbyssGameStrategy implements GameStrategy {
     private List<Question> generateQuestions(int startStreak, GameRoundCache cache) {
         List<Question> questions = new ArrayList<>();
         for (int i = 0; i < BATCH_SIZE; i++) {
-            String difficulty = determineDifficulty(startStreak + i);
-            Question q = selectRandomExcluding(difficulty, cache.getUsedQuestionIds());
-            if (q == null) {
-                q = selectRandomExcluding(null, cache.getUsedQuestionIds());
+            DifficultySelection selection = difficultyPolicy.select(startStreak + i);
+            Question q = selectRandomExcluding(selection, cache.getUsedQuestionIds());
+            if (q == null && selection != DifficultySelection.ANY) {
+                q = selectRandomExcluding(DifficultySelection.ANY, cache.getUsedQuestionIds());
             }
             if (q == null) {
-                log.warn("深渊模式题库耗尽，已出题 {} 道", cache.getUsedQuestionIds().size());
-                break;
+                throw new BusinessException(409, "深渊模式题库不足，请补充题目后重试");
             }
             cache.addQuestion(q.getId(), q.getCorrectOption());
             questions.add(q);
@@ -135,37 +134,12 @@ public class AbyssGameStrategy implements GameStrategy {
         return AbyssLevel.fromStreak(correctCount);
     }
 
-    // ---- 难度阶梯 ----
-
-    /**
-     * 根据 streak 动态决定难度。
-     * <p>难度阶梯（可配置化后从 AbyssDifficultyConfig 读取）：
-     * <pre>
-     *   streak 0-2:   100% EASY
-     *   streak 3-5:   70% MEDIUM, 30% EASY
-     *   streak 6-9:   60% HARD,  40% MEDIUM
-     *   streak 10-14: 70% HARD,  30% MEDIUM
-     *   streak 15-19: 100% HARD
-     *   streak 20-29: 80% HARD,  20% 不限
-     *   streak 30+:   50% HARD,  50% 不限
-     * </pre>
-     */
-    private String determineDifficulty(int streak) {
-        if (streak <= 2) return DifficultyLevel.EASY.name();
-        if (streak <= 5) return Math.random() < 0.7 ? DifficultyLevel.MEDIUM.name() : DifficultyLevel.EASY.name();
-        if (streak <= 9) return Math.random() < 0.6 ? DifficultyLevel.HARD.name() : DifficultyLevel.MEDIUM.name();
-        if (streak <= 14) return Math.random() < 0.7 ? DifficultyLevel.HARD.name() : DifficultyLevel.MEDIUM.name();
-        if (streak <= 19) return DifficultyLevel.HARD.name();
-        if (streak <= 29) return Math.random() < 0.8 ? DifficultyLevel.HARD.name() : null; // null = 不限难度
-        return Math.random() < 0.5 ? DifficultyLevel.HARD.name() : null;
-    }
-
     // ---- 内部工具方法 ----
 
-    private Question selectRandomExcluding(String difficulty, Set<Long> excludeIds) {
+    private Question selectRandomExcluding(DifficultySelection selection, Set<Long> excludeIds) {
         LambdaQueryWrapper<Question> wrapper = new LambdaQueryWrapper<>();
-        if (difficulty != null) {
-            wrapper.eq(Question::getDifficulty, difficulty);
+        if (selection != DifficultySelection.ANY) {
+            wrapper.eq(Question::getDifficulty, selection.name());
         }
         if (excludeIds != null && !excludeIds.isEmpty()) {
             wrapper.notIn(Question::getId, excludeIds);

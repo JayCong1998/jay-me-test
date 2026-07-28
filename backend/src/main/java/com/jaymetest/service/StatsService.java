@@ -12,12 +12,15 @@ import com.jaymetest.model.enums.FanLevel;
 import com.jaymetest.model.enums.GameMode;
 import com.jaymetest.service.game.GameStrategy;
 import com.jaymetest.service.game.GameStrategyFactory;
+import com.jaymetest.service.game.GameRecordDTOAssembler;
 import com.jaymetest.service.game.LevelInfo;
 import com.jaymetest.service.game.PostSubmitHook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,7 @@ public class StatsService {
 
     private final GameRecordMapper gameRecordMapper;
     private final GameStrategyFactory strategyFactory;
+    private final GameRecordDTOAssembler gameRecordDTOAssembler;
 
     /**
      * 提交游戏结果 — 模式差异完全委托给策略。
@@ -48,9 +52,11 @@ public class StatsService {
             throw new BusinessException(400, "该 roundId 已提交过结果");
         }
 
-        // 解析模式 → 获取策略
-        GameMode mode = strategyFactory.resolveMode(
-                request.getMode() != null ? request.getMode() : "CLASSIC");
+        // 模式由请求 DTO 强类型校验，不允许缺省或降级。
+        GameMode mode = request.getMode();
+        if (mode == null || !request.isAlbumKeyValid()) {
+            throw new BusinessException(400, "mode 与 albumKey 不匹配");
+        }
         GameStrategy strategy = strategyFactory.get(mode);
 
         int totalQuestions = request.getTotalQuestions() != null ? request.getTotalQuestions() : 10;
@@ -69,6 +75,11 @@ public class StatsService {
             // 游客
         }
 
+        int usedRevival = mode == GameMode.ABYSS
+                ? 0
+                : (Integer.valueOf(1).equals(request.getUsedRevival()) ? 1 : 0);
+        LocalDateTime createdAt = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+
         // 持久化
         GameRecord record = new GameRecord();
         record.setRoundId(request.getRoundId());
@@ -79,7 +90,8 @@ public class StatsService {
         record.setTotalQuestions(totalQuestions);
         record.setCorrectCount(correctCount);
         record.setTimeSpentSecs(request.getTimeSpentSecs());
-        record.setUsedRevival(request.getUsedRevival() != null ? request.getUsedRevival() : 0);
+        record.setUsedRevival(usedRevival);
+        record.setCreatedAt(createdAt);
         gameRecordMapper.insert(record);
 
         // 百分位
@@ -95,11 +107,16 @@ public class StatsService {
 
         // 构建结果（通用字段）
         GameResultDTO.GameResultDTOBuilder builder = GameResultDTO.builder()
+                .roundId(request.getRoundId())
+                .mode(mode)
+                .albumKey(request.getAlbumKey())
                 .score(score)
                 .correctCount(correctCount)
                 .totalQuestions(totalQuestions)
                 .accuracy(accuracy)
                 .timeSpentSecs(request.getTimeSpentSecs())
+                .usedRevival(usedRevival == 1)
+                .createdAt(createdAt.toString())
                 .level(levelInfo.name())
                 .levelTitle(levelInfo.getTitle())
                 .levelDescription(levelInfo.getDescription())
@@ -146,32 +163,14 @@ public class StatsService {
     }
 
     /**
-     * 获取当前登录用户的考试记录
+     * 获取当前登录用户的考试记录（分页）
      */
-    public List<GameRecordDTO> getMyRecords() {
+    public List<GameRecordDTO> getMyRecords(int page, int size) {
         long userId = StpUtil.getLoginIdAsLong();
-        List<GameRecord> records = gameRecordMapper.selectByUserId(userId, 20);
-        return records.stream().map(r -> {
-            LevelInfo levelInfo = resolveLevel(r.getMode(), r.getCorrectCount());
-            return GameRecordDTO.builder()
-                    .roundId(r.getRoundId())
-                    .correctCount(r.getCorrectCount())
-                    .totalQuestions(r.getTotalQuestions())
-                    .timeSpentSecs(r.getTimeSpentSecs())
-                    .usedRevival(r.getUsedRevival() != null && r.getUsedRevival() == 1)
-                    .createdAt(r.getCreatedAt())
-                    .level(levelInfo.name())
-                    .levelTitle(levelInfo.getTitle())
-                    .build();
-        }).collect(Collectors.toList());
-    }
-
-    /** 根据模式和分数解析等级 */
-    private LevelInfo resolveLevel(String mode, int correctCount) {
-        try {
-            return strategyFactory.get(GameMode.valueOf(mode)).evaluateLevel(correctCount);
-        } catch (Exception e) {
-            return FanLevel.fromScore(correctCount); // 降级
-        }
+        int offset = (page - 1) * size;
+        List<GameRecord> records = gameRecordMapper.selectByUserId(userId, size, offset);
+        return records.stream()
+                .map(gameRecordDTOAssembler::toDTO)
+                .collect(Collectors.toList());
     }
 }

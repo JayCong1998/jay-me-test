@@ -1,54 +1,60 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
-const routes: RouteRecordRaw[] = [
+export const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Home',
     component: () => import('@/pages/HomePage.vue'),
-    meta: { title: '杰迷结业考试' },
+    meta: { title: '杰迷结业考试', showTabbar: true },
   },
   {
     path: '/quiz',
     name: 'Quiz',
     component: () => import('@/pages/QuizPage.vue'),
-    meta: { title: '答题中' },
+    meta: { title: '答题中', showTabbar: false },
   },
   {
     path: '/result',
     name: 'Result',
     component: () => import('@/pages/ResultPage.vue'),
-    meta: { title: '考试结果' },
+    meta: { title: '考试结果', showTabbar: false },
   },
   {
     path: '/certificate',
     name: 'Certificate',
     component: () => import('@/pages/CertificatePage.vue'),
-    meta: { title: '我的证书' },
+    meta: { title: '我的证书', showTabbar: false },
   },
   {
     path: '/login',
     name: 'Login',
     component: () => import('@/pages/LoginPage.vue'),
-    meta: { title: '登录' },
+    meta: { title: '登录', showTabbar: false },
   },
   {
     path: '/register',
     name: 'Register',
     component: () => import('@/pages/RegisterPage.vue'),
-    meta: { title: '注册' },
+    meta: { title: '注册', showTabbar: false },
   },
   {
     path: '/leaderboard',
     name: 'Leaderboard',
     component: () => import('@/pages/LeaderboardPage.vue'),
-    meta: { title: '排行榜', requiresAuth: true },
+    meta: { title: '排行榜', showTabbar: true },
   },
   {
     path: '/albums',
     name: 'Albums',
     component: () => import('@/pages/AlbumListPage.vue'),
-    meta: { title: '专辑闯关', requiresAuth: true },
+    meta: { title: '专辑闯关', requiresAuth: true, showTabbar: true },
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('@/pages/ProfilePage.vue'),
+    meta: { title: '我的', showTabbar: true },
   },
 ]
 

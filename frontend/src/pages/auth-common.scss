@@ -23,12 +23,13 @@
 }
 
 .auth-page {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
   padding: 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .auth-content {
@@ -196,10 +197,6 @@
 }
 
 /* ======== 动画 ======== */
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 
 @keyframes spin {
   to { transform: rotate(360deg); }

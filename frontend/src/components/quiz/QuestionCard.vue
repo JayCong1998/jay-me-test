@@ -94,7 +94,7 @@ function handleClick(letter: string) {
 .question-meta {
   display: flex;
   gap: 10px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .meta-tag {
@@ -135,11 +135,11 @@ function handleClick(letter: string) {
 
 /* ======== 题目正文 ======== */
 .question-body {
-  margin-bottom: 28px;
+  margin-bottom: 18px;
 }
 
 .question-text {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   line-height: 1.75;
   color: var(--app-text-primary);
@@ -150,7 +150,7 @@ function handleClick(letter: string) {
 .options-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .option-item {
@@ -158,7 +158,7 @@ function handleClick(letter: string) {
   align-items: center;
   gap: 14px;
   width: 100%;
-  padding: 16px 18px;
+  padding: 13px 15px;
   background: var(--app-bg-card);
   border: 1.5px solid var(--app-border);
   border-radius: 14px;
@@ -166,7 +166,7 @@ function handleClick(letter: string) {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   font-family: inherit;
-  min-height: 56px;
+  min-height: 48px;
   -webkit-tap-highlight-color: transparent;
 
   &:hover:not(.option-disabled) {

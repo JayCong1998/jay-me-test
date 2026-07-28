@@ -1,33 +1,49 @@
 <template>
-  <div class="app-container">
-    <router-view v-slot="{ Component, route }">
-      <transition name="page-fade" mode="out-in">
-        <component :is="Component" :key="route.path" />
-      </transition>
-    </router-view>
+  <div class="app-container" :class="{ 'has-tabbar': showTabbar }">
+    <div class="view-area">
+      <router-view v-slot="{ Component, route }">
+        <keep-alive :include="keepAliveNames">
+          <component :is="Component" :key="route.path" />
+        </keep-alive>
+      </router-view>
+    </div>
+    <AppTabbar v-if="showTabbar" />
   </div>
 </template>
 
 <script setup lang="ts">
-// App 根组件
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import AppTabbar from '@/components/common/AppTabbar.vue'
+
+const route = useRoute()
+const showTabbar = computed(() => route.meta.showTabbar !== false)
+
+// 需要缓存的 tab 页面组件名（与各页面 defineOptions name 一致）
+const keepAliveNames = ['HomePage', 'LeaderboardPage', 'AlbumListPage', 'ProfilePage']
 </script>
 
 <style scoped>
 .app-container {
-  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 100dvh;
   max-width: 480px;
-  margin: 0 auto;
   background: var(--app-bg-color);
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* 页面切换动画 */
-.page-fade-enter-active,
-.page-fade-leave-active {
-  transition: opacity 0.25s ease;
-}
-.page-fade-enter-from,
-.page-fade-leave-to {
-  opacity: 0;
+.view-area {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  background: var(--app-bg-gradient);
 }
 </style>

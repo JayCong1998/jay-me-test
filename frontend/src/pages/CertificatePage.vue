@@ -163,12 +163,12 @@ const showShareGuide = ref(false)
 
 // --- 证书数据 ---
 const result = computed(() => {
-  const latest = userStore.latestRecord
-  if (latest) {
+  const serverResult = gameStore.lastGameResult
+  if (serverResult) {
     return {
-      correctCount: latest.correctCount,
-      totalQuestions: latest.totalQuestions,
-      accuracy: latest.correctCount / latest.totalQuestions,
+      correctCount: serverResult.correctCount,
+      totalQuestions: serverResult.totalQuestions,
+      accuracy: serverResult.accuracy,
     }
   }
   return {
@@ -207,8 +207,7 @@ const levelConfig = computed(() => {
 const levelColor = computed(() => levelConfig.value.color)
 
 const examDate = computed(() => {
-  const latest = userStore.latestRecord
-  return latest ? latest.date : formatDate()
+  return formatDate(gameStore.lastGameResult?.createdAt)
 })
 
 // --- 方法 ---
@@ -304,8 +303,9 @@ async function handleShare() {
 
 /* ======== 页面 ======== */
 .cert-page {
-  min-height: 100vh;
   position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .cert-content {
@@ -370,7 +370,7 @@ async function handleShare() {
 .cert-card {
   width: 100%;
   aspect-ratio: 340 / 478;
-  background: linear-gradient(180deg, #0a0a18 0%, #111128 40%, #0f1a2e 70%, #0a0a18 100%);
+  background: var(--app-bg-cert-card, linear-gradient(180deg, #0a0a18 0%, #111128 40%, #0f1a2e 70%, #0a0a18 100%));
   border: 2px solid rgba(var(--app-accent-rgb), 0.25);
   border-radius: 20px;
   overflow: hidden;
@@ -741,10 +741,6 @@ async function handleShare() {
 }
 
 /* ======== 动画 keyframes ======== */
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 
 @keyframes point-up {
   0%, 100% { transform: translateY(0); }

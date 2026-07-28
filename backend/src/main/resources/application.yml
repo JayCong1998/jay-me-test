@@ -62,10 +62,24 @@ app:
 game:
   abyss:
     difficulty:
-      early-tier: EASY           # streak 0-2: 100% EASY
-      mid-tier-medium-prob: 0.7  # streak 3-5: 70% MEDIUM, 30% EASY
-      mid-hard-tier-hard-prob: 0.6 # streak 6-9: 60% HARD, 40% MEDIUM
-      hard-tier-hard-prob: 0.7   # streak 10-14: 70% HARD, 30% MEDIUM
-      hard-tier: HARD            # streak 15-19: 100% HARD
-      late-tier-hard-prob: 0.8   # streak 20-29: 80% HARD, 20% 不限
-      endless-tier: HARD         # streak 30+: 50% HARD, 50% 不限
+      tiers:
+        - from: 0
+          to: 2
+          weights: { EASY: 1.0 }
+        - from: 3
+          to: 5
+          weights: { EASY: 0.3, MEDIUM: 0.7 }
+        - from: 6
+          to: 9
+          weights: { MEDIUM: 0.4, HARD: 0.6 }
+        - from: 10
+          to: 14
+          weights: { MEDIUM: 0.3, HARD: 0.7 }
+        - from: 15
+          to: 19
+          weights: { HARD: 1.0 }
+        - from: 20
+          to: 29
+          weights: { HARD: 0.8, ANY: 0.2 }
+        - from: 30
+          weights: { HARD: 0.5, ANY: 0.5 }
