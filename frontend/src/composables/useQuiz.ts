@@ -110,8 +110,10 @@ export function useQuiz() {
     try {
       const data = await questionApi.fetchAbyssBatch(gameStore.roundId)
       gameStore.appendQuestions(data.questions)
+      // 后端返回的是生成新批次前的 streak，用它校准本地状态，避免多端或重试造成显示偏差。
       gameStore.setAbyssStreak(data.streak)
     } catch (e: any) {
+      // 预加载失败不打断当前答题；真正无题时会在进入下一批时由接口错误兜底提示。
       console.warn('预加载深渊题目失败:', e.message)
     } finally {
       gameStore.prefetching = false
@@ -169,7 +171,7 @@ export function useQuiz() {
 
       return result
     } catch (e: any) {
-      // 即使提交失败也要返回本地计算结果
+      // 结果页是分享链路的终点；提交失败时仍用本地数据生成结果，避免用户丢失本局体验。
       if (isAbyss) {
         const abyssLevel = getAbyssLevelByStreak(gameStore.correctCount)
         const fallback = {

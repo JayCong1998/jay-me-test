@@ -98,18 +98,16 @@
           />
 
           <!-- 反馈栏 -->
-          <Transition name="feedback-enter">
-            <FeedbackBar
-              v-if="showFeedback && lastResult"
-              :correct="lastResult.correct"
-              :correct-option="lastResult.correctOption"
-              :explanation="lastResult.explanation"
-              :can-revive="gameStore.revivalRemaining > 0 && !lastResult.correct"
-              :is-abyss-mode="gameStore.mode === 'ABYSS'"
-              @revive="handleRevive"
-              @next="handleNext"
-            />
-          </Transition>
+          <FeedbackBar
+            v-if="showFeedback && lastResult"
+            :correct="lastResult.correct"
+            :correct-option="lastResult.correctOption"
+            :explanation="lastResult.explanation"
+            :can-revive="gameStore.revivalRemaining > 0 && !lastResult.correct"
+            :is-abyss-mode="gameStore.mode === 'ABYSS'"
+            @revive="handleRevive"
+            @next="handleNext"
+          />
 
           <!-- 提交按钮 -->
           <Transition name="fade">
@@ -217,6 +215,13 @@ async function handleSubmit() {
     const result = isAbyss.value
       ? await submitAbyssAnswer(currentSelected.value)
       : await submitAnswer(currentSelected.value)
+
+    if (!isAbyss.value && gameStore.isLastQuestion) {
+      await finishAndSubmit()
+      router.replace('/result')
+      return
+    }
+
     lastResult.value = result
     showFeedback.value = true
   } catch (e: any) {
@@ -582,16 +587,22 @@ async function handleExit() {
   color: var(--app-text-muted);
   background: rgba(var(--app-surface-rgb), 0.06);
   border: 1px solid var(--app-border);
+  -webkit-tap-highlight-color: transparent;
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+  }
 
   &.btn-ready {
     color: var(--app-text-on-accent);
     background: var(--app-gold-gradient);
     border-color: transparent;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+    box-shadow: none;
 
     &:hover {
       filter: brightness(1.03);
-      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
+      box-shadow: none;
     }
 
     &:active {
@@ -655,23 +666,6 @@ async function handleExit() {
 .question-slide-leave-to {
   opacity: 0;
   transform: translateX(-40px);
-}
-
-.feedback-enter-enter-active {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.feedback-enter-leave-active {
-  transition: all 0.15s ease-in;
-}
-
-.feedback-enter-enter-from {
-  opacity: 0;
-  transform: translateY(30px) scale(0.9);
-}
-
-.feedback-enter-leave-to {
-  opacity: 0;
 }
 
 .fade-enter-active,

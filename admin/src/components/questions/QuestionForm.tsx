@@ -65,7 +65,9 @@ export function QuestionForm({ initial, submitting, onCancel, onSubmit }: Questi
             <span className="text-sm font-medium">分类</span>
             <Select value={form.category} onChange={(event) => patch('category', event.target.value as Question['category'])}>
               <option value="LYRICS">歌词</option>
-              <option value="ALBUM">专辑</option>
+              <option value="WORKS">作品</option>
+              <option value="SCREEN">影视</option>
+              <option value="KNOWLEDGE">知识</option>
             </Select>
           </label>
           <label className="space-y-1.5">

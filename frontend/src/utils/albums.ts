@@ -10,7 +10,7 @@ export interface AlbumInfo {
   gradient: string
 }
 
-/** 15 张录音室专辑（按发行时间排序） */
+/** 16 张录音室专辑（按发行时间排序） */
 export const ALL_ALBUMS: AlbumInfo[] = [
   { key: 'Jay', displayName: 'Jay', year: 2000, gradient: 'linear-gradient(135deg, #2c3e50, #1a1a2e)' },
   { key: '范特西', displayName: '范特西', year: 2001, gradient: 'linear-gradient(135deg, #c0392b, #8b0000)' },
@@ -27,6 +27,7 @@ export const ALL_ALBUMS: AlbumInfo[] = [
   { key: '哎呦不错哦', displayName: '哎呦不错哦', year: 2014, gradient: 'linear-gradient(135deg, #f39c12, #d68910)' },
   { key: '周杰伦的床边故事', displayName: '周杰伦的床边故事', year: 2016, gradient: 'linear-gradient(135deg, #3498db, #1f618d)' },
   { key: '最伟大的作品', displayName: '最伟大的作品', year: 2022, gradient: 'linear-gradient(135deg, #c9a84c, #8b7355)' },
+  { key: '太阳之子', displayName: '太阳之子', year: 2026, gradient: 'linear-gradient(135deg, #f59e0b, #dc2626)' },
 ]
 
 /** 通关门槛：答对 8/10 解锁下一关 */

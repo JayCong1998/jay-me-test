@@ -3,7 +3,7 @@ package com.jaymetest.model.enums;
 import lombok.Getter;
 
 /**
- * 周杰伦 15 张录音室专辑枚举（按发行时间排序）
+ * 周杰伦 16 张录音室专辑枚举（按发行时间排序）
  */
 @Getter
 public enum AlbumKey {
@@ -21,7 +21,8 @@ public enum AlbumKey {
     OPUS_12("12新作", 2012),
     AIYO_NOT_BAD("哎呦不错哦", 2014),
     BEDTIME_STORIES("周杰伦的床边故事", 2016),
-    GREATEST_WORKS("最伟大的作品", 2022);
+    GREATEST_WORKS("最伟大的作品", 2022),
+    SUN_CHILD("太阳之子", 2026);
 
     /** 显示名称 */
     private final String displayName;

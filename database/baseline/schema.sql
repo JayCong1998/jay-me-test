@@ -1,5 +1,9 @@
 -- ============================================
 -- 杰迷结业考试 数据库初始化 DDL (MySQL 8.0+)
+-- 用途：从零创建本地基础库表结构
+-- 前置条件：MySQL 8.0+，当前用户具备 CREATE DATABASE / CREATE TABLE 权限
+-- 影响表：question, user, game_record, album_progress
+-- 幂等性：表使用 IF NOT EXISTS；函数索引重复执行可能失败，已建库环境不要反复执行本文件
 -- ============================================
 
 CREATE DATABASE IF NOT EXISTS jaymetest
@@ -13,7 +17,7 @@ USE jaymetest;
 -- ============================================
 CREATE TABLE IF NOT EXISTS question (
     id             BIGINT PRIMARY KEY AUTO_INCREMENT,
-    category       VARCHAR(20) NOT NULL COMMENT '分类: LYRICS | ALBUM',
+    category       VARCHAR(20) NOT NULL COMMENT '分类: LYRICS | WORKS | SCREEN | KNOWLEDGE',
     album          VARCHAR(50) NULL     COMMENT '所属专辑（中文名），跨专辑/NULL=不纳入专辑模式抽题',
     difficulty     VARCHAR(20) NOT NULL COMMENT '难度: EASY | MEDIUM | HARD',
     question_text  TEXT        NOT NULL COMMENT '题目正文',
@@ -25,7 +29,7 @@ CREATE TABLE IF NOT EXISTS question (
     explanation    TEXT        NOT NULL COMMENT '答案解析',
     created_at     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT chk_category     CHECK (category IN ('LYRICS', 'ALBUM')),
+    CONSTRAINT chk_category     CHECK (category IN ('LYRICS', 'WORKS', 'SCREEN', 'KNOWLEDGE')),
     CONSTRAINT chk_difficulty   CHECK (difficulty IN ('EASY', 'MEDIUM', 'HARD')),
     CONSTRAINT chk_correct_opt  CHECK (correct_option IN ('A', 'B', 'C', 'D')),
     INDEX idx_q_category (category),

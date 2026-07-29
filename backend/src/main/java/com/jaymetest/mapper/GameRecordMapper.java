@@ -2,6 +2,7 @@ package com.jaymetest.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.jaymetest.model.entity.GameRecord;
+import com.jaymetest.model.enums.AlbumKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -185,6 +186,11 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
                                                             @Param("offset") int offset,
                                                             @Param("classicMode") String classicMode);
 
+    /**
+     * 经典榜只统计登录用户，并先在用户维度取最佳记录。
+     *
+     * <p>排序稳定性很重要：同分同用时再按创建时间和 user_id 排，避免翻页时排名抖动。</p>
+     */
     @Select("""
             SELECT ranked.`rank`
             FROM (
@@ -208,6 +214,11 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
             """)
     Long selectMyClassicRank(@Param("userId") long userId, @Param("classicMode") String classicMode);
 
+    /**
+     * 专辑榜统计“已通关专辑数”，每个用户每张专辑只取一次最佳通关记录。
+     *
+     * <p>completionScore 来自 {@link AlbumKey#UNLOCK_THRESHOLD}，保持排行榜口径和解锁规则一致。</p>
+     */
     @Select("""
             SELECT ranked.`rank`, ranked.nickname,
                    ranked.completedAlbumCount AS completedAlbumCount,
@@ -252,11 +263,14 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
             ORDER BY ranked.`rank`
             LIMIT #{limit} OFFSET #{offset}
             """)
-    List<Map<String, Object>> selectAlbumLeaderboardPaged(@Param("limit") int limit,
+            List<Map<String, Object>> selectAlbumLeaderboardPaged(@Param("limit") int limit,
                                                           @Param("offset") int offset,
                                                           @Param("albumMode") String albumMode,
                                                           @Param("completionScore") int completionScore);
 
+    /**
+     * 当前用户专辑榜排名和列表 SQL 使用同一套聚合口径，避免“榜上排名”和“我的排名”不一致。
+     */
     @Select("""
             SELECT ranked.`rank`
             FROM (
@@ -295,6 +309,9 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
                            @Param("albumMode") String albumMode,
                            @Param("completionScore") int completionScore);
 
+    /**
+     * 深渊榜以连续答对数为主排序，用时只作为同 streak 的 tie-breaker。
+     */
     @Select("""
             SELECT ranked.`rank`
             FROM (

@@ -44,7 +44,7 @@ public class StatsService {
      * 提交游戏结果 — 模式差异完全委托给策略。
      */
     public GameResultDTO submitResult(GameSubmitRequest request) {
-        // 去重检查
+        // roundId 是服务端生成的回合凭证，先去重可以挡住刷新页面或重复请求造成的二次入榜。
         GameRecord existing = gameRecordMapper.selectOne(
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<GameRecord>()
                         .eq(GameRecord::getRoundId, request.getRoundId()));
@@ -67,14 +67,14 @@ public class StatsService {
         double accuracy = totalQuestions > 0 ? (double) correctCount / totalQuestions : 0.0;
         LevelInfo levelInfo = strategy.evaluateLevel(correctCount);
 
-        // 用户身份
+        // 提交成绩对游客开放；拿不到登录态时保留匿名记录，不影响经典模式分享链路。
         Long userId = null;
         try {
             userId = StpUtil.getLoginIdAsLong();
         } catch (Exception ignored) {
-            // 游客
         }
 
+        // 深渊模式没有复活规则，强制归零避免前端旧状态污染记录。
         int usedRevival = mode == GameMode.ABYSS
                 ? 0
                 : (Integer.valueOf(1).equals(request.getUsedRevival()) ? 1 : 0);
@@ -94,7 +94,7 @@ public class StatsService {
         record.setCreatedAt(createdAt);
         gameRecordMapper.insert(record);
 
-        // 百分位
+        // 百分位只比较答对数，保留 99.99 上限避免展示成“超过 100% 玩家”。
         long totalPlayers = gameRecordMapper.countTotal();
         long lowerCount = gameRecordMapper.countByCorrectCountLessThan(correctCount);
         double beatPercentage = totalPlayers > 0

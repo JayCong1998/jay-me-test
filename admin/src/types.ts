@@ -35,7 +35,7 @@ export interface DashboardOverview {
 
 export interface Question {
   id?: number
-  category: 'LYRICS' | 'ALBUM'
+  category: 'LYRICS' | 'WORKS' | 'SCREEN' | 'KNOWLEDGE'
   album?: string | null
   difficulty: 'EASY' | 'MEDIUM' | 'HARD'
   questionText: string

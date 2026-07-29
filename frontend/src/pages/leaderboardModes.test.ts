@@ -33,6 +33,12 @@ describe('leaderboard mode tabs', () => {
     expect(pageSource).toContain('loadData()')
   })
 
+  it('refreshes leaderboard data when the cached tab is re-entered', () => {
+    expect(pageSource).toContain('onActivated')
+    expect(pageSource).toContain('onActivated(() => {')
+    expect(pageSource).toContain('loadData()')
+  })
+
   it('narrows the api type to the three modes and exposes detail fields', () => {
     expect(apiSource).toContain("type: LeaderboardType = 'classic'")
     expect(apiSource).toContain("'classic' | 'album' | 'abyss'")

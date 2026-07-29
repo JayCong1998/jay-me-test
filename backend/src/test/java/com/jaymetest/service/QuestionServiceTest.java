@@ -53,7 +53,7 @@ class QuestionServiceTest {
         for (int i = 1; i <= 10; i++) {
             Question q = new Question();
             q.setId((long) i);
-            q.setCategory(i <= 6 ? "LYRICS" : "ALBUM");
+            q.setCategory(i <= 6 ? "LYRICS" : "WORKS");
             q.setDifficulty(i <= 6 ? "EASY" : "MEDIUM");
             q.setQuestionText("Test question " + i);
             q.setOptionA("Option A");

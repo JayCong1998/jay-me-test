@@ -177,9 +177,9 @@ backend/
     │   ├── dto/                               # 请求/响应 DTO (~20 个类)
     │   └── enums/
     │       ├── FanLevel.java                  # 5 级杰迷等级
-    │       ├── QuestionCategory.java          # LYRICS | ALBUM
-    │       ├── DifficultyLevel.java           # EASY | MEDIUM
-    │       └── AlbumKey.java                  # 15 张专辑枚举
+    │       ├── QuestionCategory.java          # LYRICS | WORKS | SCREEN | KNOWLEDGE
+    │       ├── DifficultyLevel.java           # EASY | MEDIUM | HARD
+    │       └── AlbumKey.java                  # 16 张专辑枚举
     └── exception/
         ├── GlobalExceptionHandler.java
         └── BusinessException.java
@@ -247,9 +247,9 @@ frontend/
 -- 题目表
 CREATE TABLE IF NOT EXISTS question (
     id             BIGINT PRIMARY KEY AUTO_INCREMENT,
-    category       VARCHAR(20) NOT NULL COMMENT '分类: LYRICS | ALBUM',
+    category       VARCHAR(20) NOT NULL COMMENT '分类: LYRICS | WORKS | SCREEN | KNOWLEDGE',
     album          VARCHAR(50) NULL     COMMENT '所属专辑 (NULL=跨专辑通用)',
-    difficulty     VARCHAR(20) NOT NULL COMMENT '难度: EASY | MEDIUM',
+    difficulty     VARCHAR(20) NOT NULL COMMENT '难度: EASY | MEDIUM | HARD',
     question_text  TEXT        NOT NULL COMMENT '题目正文',
     option_a       TEXT        NOT NULL,
     option_b       TEXT        NOT NULL,
@@ -259,8 +259,8 @@ CREATE TABLE IF NOT EXISTS question (
     explanation    TEXT        NOT NULL COMMENT '答案解析',
     created_at     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT chk_category     CHECK (category IN ('LYRICS', 'ALBUM')),
-    CONSTRAINT chk_difficulty   CHECK (difficulty IN ('EASY', 'MEDIUM')),
+    CONSTRAINT chk_category     CHECK (category IN ('LYRICS', 'WORKS', 'SCREEN', 'KNOWLEDGE')),
+    CONSTRAINT chk_difficulty   CHECK (difficulty IN ('EASY', 'MEDIUM', 'HARD')),
     CONSTRAINT chk_correct_opt  CHECK (correct_option IN ('A', 'B', 'C', 'D'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -604,7 +604,7 @@ TTL：30 分钟
 
 ```
 getAlbumList(userId):
-  1. 从 AlbumKey 枚举遍历全部 15 张专辑
+  1. 从 AlbumKey 枚举遍历全部 16 张专辑
   2. 查询 album_progress WHERE user_id = #{userId} AND album_key = #{key}
   3. 首张专辑 (JAY) 无记录则自动创建 (unlocked=1)
   4. 组装 AlbumDTO 返回

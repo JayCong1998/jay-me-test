@@ -15,7 +15,7 @@ export interface Question {
 export type GamePhase = 'idle' | 'playing' | 'finished'
 
 export const useGameStore = defineStore('game', () => {
-  // --- State ---
+  // 答题状态仅保存在内存中，刷新后必须重新开局，避免 roundId 与后端缓存生命周期错位。
   const roundId = ref<string | null>(null)
   const questions = ref<Question[]>([])
   const currentIndex = ref(0)
@@ -29,7 +29,7 @@ export const useGameStore = defineStore('game', () => {
   const mode = ref<GameMode>('CLASSIC')
   const albumKey = ref<string | null>(null)
 
-  // 深渊模式专用
+  // 深渊模式没有固定题量，需要记录 streak 和预加载状态来支撑“无限批次”体验。
   const abyssStreak = ref(0)
   const prefetching = ref(false)
 
@@ -84,7 +84,7 @@ export const useGameStore = defineStore('game', () => {
   function useRevival() {
     if (revivalRemaining.value > 0) {
       revivalRemaining.value--
-      // 清除当前题的答题记录以便重答
+      // 复活只允许重答当前题，清理本地记录即可；正确答案仍只存在后端 round 缓存里。
       answers.value.delete(currentIndex.value)
       results.value.delete(currentIndex.value)
       return true

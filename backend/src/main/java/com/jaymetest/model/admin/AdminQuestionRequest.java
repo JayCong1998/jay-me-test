@@ -8,7 +8,7 @@ import lombok.Data;
 public class AdminQuestionRequest {
 
     @NotBlank
-    @Pattern(regexp = "LYRICS|ALBUM")
+    @Pattern(regexp = "LYRICS|WORKS|SCREEN|KNOWLEDGE")
     private String category;
 
     private String album;

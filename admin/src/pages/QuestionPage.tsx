@@ -68,7 +68,9 @@ export function QuestionPage() {
           <Select value={category} onChange={(event) => setCategory(event.target.value)}>
             <option value="">全部分类</option>
             <option value="LYRICS">歌词</option>
-            <option value="ALBUM">专辑</option>
+            <option value="WORKS">作品</option>
+            <option value="SCREEN">影视</option>
+            <option value="KNOWLEDGE">知识</option>
           </Select>
           <Select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}>
             <option value="">全部难度</option>

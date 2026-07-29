@@ -20,7 +20,7 @@ const client: AxiosInstance = axios.create({
   },
 })
 
-// Request interceptor: attach current user token when available.
+// 直接从 localStorage 读取 token，避免 Pinia 尚未初始化时首个接口漏带登录态。
 client.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     try {
@@ -32,14 +32,14 @@ client.interceptors.request.use(
         }
       }
     } catch {
-      // ignore storage parsing failures
+      // 本地缓存损坏时忽略本次 token 注入，响应拦截器会统一处理登录过期。
     }
     return config
   },
   (error: AxiosError) => Promise.reject(error),
 )
 
-// Response interceptor: unwrap business errors and centralize auth expiry.
+// 统一处理业务错误和登录过期，让页面代码只关心成功数据和明确异常。
 client.interceptors.response.use(
   (response) => {
     const { data } = response
@@ -67,6 +67,7 @@ client.interceptors.response.use(
       if (!authExpiredToastShown) {
         authExpiredToastShown = true
         showToast('登录已过期，请重新登录')
+        // 多个接口同时 401 时只提示一次，防止 toast 连续刷屏。
         window.setTimeout(() => {
           authExpiredToastShown = false
         }, 2000)

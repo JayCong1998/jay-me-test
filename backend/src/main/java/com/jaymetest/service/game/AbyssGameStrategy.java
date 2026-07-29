@@ -82,6 +82,7 @@ public class AbyssGameStrategy implements GameStrategy {
         for (int i = 0; i < BATCH_SIZE; i++) {
             DifficultySelection selection = difficultyPolicy.select(startStreak + i);
             Question q = selectRandomExcluding(selection, cache.getUsedQuestionIds());
+            // 指定难度题库耗尽时降级到全题库兜底，保证深渊模式不会被单一难度库存卡死。
             if (q == null && selection != DifficultySelection.ANY) {
                 q = selectRandomExcluding(DifficultySelection.ANY, cache.getUsedQuestionIds());
             }
@@ -144,6 +145,7 @@ public class AbyssGameStrategy implements GameStrategy {
         if (excludeIds != null && !excludeIds.isEmpty()) {
             wrapper.notIn(Question::getId, excludeIds);
         }
+        // 当前题库规模较小，RAND() 可接受；题量明显增长后应改成预抽样或随机 id 窗口。
         wrapper.last("ORDER BY RAND() LIMIT 1");
         List<Question> candidates = questionMapper.selectList(wrapper);
         return candidates.isEmpty() ? null : candidates.get(0);

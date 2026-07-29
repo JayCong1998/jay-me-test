@@ -19,7 +19,7 @@ public class Question implements Serializable {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /** 分类: LYRICS | ALBUM */
+    /** 分类: LYRICS | WORKS | SCREEN | KNOWLEDGE */
     private String category;
 
     /** 所属专辑 (NULL = 跨专辑通用) */

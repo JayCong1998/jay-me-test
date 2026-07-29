@@ -7,8 +7,10 @@ import lombok.Getter;
  */
 @Getter
 public enum QuestionCategory {
-    LYRICS("歌词类"),
-    ALBUM("专辑归属类");
+    LYRICS("歌词"),
+    WORKS("作品"),
+    SCREEN("影视"),
+    KNOWLEDGE("知识");
 
     private final String description;
 

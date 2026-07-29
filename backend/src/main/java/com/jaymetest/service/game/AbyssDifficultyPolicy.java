@@ -32,6 +32,7 @@ public class AbyssDifficultyPolicy {
                 return lastSelection;
             }
         }
+        // 权重小数相加可能出现 0.999999 这类精度尾差，落到最后一个选项比直接失败更符合配置语义。
         return lastSelection;
     }
 }

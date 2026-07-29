@@ -62,6 +62,8 @@ app:
 game:
   abyss:
     difficulty:
+      # from/to 按当前连续答对数匹配；最后一档不写 to，表示覆盖 30+。
+      # weights 是随机抽题权重，ANY 表示不限难度，用于后期增加变化和题库兜底。
       tiers:
         - from: 0
           to: 2

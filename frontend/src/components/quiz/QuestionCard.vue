@@ -69,7 +69,12 @@ const emit = defineEmits<{
 }>()
 
 const difficultyMap: Record<string, string> = { EASY: '简单', MEDIUM: '中等', HARD: '困难' }
-const categoryMap: Record<string, string> = { LYRICS: '歌词类', ALBUM: '专辑归属' }
+const categoryMap: Record<string, string> = {
+  LYRICS: '歌词',
+  WORKS: '作品',
+  SCREEN: '影视',
+  KNOWLEDGE: '知识',
+}
 const difficultyLabel = difficultyMap[props.question.difficulty] || props.question.difficulty
 const categoryLabel = categoryMap[props.question.category] || props.question.category
 
@@ -163,7 +168,7 @@ function handleClick(letter: string) {
   border: 1.5px solid var(--app-border);
   border-radius: 14px;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
   text-align: left;
   font-family: inherit;
   min-height: 48px;
@@ -172,7 +177,6 @@ function handleClick(letter: string) {
   &:hover:not(.option-disabled) {
     background: var(--app-bg-card-hover);
     border-color: rgba(var(--app-accent-rgb), 0.25);
-    transform: translateX(4px);
   }
 
   &:active:not(.option-disabled) {
@@ -182,16 +186,10 @@ function handleClick(letter: string) {
   &.option-selected {
     border-color: var(--app-gold);
     background: rgba(var(--app-accent-rgb), 0.1);
-    box-shadow: 0 0 20px rgba(var(--app-accent-rgb), 0.1);
-
-    &:hover {
-      transform: translateX(4px);
-    }
   }
 
   &.option-disabled {
     pointer-events: none;
-    opacity: 0.55;
   }
 }
 

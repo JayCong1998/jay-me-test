@@ -137,7 +137,7 @@
 <script setup lang="ts">
 defineOptions({ name: 'LeaderboardPage' })
 
-import { ref, computed, watch } from 'vue'
+import { ref, computed, onActivated, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import * as leaderboardApi from '@/api/leaderboardApi'
@@ -186,6 +186,8 @@ const {
 const visibleRankList = computed(() =>
   allEntries.value.length >= 3 ? allEntries.value.slice(3) : allEntries.value
 )
+
+let hasActivated = false
 
 function formatScore(entry: LeaderboardEntry): string {
   if (activeTab.value === 'album') {
@@ -266,6 +268,14 @@ watch(
   },
   { immediate: true }
 )
+
+onActivated(() => {
+  if (!hasActivated) {
+    hasActivated = true
+    return
+  }
+  loadData()
+})
 </script>
 
 <style scoped lang="scss">

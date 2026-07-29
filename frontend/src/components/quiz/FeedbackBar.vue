@@ -1,32 +1,33 @@
 <template>
   <div class="feedback-bar" :class="correct ? 'feedback-correct' : 'feedback-wrong'">
-    <!-- 图标动画 -->
-    <div class="feedback-icon-wrap">
+    <div class="feedback-summary">
       <div class="feedback-icon-circle" :class="correct ? 'icon-correct' : 'icon-wrong'">
-        <!-- 正确勾号 -->
         <svg v-if="correct" class="feedback-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12" />
         </svg>
-        <!-- 错误叉号 -->
         <svg v-else class="feedback-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </div>
+      <div>
+        <p class="feedback-result">{{ correct ? '回答正确' : '回答错误' }}</p>
+        <p v-if="!correct" class="feedback-answer">正确答案 <strong>{{ correctOption }}</strong></p>
+      </div>
     </div>
 
-    <!-- 结果文字 -->
-    <div class="feedback-info">
-      <p class="feedback-result">{{ correct ? '回答正确！' : '回答错误' }}</p>
+    <button
+      v-if="explanation && !showExplanation"
+      class="btn-explanation"
+      type="button"
+      @click="showExplanation = true"
+    >
+      查看解析
+    </button>
 
-      <div v-if="!correct" class="feedback-answer-block">
-        <span class="answer-label">正确答案</span>
-        <span class="answer-value">{{ correctOption }}</span>
-      </div>
-
-      <p v-if="explanation" class="feedback-explain">
+    <p v-if="explanation && showExplanation" class="feedback-explain">
         <svg class="explain-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10" />
@@ -34,15 +35,16 @@
           <line x1="12" y1="8" x2="12.01" y2="8" />
         </svg>
         {{ explanation }}
-      </p>
-    </div>
+    </p>
 
-    <!-- 操作按钮 -->
-    <div class="feedback-actions">
-      <!-- 复活按钮（深渊模式不显示） -->
+    <div
+      class="feedback-actions"
+      :class="{ 'feedback-actions--split': canRevive && !correct && !isAbyssMode }"
+    >
       <button
         v-if="canRevive && !correct && !isAbyssMode"
         class="btn-revive"
+        type="button"
         @click="$emit('revive')"
       >
         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -53,9 +55,9 @@
         使用复活（{{ 1 }}次）
       </button>
 
-      <!-- 下一题 / 深渊模式按钮 -->
       <button
         class="btn-next"
+        type="button"
         :class="{ 'btn-abyss-fall': isAbyssMode && !correct }"
         @click="$emit('next')"
       >
@@ -78,6 +80,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
 defineProps<{
   correct: boolean
   correctOption: string
@@ -90,15 +94,17 @@ defineEmits<{
   revive: []
   next: []
 }>()
+
+const showExplanation = ref(false)
 </script>
 
 <style scoped lang="scss">
 /* ======== 容器 ======== */
 .feedback-bar {
   margin-top: auto;
-  padding: 16px 16px;
-  border-radius: 20px;
-  animation: feedback-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  padding: 16px;
+  border-radius: 14px;
+  animation: feedback-fade-in 0.18s ease-out;
 
   &.feedback-correct {
     background: rgba(34, 197, 94, 0.06);
@@ -111,21 +117,26 @@ defineEmits<{
   }
 }
 
-/* ======== 图标 ======== */
-.feedback-icon-wrap {
+.feedback-summary {
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.feedback-summary > div:last-child {
+  text-align: center;
 }
 
 .feedback-icon-circle {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: icon-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+  flex-shrink: 0;
 
   &.icon-correct {
     background: rgba(34, 197, 94, 0.15);
@@ -139,51 +150,55 @@ defineEmits<{
 }
 
 .feedback-svg {
-  width: 22px;
-  height: 22px;
-}
-
-/* ======== 文字 ======== */
-.feedback-info {
-  text-align: center;
-  margin-bottom: 14px;
+  width: 20px;
+  height: 20px;
 }
 
 .feedback-result {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--app-text-primary);
-  margin-bottom: 8px;
+  line-height: 1.3;
 }
 
-.feedback-answer-block {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
-  border-radius: 8px;
-  background: rgba(var(--app-accent-rgb), 0.1);
-  border: 1px solid rgba(var(--app-accent-rgb), 0.2);
-  margin-bottom: 12px;
+.feedback-answer {
+  margin-top: 2px;
+  color: var(--app-text-secondary);
+  font-size: 13px;
+  line-height: 1.3;
 
-  .answer-label {
-    font-size: 12px;
-    color: var(--app-text-muted);
-  }
-
-  .answer-value {
-    font-family: var(--app-font-display), sans-serif;
-    font-size: 18px;
-    font-weight: 700;
+  strong {
     color: var(--app-gold);
+    font-family: var(--app-font-display), sans-serif;
+    font-size: 16px;
+  }
+}
+
+.btn-explanation {
+  width: 100%;
+  min-height: 30px;
+  margin-bottom: 8px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--app-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+
+  &:hover {
+    background: rgba(var(--app-surface-rgb), 0.06);
   }
 }
 
 .feedback-explain {
-  font-size: 13px;
+  margin-bottom: 8px;
+  font-size: 12px;
   color: var(--app-text-secondary);
   line-height: 1.65;
-  padding: 0 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(var(--app-surface-rgb), 0.04);
   display: flex;
   align-items: flex-start;
   gap: 6px;
@@ -198,11 +213,14 @@ defineEmits<{
   }
 }
 
-/* ======== 按钮 ======== */
 .feedback-actions {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+}
+
+.feedback-actions--split {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .btn-revive {
@@ -210,17 +228,17 @@ defineEmits<{
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
+  min-width: 0;
   height: 44px;
   border: 1.5px solid rgba(234, 179, 8, 0.3);
   border-radius: 12px;
   background: rgba(234, 179, 8, 0.08);
   color: var(--app-warning);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.25s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
 
   .btn-icon {
     width: 18px;
@@ -232,9 +250,6 @@ defineEmits<{
     border-color: rgba(234, 179, 8, 0.5);
   }
 
-  &:active {
-    transform: scale(0.97);
-  }
 }
 
 .btn-next {
@@ -242,70 +257,49 @@ defineEmits<{
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
+  min-width: 0;
   height: 44px;
   border: none;
   border-radius: 12px;
   background: var(--app-gold-gradient);
   color: var(--app-text-on-accent);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 4px 16px rgba(var(--app-accent-rgb), 0.3);
-  transition: all 0.25s ease;
+  box-shadow: none;
+  transition: filter 0.18s ease;
 
   svg {
     width: 18px;
     height: 18px;
-    transition: transform 0.25s ease;
+    transition: none;
   }
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(var(--app-accent-rgb), 0.45);
-
-    svg {
-      transform: translateX(3px);
-    }
-  }
-
-  &:active {
-    transform: scale(0.97);
+    filter: brightness(1.03);
   }
 
   /* 深渊模式答错：堕入深渊按钮 */
   &.btn-abyss-fall {
     background: linear-gradient(135deg, #7c3aed 0%, #dc2626 100%);
     color: #fff;
-    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+    box-shadow: none;
 
     &:hover {
-      box-shadow: 0 6px 28px rgba(220, 38, 38, 0.5);
+      box-shadow: none;
     }
   }
 }
 
-/* ======== 动画 ======== */
-@keyframes feedback-enter {
+@keyframes feedback-fade-in {
   from {
     opacity: 0;
-    transform: translateY(24px) scale(0.95);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes icon-pop {
-  from {
-    opacity: 0;
-    transform: scale(0);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 }
 </style>

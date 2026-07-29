@@ -24,6 +24,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
     /** 注册 Sa-Token 拦截器（注解模式：仅 @SaCheckLogin / @SaCheckRole 等方法校验登录） */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 后台使用独立 StpLogic，必须先于普通 /api/** 拦截器注册，避免 admin token 被用户态逻辑误判。
         registry.addInterceptor(new SaInterceptor(handle -> AdminStpUtil.checkLogin()))
                 .addPathPatterns("/api/admin/**")
                 .excludePathPatterns("/api/admin/auth/login");

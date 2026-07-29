@@ -10,5 +10,14 @@ describe('quiz submit button style', () => {
 
     expect(readyBlock).not.toContain('rgba(var(--app-accent-rgb)')
     expect(readyBlock).not.toContain('translateY(-2px)')
+    expect(readyBlock).toContain('box-shadow: none')
+    expect(readyBlock).not.toContain('0 2px 8px')
+    expect(readyBlock).not.toContain('0 3px 10px')
+  })
+
+  it('suppresses the global focus outline for the fixed bottom submit button', () => {
+    expect(quizSource).toContain('&:focus,')
+    expect(quizSource).toContain('&:focus-visible')
+    expect(quizSource).toContain('outline: none')
   })
 })
