@@ -60,7 +60,16 @@ app:
 
 # 深渊模式难度阶梯配置
 game:
+  classic:
+    question-count: 10
+    revival-count: 1
+    easy-weight: 0.6
+  album:
+    question-count: 10
+    pass-threshold: 8
+    revival-count: 0
   abyss:
+    batch-size: 5
     difficulty:
       # from/to 按当前连续答对数匹配；最后一档不写 to，表示覆盖 30+。
       # weights 是随机抽题权重，ANY 表示不限难度，用于后期增加变化和题库兜底。

@@ -1,7 +1,6 @@
 package com.jaymetest.service.game;
 
 import com.jaymetest.model.dto.GameResultDTO;
-import com.jaymetest.model.dto.GameSubmitRequest;
 
 /**
  * 游戏提交后置处理钩子。
@@ -16,9 +15,10 @@ public interface PostSubmitHook {
      * 在游戏结果已计算、GameResultDTO 构建完成前执行。
      * 可通过 builder 追加模式特有字段（如 albumResult）。
      *
-     * @param request 提交请求
+     * @param albumKey 服务端 Round 中的专辑标识
+     * @param correctCount 服务端校验得到的正确数
      * @param builder GameResultDTO 构建器（已填充通用字段）
      * @param userId  登录用户 ID（游客为 null）
      */
-    void afterSubmit(GameSubmitRequest request, GameResultDTO.GameResultDTOBuilder builder, Long userId);
+    void afterSubmit(String albumKey, int correctCount, GameResultDTO.GameResultDTOBuilder builder, Long userId);
 }

@@ -39,10 +39,8 @@ export interface ReviveResult {
 /**
  * 获取一局题目
  */
-export async function fetchRound(count = 10): Promise<RoundData> {
-  const res = await client.get<R<RoundData>>('/questions/round', {
-    params: { count },
-  })
+export async function fetchRound(): Promise<RoundData> {
+  const res = await client.get<R<RoundData>>('/questions/round')
   return res.data.data
 }
 

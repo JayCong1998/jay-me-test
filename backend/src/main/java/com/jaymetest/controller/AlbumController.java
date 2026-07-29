@@ -37,12 +37,11 @@ public class AlbumController {
 
     @Operation(summary = "获取专辑关卡题目")
     @GetMapping("/round")
-    public R<RoundDTO> getAlbumRound(@RequestParam String albumKey,
-                                      @RequestParam(defaultValue = "10") int count) {
+    public R<RoundDTO> getAlbumRound(@RequestParam String albumKey) {
         long userId = StpUtil.getLoginIdAsLong();
         albumProgressService.canAccessAlbum(userId, albumKey);
         RoundDTO round = questionService.album()
-                .generateRound(count, albumKey, questionService.cacheManager());
+                .generateRound(albumKey, questionService.cacheManager());
         return R.ok(round);
     }
 }

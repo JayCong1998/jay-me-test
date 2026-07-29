@@ -1,6 +1,7 @@
 package com.jaymetest.service.game;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.jaymetest.config.GameRuleProperties;
 import com.jaymetest.exception.BusinessException;
 import com.jaymetest.mapper.QuestionMapper;
 import com.jaymetest.model.dto.AbyssStepDTO;
@@ -29,10 +30,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AbyssGameStrategy implements GameStrategy {
 
-    private static final int BATCH_SIZE = 5;
-
     private final QuestionMapper questionMapper;
     private final AbyssDifficultyPolicy difficultyPolicy;
+    private final GameRuleProperties gameRules;
 
     @Override
     public GameMode getMode() {
@@ -79,7 +79,7 @@ public class AbyssGameStrategy implements GameStrategy {
 
     private List<Question> generateQuestions(int startStreak, GameRoundCache cache) {
         List<Question> questions = new ArrayList<>();
-        for (int i = 0; i < BATCH_SIZE; i++) {
+        for (int i = 0; i < gameRules.getAbyss().getBatchSize(); i++) {
             DifficultySelection selection = difficultyPolicy.select(startStreak + i);
             Question q = selectRandomExcluding(selection, cache.getUsedQuestionIds());
             // 指定难度题库耗尽时降级到全题库兜底，保证深渊模式不会被单一难度库存卡死。
@@ -108,6 +108,7 @@ public class AbyssGameStrategy implements GameStrategy {
         }
 
         boolean correct = correctOption.equalsIgnoreCase(selectedOption.trim().toUpperCase());
+        cache.recordAnswer(questionId, correct);
         Question question = questionMapper.selectById(questionId);
 
         // 答对时自动递增 streak

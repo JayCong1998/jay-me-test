@@ -1,6 +1,7 @@
 package com.jaymetest.service.game;
 
 import com.jaymetest.exception.BusinessException;
+import com.jaymetest.config.GameRuleProperties;
 import com.jaymetest.mapper.QuestionMapper;
 import com.jaymetest.model.dto.AnswerResultDTO;
 import com.jaymetest.model.dto.QuestionDTO;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 public class ClassicGameStrategy implements GameStrategy {
 
     private final QuestionMapper questionMapper;
+    private final GameRuleProperties gameRules;
 
     @Override
     public GameMode getMode() {
@@ -36,9 +38,14 @@ public class ClassicGameStrategy implements GameStrategy {
     }
 
     @Override
-    public RoundDTO generateRound(int count, String albumKey, RoundCacheManager cacheManager) {
+    public RoundDTO generateRound(int ignoredCount, String albumKey, RoundCacheManager cacheManager) {
+        return generateRound(albumKey, cacheManager);
+    }
+
+    public RoundDTO generateRound(String albumKey, RoundCacheManager cacheManager) {
+        int count = gameRules.getClassic().getQuestionCount();
         // 60% 简单 + 40% 中等
-        int easyCount = (int) Math.round(count * 0.6);
+        int easyCount = (int) Math.round(count * gameRules.getClassic().getEasyWeight());
         int mediumCount = count - easyCount;
 
         List<Question> easyQuestions = questionMapper.selectRandomByDifficulty(
@@ -58,7 +65,7 @@ public class ClassicGameStrategy implements GameStrategy {
         // 构建答案缓存
         Map<Long, String> answerMap = finalQuestions.stream()
                 .collect(Collectors.toMap(Question::getId, Question::getCorrectOption));
-        cacheManager.put(roundId, new GameRoundCache(answerMap));
+        cacheManager.put(roundId, new GameRoundCache(GameMode.CLASSIC, null, answerMap));
 
         // 组装 DTO
         List<QuestionDTO> questionDTOs = QuestionAssembler.toDTOList(finalQuestions);
@@ -81,6 +88,7 @@ public class ClassicGameStrategy implements GameStrategy {
         }
 
         boolean correct = correctOption.equalsIgnoreCase(selectedOption.trim().toUpperCase());
+        cache.recordAnswer(questionId, correct);
         Question question = questionMapper.selectById(questionId);
 
         return AnswerResultDTO.builder()
@@ -98,10 +106,14 @@ public class ClassicGameStrategy implements GameStrategy {
     @Override
     public String revive(String roundId, Long questionId, RoundCacheManager cacheManager) {
         GameRoundCache cache = cacheManager.getOrThrow(roundId);
+        if (cache.getRevivalUsed() >= gameRules.getClassic().getRevivalCount()) {
+            throw new BusinessException(409, "本局复活机会已用完");
+        }
         String correctOption = cache.getAnswerMap().get(questionId);
         if (correctOption == null) {
             throw new BusinessException(404, "题目不存在于该回合中");
         }
+        cache.resetAnswerForRevival(questionId);
         return correctOption;
     }
 

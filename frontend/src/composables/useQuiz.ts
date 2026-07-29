@@ -18,7 +18,7 @@ export function useQuiz() {
    */
   async function startNewRound() {
     try {
-      const data = await questionApi.fetchRound(10)
+      const data = await questionApi.fetchRound()
       gameStore.startGame(data.roundId, data.questions)
       return true
     } catch (e: any) {
@@ -31,7 +31,7 @@ export function useQuiz() {
    */
   async function startAlbumRound(albumKey: string) {
     try {
-      const data = await albumApi.fetchAlbumRound(albumKey, 10)
+      const data = await albumApi.fetchAlbumRound(albumKey)
       gameStore.startGame(data.roundId, data.questions, albumKey)
       return true
     } catch (e: any) {
@@ -151,19 +151,10 @@ export function useQuiz() {
         ? authStore.user!.nickname
         : generateGuestNickname()
 
-      const totalQuestions = isAbyss
-        ? gameStore.answers.size  // 深渊模式：已答总题数 = streak + 1（含答错那题）
-        : gameStore.totalQuestions
-
       const result = await statsApi.submitResult({
         roundId: gameStore.roundId!,
-        correctCount: gameStore.correctCount,
         timeSpentSecs: gameStore.elapsedSeconds,
-        usedRevival: gameStore.revivalRemaining === 0 ? 1 : 0,
         nickname,
-        mode: gameStore.mode,
-        albumKey: gameStore.albumKey || undefined,
-        totalQuestions,
       })
 
       // 保存 API 结果到 gameStore，供结果页使用

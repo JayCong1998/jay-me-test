@@ -15,6 +15,8 @@ import com.jaymetest.service.game.GameStrategyFactory;
 import com.jaymetest.service.game.GameRecordDTOAssembler;
 import com.jaymetest.service.game.LevelInfo;
 import com.jaymetest.service.game.PostSubmitHook;
+import com.jaymetest.service.game.RoundCacheManager;
+import com.jaymetest.service.game.GameRoundCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,7 @@ public class StatsService {
     private final GameRecordMapper gameRecordMapper;
     private final GameStrategyFactory strategyFactory;
     private final GameRecordDTOAssembler gameRecordDTOAssembler;
+    private final RoundCacheManager roundCacheManager;
 
     /**
      * 提交游戏结果 — 模式差异完全委托给策略。
@@ -52,15 +55,16 @@ public class StatsService {
             throw new BusinessException(400, "该 roundId 已提交过结果");
         }
 
-        // 模式由请求 DTO 强类型校验，不允许缺省或降级。
-        GameMode mode = request.getMode();
-        if (mode == null || !request.isAlbumKeyValid()) {
-            throw new BusinessException(400, "mode 与 albumKey 不匹配");
-        }
+        GameRoundCache round = roundCacheManager.getOrThrow(request.getRoundId());
+        GameMode mode = round.getMode();
         GameStrategy strategy = strategyFactory.get(mode);
-
-        int totalQuestions = request.getTotalQuestions() != null ? request.getTotalQuestions() : 10;
-        int correctCount = request.getCorrectCount();
+        int totalQuestions = mode == GameMode.ABYSS
+                ? round.getAnsweredCount()
+                : round.getAnswerMap().size();
+        int correctCount = round.getCorrectCount();
+        if (mode != GameMode.ABYSS && round.getAnsweredCount() != totalQuestions) {
+            throw new BusinessException(400, "本局尚未完成，不能提交结果");
+        }
 
         // 计分 & 等级 — 委托给策略
         int score = strategy.calculateScore(correctCount, totalQuestions);
@@ -75,16 +79,14 @@ public class StatsService {
         }
 
         // 深渊模式没有复活规则，强制归零避免前端旧状态污染记录。
-        int usedRevival = mode == GameMode.ABYSS
-                ? 0
-                : (Integer.valueOf(1).equals(request.getUsedRevival()) ? 1 : 0);
+        int usedRevival = mode == GameMode.ABYSS ? 0 : round.getRevivalUsed();
         LocalDateTime createdAt = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
 
         // 持久化
         GameRecord record = new GameRecord();
         record.setRoundId(request.getRoundId());
         record.setMode(mode.name());
-        record.setAlbumKey(request.getAlbumKey());
+        record.setAlbumKey(round.getAlbumKey());
         record.setUserId(userId);
         record.setNickname(request.getNickname() != null ? request.getNickname() : "匿名杰迷");
         record.setTotalQuestions(totalQuestions);
@@ -109,7 +111,7 @@ public class StatsService {
         GameResultDTO.GameResultDTOBuilder builder = GameResultDTO.builder()
                 .roundId(request.getRoundId())
                 .mode(mode)
-                .albumKey(request.getAlbumKey())
+                .albumKey(round.getAlbumKey())
                 .score(score)
                 .correctCount(correctCount)
                 .totalQuestions(totalQuestions)
@@ -125,10 +127,11 @@ public class StatsService {
 
         // 执行后置钩子（如专辑解锁）
         for (PostSubmitHook hook : strategy.getPostSubmitHooks()) {
-            hook.afterSubmit(request, builder, userId);
+            hook.afterSubmit(round.getAlbumKey(), correctCount, builder, userId);
         }
-
-        return builder.build();
+        GameResultDTO result = builder.build();
+        roundCacheManager.remove(request.getRoundId());
+        return result;
     }
 
     /**

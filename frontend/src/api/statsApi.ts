@@ -16,13 +16,8 @@ export interface AlbumResult {
 
 export interface GameSubmitRequest {
   roundId: string
-  correctCount: number
   timeSpentSecs: number
-  usedRevival: number
   nickname?: string
-  mode: GameMode
-  albumKey?: string
-  totalQuestions?: number
 }
 
 export interface GameResult {

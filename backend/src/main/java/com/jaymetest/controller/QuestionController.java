@@ -24,9 +24,9 @@ public class QuestionController {
 
     @Operation(summary = "随机抽取一局题目（经典模式）")
     @GetMapping("/round")
-    public R<RoundDTO> getRound(@RequestParam(defaultValue = "10") int count) {
+    public R<RoundDTO> getRound() {
         RoundDTO round = questionService.classic()
-                .generateRound(count, null, questionService.cacheManager());
+                .generateRound(null, questionService.cacheManager());
         return R.ok(round);
     }
 

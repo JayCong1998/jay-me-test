@@ -1,6 +1,7 @@
 package com.jaymetest.service.game;
 
 import com.jaymetest.exception.BusinessException;
+import com.jaymetest.config.GameRuleProperties;
 import com.jaymetest.mapper.QuestionMapper;
 import com.jaymetest.model.dto.AnswerResultDTO;
 import com.jaymetest.model.dto.QuestionDTO;
@@ -28,6 +29,7 @@ public class AlbumGameStrategy implements GameStrategy {
 
     private final QuestionMapper questionMapper;
     private final AlbumUnlockHook albumUnlockHook;
+    private final GameRuleProperties gameRules;
 
     @Override
     public GameMode getMode() {
@@ -40,7 +42,12 @@ public class AlbumGameStrategy implements GameStrategy {
     }
 
     @Override
-    public RoundDTO generateRound(int count, String albumKey, RoundCacheManager cacheManager) {
+    public RoundDTO generateRound(int ignoredCount, String albumKey, RoundCacheManager cacheManager) {
+        return generateRound(albumKey, cacheManager);
+    }
+
+    public RoundDTO generateRound(String albumKey, RoundCacheManager cacheManager) {
+        int count = gameRules.getAlbum().getQuestionCount();
         if (albumKey == null || albumKey.isEmpty()) {
             throw new BusinessException(400, "专辑模式缺少 albumKey 参数");
         }
@@ -55,7 +62,7 @@ public class AlbumGameStrategy implements GameStrategy {
 
         Map<Long, String> answerMap = finalQuestions.stream()
                 .collect(Collectors.toMap(Question::getId, Question::getCorrectOption));
-        cacheManager.put(roundId, new GameRoundCache(answerMap));
+        cacheManager.put(roundId, new GameRoundCache(GameMode.ALBUM, albumKey, answerMap));
 
         List<QuestionDTO> questionDTOs = QuestionAssembler.toDTOList(finalQuestions);
         RoundDTO roundDTO = new RoundDTO();
@@ -77,6 +84,7 @@ public class AlbumGameStrategy implements GameStrategy {
         }
 
         boolean correct = correctOption.equalsIgnoreCase(selectedOption.trim().toUpperCase());
+        cache.recordAnswer(questionId, correct);
         Question question = questionMapper.selectById(questionId);
 
         return AnswerResultDTO.builder()

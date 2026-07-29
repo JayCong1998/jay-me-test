@@ -2,7 +2,6 @@ package com.jaymetest.service.game;
 
 import com.jaymetest.model.dto.AlbumResultDTO;
 import com.jaymetest.model.dto.GameResultDTO;
-import com.jaymetest.model.dto.GameSubmitRequest;
 import com.jaymetest.service.AlbumProgressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +19,12 @@ public class AlbumUnlockHook implements PostSubmitHook {
     private final AlbumProgressService albumProgressService;
 
     @Override
-    public void afterSubmit(GameSubmitRequest request, GameResultDTO.GameResultDTOBuilder builder, Long userId) {
-        if (request.getAlbumKey() == null || userId == null) {
+    public void afterSubmit(String albumKey, int correctCount, GameResultDTO.GameResultDTOBuilder builder, Long userId) {
+        if (albumKey == null || userId == null) {
             return;
         }
         AlbumResultDTO albumResult = albumProgressService.processAlbumCompletion(
-                userId, request.getAlbumKey(), request.getCorrectCount());
+                userId, albumKey, correctCount);
         builder.albumResult(albumResult);
     }
 }

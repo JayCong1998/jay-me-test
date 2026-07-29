@@ -11,6 +11,8 @@ import com.jaymetest.service.game.GameStrategy;
 import com.jaymetest.service.game.GameStrategyFactory;
 import com.jaymetest.service.game.LevelInfo;
 import com.jaymetest.service.game.PostSubmitHook;
+import com.jaymetest.service.game.RoundCacheManager;
+import com.jaymetest.service.game.GameRoundCache;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,6 +39,9 @@ class StatsServiceTest {
     @Mock
     private GameStrategy gameStrategy;
 
+    @Mock
+    private RoundCacheManager roundCacheManager;
+
     @InjectMocks
     private StatsService statsService;
 
@@ -44,31 +49,32 @@ class StatsServiceTest {
     void testSubmitResult_classicMode() {
         // 工厂和策略 Mock
         when(strategyFactory.get(GameMode.CLASSIC)).thenReturn(gameStrategy);
-        when(gameStrategy.calculateScore(7, 10)).thenReturn(70);
-        when(gameStrategy.evaluateLevel(7)).thenReturn(FanLevel.SENIOR);
+        when(gameStrategy.calculateScore(1, 2)).thenReturn(50);
+        when(gameStrategy.evaluateLevel(1)).thenReturn(FanLevel.PASSERBY);
         when(gameStrategy.getPostSubmitHooks()).thenReturn(List.of());
 
         // Mapper Mock
         when(gameRecordMapper.selectOne(any())).thenReturn(null);
         when(gameRecordMapper.insert(any(com.jaymetest.model.entity.GameRecord.class))).thenReturn(1);
         when(gameRecordMapper.countTotal()).thenReturn(100L);
-        when(gameRecordMapper.countByCorrectCountLessThan(eq(7))).thenReturn(65L);
+        when(gameRecordMapper.countByCorrectCountLessThan(eq(1))).thenReturn(65L);
+        GameRoundCache round = new GameRoundCache(GameMode.CLASSIC, null, java.util.Map.of(1L, "A", 2L, "B"));
+        round.recordAnswer(1L, true);
+        round.recordAnswer(2L, false);
+        when(roundCacheManager.getOrThrow("test-uuid")).thenReturn(round);
 
         GameSubmitRequest request = new GameSubmitRequest();
         request.setRoundId("test-uuid");
-        request.setCorrectCount(7);
         request.setTimeSpentSecs(120);
-        request.setUsedRevival(0);
-        request.setMode(GameMode.CLASSIC);
 
         GameResultDTO result = statsService.submitResult(request);
 
         assertNotNull(result);
-        assertEquals(70, result.getScore());
-        assertEquals(7, result.getCorrectCount());
-        assertEquals(10, result.getTotalQuestions());
-        assertEquals(FanLevel.SENIOR.name(), result.getLevel());
-        assertEquals(FanLevel.SENIOR.getTitle(), result.getLevelTitle());
+        assertEquals(50, result.getScore());
+        assertEquals(1, result.getCorrectCount());
+        assertEquals(2, result.getTotalQuestions());
+        assertEquals(FanLevel.PASSERBY.name(), result.getLevel());
+        assertEquals(FanLevel.PASSERBY.getTitle(), result.getLevelTitle());
         assertEquals("test-uuid", result.getRoundId());
         assertEquals(GameMode.CLASSIC, result.getMode());
         assertNull(result.getAlbumKey());
@@ -79,27 +85,29 @@ class StatsServiceTest {
     @Test
     void submitAbyssResultKeepsGuestRecordButNormalizesRevival() {
         when(strategyFactory.get(GameMode.ABYSS)).thenReturn(gameStrategy);
-        when(gameStrategy.calculateScore(12, 13)).thenReturn(12);
-        when(gameStrategy.evaluateLevel(12)).thenReturn(AbyssLevel.ABYSS_KNIGHT);
+        when(gameStrategy.calculateScore(1, 2)).thenReturn(1);
+        when(gameStrategy.evaluateLevel(1)).thenReturn(AbyssLevel.ABYSS_TOURIST);
         when(gameStrategy.getPostSubmitHooks()).thenReturn(List.of());
         when(gameRecordMapper.selectOne(any())).thenReturn(null);
         when(gameRecordMapper.insert(any(GameRecord.class))).thenReturn(1);
         when(gameRecordMapper.countTotal()).thenReturn(101L);
-        when(gameRecordMapper.countByCorrectCountLessThan(12)).thenReturn(90L);
+        when(gameRecordMapper.countByCorrectCountLessThan(1)).thenReturn(90L);
+        GameRoundCache round = new GameRoundCache(true);
+        round.addQuestion(1L, "A");
+        round.addQuestion(2L, "B");
+        round.recordAnswer(1L, true);
+        round.recordAnswer(2L, false);
+        when(roundCacheManager.getOrThrow("abyss-round")).thenReturn(round);
 
         GameSubmitRequest request = new GameSubmitRequest();
         request.setRoundId("abyss-round");
-        request.setMode(GameMode.ABYSS);
-        request.setCorrectCount(12);
-        request.setTotalQuestions(13);
         request.setTimeSpentSecs(180);
-        request.setUsedRevival(1);
 
         GameResultDTO result = statsService.submitResult(request);
 
         assertEquals("abyss-round", result.getRoundId());
         assertEquals(GameMode.ABYSS, result.getMode());
-        assertEquals(12, result.getScore());
+        assertEquals(1, result.getScore());
         assertFalse(result.isUsedRevival());
 
         ArgumentCaptor<GameRecord> recordCaptor = ArgumentCaptor.forClass(GameRecord.class);

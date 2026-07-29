@@ -34,9 +34,9 @@ export interface RoundData {
 /**
  * 获取专辑关卡题目（需登录 + 已解锁）
  */
-export async function fetchAlbumRound(albumKey: string, count = 10): Promise<RoundData> {
+export async function fetchAlbumRound(albumKey: string): Promise<RoundData> {
   const res = await client.get<R<RoundData>>('/albums/round', {
-    params: { albumKey, count },
+    params: { albumKey },
   })
   return res.data.data
 }
