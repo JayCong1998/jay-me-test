@@ -63,6 +63,9 @@ public class StatsService {
                 ? round.getAnsweredCount()
                 : round.getAnswerMap().size();
         int correctCount = round.getCorrectCount();
+        if (mode == GameMode.ABYSS) {
+            round.requireAbyssFailed();
+        }
         if (mode != GameMode.ABYSS && round.getAnsweredCount() != totalQuestions) {
             throw new BusinessException(400, "本局尚未完成，不能提交结果");
         }
@@ -79,8 +82,7 @@ public class StatsService {
         } catch (Exception ignored) {
         }
 
-        // 深渊模式没有复活规则，强制归零避免前端旧状态污染记录。
-        int usedRevival = mode == GameMode.ABYSS ? 0 : round.getRevivalUsed();
+        int usedRevival = round.getRevivalUsed();
         LocalDateTime createdAt = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
 
         // 持久化
@@ -118,7 +120,7 @@ public class StatsService {
                 .totalQuestions(totalQuestions)
                 .accuracy(accuracy)
                 .timeSpentSecs(request.getTimeSpentSecs())
-                .usedRevival(usedRevival == 1)
+                .usedRevival(usedRevival > 0)
                 .createdAt(createdAt.toString())
                 .level(levelInfo.name())
                 .levelTitle(levelInfo.getTitle())

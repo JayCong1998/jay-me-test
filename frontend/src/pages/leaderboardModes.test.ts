@@ -17,7 +17,7 @@ describe('leaderboard mode tabs', () => {
   })
 
   it('formats each mode with its own primary score field', () => {
-    expect(pageSource).toContain('correctCount}/10')
+    expect(pageSource).toContain('答对 ${entry.correctCount} 题')
     expect(pageSource).toContain('通关 ${entry.completedAlbumCount}/15')
     expect(pageSource).toContain('${entry.streak ?? entry.correctCount} 连对')
   })

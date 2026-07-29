@@ -43,9 +43,6 @@ public enum AlbumKey {
         throw new IllegalArgumentException("未知专辑名: " + displayName);
     }
 
-    /** 通关门槛：答对 8/10 解锁下一关 */
-    public static final int UNLOCK_THRESHOLD = 8;
-
     /** 第一张专辑（新用户默认解锁） */
     public static AlbumKey first() {
         return values()[0];

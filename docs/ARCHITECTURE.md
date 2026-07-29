@@ -14,34 +14,35 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 
 - **经典模式**：`GET /api/questions/round` 返回的 `QuestionDTO` **不含** `correctOption`。答案校验在服务端通过 `POST /api/questions/check` 完成；后端持有 `ConcurrentHashMap<String, RoundCache>`，前端无法获取正确答案、无法预测 roundId。
 - **用户系统**：Sa-Token + JWT 双令牌模式。注册密码 BCrypt 加密。敏感接口（排行榜、专辑进度、我的记录）需登录，游客可正常答题。
-- 复活接口返回 `{revived: true, remainingRevivals: 0}`，不返回答案本身。
+- **无尽深渊**：仅登录用户可进入。首次答错且仍有续命机会时，`POST /api/abyss/check` 不返回正确答案和解析；`POST /api/abyss/revive` 只重置当前错误题并返回剩余续命次数。
 - `game_record` 表 `uk_round_id` 唯一约束防重复提交。
 
 ## Round 生命周期
 
-1. 客户端请求 `GET /api/questions/round?count=10&albumKey=xxx`，服务端生成 UUID `roundId`，随机抽取题目。经典模式为 6 简单 + 4 中等；专辑模式为指定专辑下按难度混合。
+1. 客户端请求 `GET /api/questions/round`，服务端生成 UUID `roundId`，按 `game.classic.question-count` 随机抽取题目（当前为 20 题）；简单题占比由 `game.classic.easy-weight` 配置（当前为 60%）。专辑模式通过 `GET /api/albums/round?albumKey=xxx` 抽取当前配置的 20 题。
 2. 服务端将 `(questionId → correctOption)` 映射存入 `RoundCache`，返回不含答案的题目列表。
 3. 客户端逐题通过 `POST /api/questions/check` 提交答案，服务端根据 `roundId` 查找缓存比对。
 4. 客户端通过 `POST /api/stats/submit` 提交最终结果，服务端按 `roundId` 去重，计算等级和百分位，持久化到 `game_record` 表。
-5. 专辑模式下，得分 ≥ 8/10 自动解锁下一张专辑。
+5. 专辑模式下，正确率达到 `game.album.pass-accuracy` 自动解锁下一张专辑（当前为 80%，即 16/20）。
 6. `QuestionService.cleanExpiredCache()` 每 10 分钟执行一次，清除超过 30 分钟的 round。
 
 ## 后端关键文件
 
 | 文件 | 职责 |
 |------|------|
-| [QuestionController.java](../backend/src/main/java/com/jaymetest/controller/QuestionController.java) | 题目 API：抽题 `/round`、校验 `/check`、复活 `/revive` |
+| [QuestionController.java](../backend/src/main/java/com/jaymetest/controller/QuestionController.java) | 经典题目 API：抽题 `/round`、校验 `/check` |
+| [AbyssController.java](../backend/src/main/java/com/jaymetest/controller/AbyssController.java) | 深渊 API：开始、批次、校验和续命 `/api/abyss/**`（均需登录） |
 | [StatsController.java](../backend/src/main/java/com/jaymetest/controller/StatsController.java) | 统计 API：提交结果 `/submit`、全局概览 `/overview`、我的记录 `/my-records` |
 | [AuthController.java](../backend/src/main/java/com/jaymetest/controller/AuthController.java) | 认证 API：注册 `/register`、登录 `/login`、当前用户 `/me` |
 | [AlbumController.java](../backend/src/main/java/com/jaymetest/controller/AlbumController.java) | 专辑 API：专辑列表 `/list`、专辑抽题 `/round`（均需登录） |
-| [LeaderboardController.java](../backend/src/main/java/com/jaymetest/controller/LeaderboardController.java) | 排行榜 API：总榜/日榜/等级榜（需登录） |
+| [LeaderboardController.java](../backend/src/main/java/com/jaymetest/controller/LeaderboardController.java) | 排行榜 API：经典、专辑、深渊三榜（需登录） |
 | [HealthController.java](../backend/src/main/java/com/jaymetest/controller/HealthController.java) | 健康检查 `/api/health` |
 | [AiController.java](../backend/src/main/java/com/jaymetest/ai/controller/AiController.java) | AI 问答 `/api/ai/query`（DashScope 流式响应） |
-| [QuestionService.java](../backend/src/main/java/com/jaymetest/service/QuestionService.java) | 抽题、答案校验、复活、缓存清理 |
+| [QuestionService.java](../backend/src/main/java/com/jaymetest/service/QuestionService.java) | 抽题、答案校验和 Round 缓存入口 |
 | [StatsService.java](../backend/src/main/java/com/jaymetest/service/StatsService.java) | 等级匹配、百分位计算、结果持久化、全局统计 |
 | [AuthService.java](../backend/src/main/java/com/jaymetest/service/AuthService.java) | 注册/登录逻辑、BCrypt 密码验证、JWT 令牌生成 |
 | [AlbumProgressService.java](../backend/src/main/java/com/jaymetest/service/AlbumProgressService.java) | 专辑解锁判断、进度查询/更新、闯关权限校验 |
-| [LeaderboardService.java](../backend/src/main/java/com/jaymetest/service/LeaderboardService.java) | 多维度排行查询（总榜/日榜/等级榜） |
+| [LeaderboardService.java](../backend/src/main/java/com/jaymetest/service/LeaderboardService.java) | 经典、专辑、深渊三榜的排行查询 |
 | [RoundCache.java](../backend/src/main/java/com/jaymetest/service/RoundCache.java) | Round 缓存数据结构（answerMap + createdAt + 30min TTL） |
 | [QuestionMapper.java](../backend/src/main/java/com/jaymetest/mapper/QuestionMapper.java) | 题目查询：按难度随机抽取、按专辑随机抽取、总数统计 |
 | [GameRecordMapper.java](../backend/src/main/java/com/jaymetest/mapper/GameRecordMapper.java) | 游戏记录查询：百分位计数、排行数据、用户记录 |
@@ -80,7 +81,7 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 | [ResultPage.vue](../frontend/src/pages/ResultPage.vue) | 结果页：等级展示、数据面板、分享 |
 | [CertificatePage.vue](../frontend/src/pages/CertificatePage.vue) | 证书页：Canvas 预览、保存/分享 |
 | [AlbumListPage.vue](../frontend/src/pages/AlbumListPage.vue) | 专辑闯关列表：15 张专辑卡片、解锁状态、最高分 |
-| [LeaderboardPage.vue](../frontend/src/pages/LeaderboardPage.vue) | 排行榜：总榜/日榜/等级榜切换 |
+| [LeaderboardPage.vue](../frontend/src/pages/LeaderboardPage.vue) | 排行榜：经典、专辑、深渊三榜切换 |
 | [QuestionCard.vue](../frontend/src/components/quiz/QuestionCard.vue) | 题目卡片 + `el-radio-group` 选项 |
 | [FeedbackBar.vue](../frontend/src/components/quiz/FeedbackBar.vue) | 答题对错反馈条 |
 | [AlbumCard.vue](../frontend/src/components/album/AlbumCard.vue) | 专辑卡片：封面渐变、年份、锁定/解锁状态、最高分 |
@@ -121,7 +122,7 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 ## 专辑闯关模式
 
 - 15 张录音室专辑（Jay 2000 → 最伟大的作品 2022），按发行时间排序。
-- 首张专辑 `JAY` 默认解锁，后续专辑需前一专辑得分 ≥ 8/10 解锁。
+- 首张专辑 `JAY` 默认解锁，后续专辑需前一专辑正确率达到 80%（当前为 16/20）解锁。
 - 每道题关联 `album` 字段，跨专辑/非录音室曲目 `album = NULL`，不纳入专辑模式抽题。
 - 专辑进度持久化到 `album_progress` 表，记录最高分和挑战次数。
 

@@ -9,9 +9,10 @@ import java.util.List;
 @ConfigurationProperties(prefix = "game.abyss")
 public class AbyssGameProperties {
     private int batchSize = 5;
+    private int revivalCount = 1;
     private List<LevelRangeProperties> levels;
     @PostConstruct public void validate() {
-        if (batchSize < 1 || batchSize > 50) throw new IllegalStateException("深渊模式 batchSize 必须在 1-50 之间");
+        if (batchSize < 1 || batchSize > 50 || revivalCount < 0 || revivalCount > 3) throw new IllegalStateException("深渊模式基础配置非法");
         LevelRangeValidator.validate(levels, 0, true, "深渊模式");
     }
 }

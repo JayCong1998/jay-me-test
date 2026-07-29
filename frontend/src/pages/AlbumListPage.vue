@@ -10,7 +10,7 @@
           <div class="header-title">
             <h1 class="page-title">🎵 专辑闯关</h1>
             <p class="page-subtitle">
-              答对 <strong>{{ UNLOCK_THRESHOLD }}/10</strong> 解锁下一张专辑
+              达到通关要求，解锁下一张专辑
             </p>
           </div>
           <!-- 进度概览 -->
@@ -70,7 +70,6 @@ import { useAlbumStore } from '@/stores/albumStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useQuiz } from '@/composables/useQuiz'
 import { showFailToast } from 'vant'
-import { UNLOCK_THRESHOLD } from '@/utils/albums'
 import AlbumCard from '@/components/album/AlbumCard.vue'
 
 const router = useRouter()

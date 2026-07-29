@@ -46,7 +46,7 @@
                   <span class="loading-dot"></span> 加载中...
                 </template>
                 <template v-else>
-                  随机 10 题 · 游客可玩
+                  随机题目 · 游客可玩
                 </template>
               </p>
             </button>
@@ -62,7 +62,7 @@
               </div>
               <h3 class="mode-title">专辑闯关</h3>
               <p class="mode-desc">
-                15 张专辑 · 8/10 解锁下一关<template v-if="authStore.isGuest"> · 需登录</template>
+                专辑挑战 · 通关解锁下一关<template v-if="authStore.isGuest"> · 需登录</template>
               </p>
             </button>
 

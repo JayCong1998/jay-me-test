@@ -16,4 +16,5 @@ public class AbyssStepDTO {
     private String roundId;
     private List<QuestionDTO> questions;
     private int streak;
+    private int revivalRemaining;
 }

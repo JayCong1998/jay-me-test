@@ -32,21 +32,4 @@ public class GameStrategyFactory {
         return strategy;
     }
 
-    /** 根据字符串获取策略（兼容前端传 "CLASSIC"/"ALBUM"/"ABYSS"） */
-    public GameStrategy get(String mode) {
-        try {
-            return get(GameMode.valueOf(mode.toUpperCase()));
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException(400, "无效的游戏模式: " + mode);
-        }
-    }
-
-    /** 解析 mode 字符串为 GameMode 枚举，失败抛异常 */
-    public GameMode resolveMode(String modeStr) {
-        try {
-            return GameMode.valueOf(modeStr.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException(400, "无效的游戏模式: " + modeStr);
-        }
-    }
 }

@@ -19,7 +19,7 @@ public class AlbumResultDTO {
     /** 当前专辑中文名 */
     private String albumDisplayName;
 
-    /** 是否通关 (≥UNLOCK_THRESHOLD) */
+    /** 是否达到当前专辑通关正确率阈值 */
     private boolean passed;
 
     /** 本专辑历史最佳成绩 */

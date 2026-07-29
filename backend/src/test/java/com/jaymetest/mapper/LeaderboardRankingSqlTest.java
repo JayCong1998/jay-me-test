@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class LeaderboardRankingSqlTest {
 
@@ -19,6 +20,18 @@ class LeaderboardRankingSqlTest {
         assertTrue(mapperSource.contains("ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC, gr.created_at ASC"));
         assertTrue(mapperSource.contains("selectClassicLeaderboardPaged"));
         assertTrue(mapperSource.contains("selectMyClassicRank"));
+    }
+
+    @Test
+    void keepsClassicRankingByCorrectCountAndRemovesUnusedLeaderboardQueries() {
+        assertTrue(mapperSource.contains("ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC"));
+        assertFalse(mapperSource.contains("selectTotalLeaderboard"));
+        assertFalse(mapperSource.contains("selectDailyLeaderboard"));
+        assertFalse(mapperSource.contains("selectLevelLeaderboard"));
+        assertFalse(mapperSource.contains("getTotalRank"));
+        assertFalse(mapperSource.contains("getDailyRank"));
+        assertFalse(mapperSource.contains("getLevelRank"));
+        assertFalse(mapperSource.contains("selectAbyssLeaderboard("));
     }
 
     @Test

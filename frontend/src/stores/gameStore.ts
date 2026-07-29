@@ -21,7 +21,8 @@ export const useGameStore = defineStore('game', () => {
   const currentIndex = ref(0)
   const answers = ref<Map<number, string>>(new Map())
   const results = ref<Map<number, boolean>>(new Map())
-  const revivalRemaining = ref(1)
+  const revivalRemaining = ref(0)
+  const revivalUsed = ref(false)
   const startTime = ref<number>(0)
   const endTime = ref<number | null>(null)
   const phase = ref<GamePhase>('idle')
@@ -54,13 +55,14 @@ export const useGameStore = defineStore('game', () => {
   })
 
   // --- Actions ---
-  function startGame(rid: string, qs: Question[], albumKeyParam?: string, gameMode?: GameMode) {
+  function startGame(rid: string, qs: Question[], albumKeyParam?: string, gameMode?: GameMode, revivalCount = 0) {
     roundId.value = rid
     questions.value = qs
     currentIndex.value = 0
     answers.value = new Map()
     results.value = new Map()
-    revivalRemaining.value = 1
+    revivalRemaining.value = revivalCount
+    revivalUsed.value = false
     startTime.value = Date.now()
     endTime.value = null
     phase.value = 'playing'
@@ -81,9 +83,10 @@ export const useGameStore = defineStore('game', () => {
     results.value.set(questionIndex, isCorrect)
   }
 
-  function useRevival() {
-    if (revivalRemaining.value > 0) {
-      revivalRemaining.value--
+  function useRevival(remainingRevivals: number) {
+    if (remainingRevivals >= 0) {
+      revivalRemaining.value = remainingRevivals
+      revivalUsed.value = true
       // 复活只允许重答当前题，清理本地记录即可；正确答案仍只存在后端 round 缓存里。
       answers.value.delete(currentIndex.value)
       results.value.delete(currentIndex.value)
@@ -117,7 +120,8 @@ export const useGameStore = defineStore('game', () => {
     currentIndex.value = 0
     answers.value = new Map()
     results.value = new Map()
-    revivalRemaining.value = 1
+    revivalRemaining.value = 0
+    revivalUsed.value = false
     startTime.value = 0
     endTime.value = null
     phase.value = 'idle'
@@ -135,7 +139,7 @@ export const useGameStore = defineStore('game', () => {
   return {
     // state
     roundId, questions, currentIndex, answers, results,
-    revivalRemaining, startTime, endTime, phase, mode, albumKey,
+    revivalRemaining, revivalUsed, startTime, endTime, phase, mode, albumKey,
     abyssStreak, prefetching,
     // getters + data
     totalQuestions, currentQuestion, progress, correctCount,

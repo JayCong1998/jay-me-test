@@ -61,19 +61,20 @@ public class AbyssGameStrategy implements GameStrategy {
         cacheManager.put(roundId, cache);
 
         log.info("深渊模式开始 roundId={}, 首批 {} 题", roundId, questions.size());
-        return buildStepDTO(roundId, questions, 0);
+        return buildStepDTO(roundId, questions, 0, cache);
     }
 
     /** 获取下一批题目（前端在倒数第 2 题时静默预加载） */
     public AbyssStepDTO generateBatch(String roundId, RoundCacheManager cacheManager) {
         GameRoundCache cache = cacheManager.getOrThrow(roundId);
+        cache.requireAbyssBatchCanBeGenerated();
         int currentStreak = cache.getStreak();
 
         List<Question> questions = generateQuestions(currentStreak, cache);
 
         log.info("深渊模式下一批 roundId={}, 当前streak={}, 新增 {} 题",
                 roundId, currentStreak, questions.size());
-        return buildStepDTO(roundId, questions, currentStreak);
+        return buildStepDTO(roundId, questions, currentStreak, cache);
     }
 
     private List<Question> generateQuestions(int startStreak, GameRoundCache cache) {
@@ -107,7 +108,7 @@ public class AbyssGameStrategy implements GameStrategy {
         }
 
         boolean correct = correctOption.equalsIgnoreCase(selectedOption.trim().toUpperCase());
-        cache.recordAnswer(questionId, correct);
+        cache.recordAbyssAnswer(questionId, correct);
         Question question = questionMapper.selectById(questionId);
 
         // 答对时自动递增 streak
@@ -115,11 +116,31 @@ public class AbyssGameStrategy implements GameStrategy {
             cache.incrementAndGetStreak();
         }
 
+        boolean canRevive = !correct && canRevive(cache);
         return AnswerResultDTO.builder()
                 .correct(correct)
-                .correctOption(correctOption)
-                .explanation(question != null ? question.getExplanation() : "暂无解析")
+                .correctOption(canRevive ? null : correctOption)
+                .explanation(canRevive ? null : question != null ? question.getExplanation() : "暂无解析")
+                .canRevive(canRevive)
                 .build();
+    }
+
+    @Override
+    public String revive(String roundId, Long questionId, RoundCacheManager cacheManager) {
+        GameRoundCache cache = cacheManager.getOrThrow(roundId);
+        if (!canRevive(cache)) {
+            throw new BusinessException(409, "本局深渊续命机会已用完");
+        }
+        if (!cache.getAnswerMap().containsKey(questionId)) {
+            throw new BusinessException(404, "题目不属于该回合");
+        }
+        cache.reviveAbyssAnswer(questionId);
+        return cache.getAnswerMap().get(questionId);
+    }
+
+    public int getRemainingRevivals(String roundId, RoundCacheManager cacheManager) {
+        GameRoundCache cache = cacheManager.getOrThrow(roundId);
+        return Math.max(0, gameRules.getRevivalCount() - cache.getRevivalUsed());
     }
 
     // ---- 计分 / 等级 ----
@@ -151,12 +172,17 @@ public class AbyssGameStrategy implements GameStrategy {
         return candidates.isEmpty() ? null : candidates.get(0);
     }
 
-    private AbyssStepDTO buildStepDTO(String roundId, List<Question> questions, int streak) {
+    private boolean canRevive(GameRoundCache cache) {
+        return cache.getRevivalUsed() < gameRules.getRevivalCount();
+    }
+
+    private AbyssStepDTO buildStepDTO(String roundId, List<Question> questions, int streak, GameRoundCache cache) {
         List<QuestionDTO> questionDTOs = QuestionAssembler.toDTOList(questions);
         AbyssStepDTO result = new AbyssStepDTO();
         result.setRoundId(roundId);
         result.setQuestions(questionDTOs);
         result.setStreak(streak);
+        result.setRevivalRemaining(Math.max(0, gameRules.getRevivalCount() - cache.getRevivalUsed()));
         return result;
     }
 }

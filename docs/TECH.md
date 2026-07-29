@@ -152,12 +152,13 @@ backend/
     ├── controller/
     │   ├── HealthController.java              # GET /api/health
     │   ├── AuthController.java                # 注册/登录/当前用户
-    │   ├── QuestionController.java            # 抽题/校验/复活
+    │   ├── QuestionController.java            # 经典抽题/校验
+    │   ├── AbyssController.java               # 深渊开始/批次/校验/续命 (需登录)
     │   ├── StatsController.java               # 提交结果/统计/我的记录
     │   ├── AlbumController.java               # 专辑列表/专辑抽题 (需登录)
     │   └── LeaderboardController.java         # 排行榜 (需登录)
     ├── service/
-    │   ├── QuestionService.java               # 抽题 + 校验 + 复活 + 缓存清理
+    │   ├── QuestionService.java               # 抽题 + 校验 + 缓存入口
     │   ├── StatsService.java                  # 等级 + 百分位 + 持久化 + 统计
     │   ├── AuthService.java                   # 注册/登录/用户信息
     │   ├── AlbumProgressService.java          # 解锁/进度/通关反馈
@@ -308,7 +309,7 @@ CREATE TABLE IF NOT EXISTS album_progress (
     unlocked          TINYINT      NOT NULL DEFAULT 0,
     best_score        INT          NOT NULL DEFAULT 0,
     total_attempts    INT          NOT NULL DEFAULT 0,
-    first_passed_at   DATETIME     NULL COMMENT '首次通关时间(≥8/10)',
+    first_passed_at   DATETIME     NULL COMMENT '首次通关时间(正确率达到配置阈值)',
     last_attempted_at DATETIME     NULL,
     created_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -365,9 +366,9 @@ List<AlbumProgress> selectByUserId(long userId);
 | # | Method | Path | Auth | 说明 |
 |---|--------|------|------|------|
 | 1 | `GET` | `/api/health` | — | 健康检查 |
-| 2 | `GET` | `/api/questions/round?count=10` | — | 经典模式随机抽题 |
+| 2 | `GET` | `/api/questions/round` | — | 经典模式随机抽题（当前 20 题） |
 | 3 | `POST` | `/api/questions/check` | — | 校验单题答案 |
-| 4 | `POST` | `/api/questions/revive` | — | 使用复活机会 |
+| 4 | `POST` | `/api/abyss/start` | 需登录 | 开始无尽深渊 |
 | 5 | `POST` | `/api/stats/submit` | — | 提交游戏结果 |
 | 6 | `GET` | `/api/stats/overview` | — | 全局统计概览 |
 | 7 | `GET` | `/api/stats/my-records` | 需登录 | 当前用户的考试记录 |
@@ -375,16 +376,19 @@ List<AlbumProgress> selectByUserId(long userId);
 | 9 | `POST` | `/api/auth/login` | — | 登录 |
 | 10 | `GET` | `/api/auth/me` | 需登录 | 当前用户信息 |
 | 11 | `GET` | `/api/albums/list` | 需登录 | 专辑列表及解锁状态 |
-| 12 | `GET` | `/api/albums/round?albumKey=&count=10` | 需登录 | 专辑关卡抽题 |
-| 13 | `GET` | `/api/leaderboard?type=&limit=&level=` | 需登录 | 排行榜 |
-| 14 | `GET` | `/api/ai/query?message=` | — | AI 问答（流式，实验性） |
+| 12 | `GET` | `/api/albums/round?albumKey=` | 需登录 | 专辑关卡抽题（当前 20 题） |
+| 13 | `POST` | `/api/abyss/batch` | 需登录 | 获取下一批深渊题目 |
+| 14 | `POST` | `/api/abyss/check` | 需登录 | 校验当前深渊题 |
+| 15 | `POST` | `/api/abyss/revive` | 需登录 | 消耗续命机会并重答当前题 |
+| 16 | `GET` | `/api/leaderboard?type=&limit=&level=` | 需登录 | 排行榜 |
+| 17 | `GET` | `/api/ai/query?message=` | — | AI 问答（流式，实验性） |
 
 ### 5.3 接口详细定义
 
 #### 5.3.1 随机抽题（经典模式）
 
 ```
-GET /api/questions/round?count=10
+GET /api/questions/round
 
 Response 200:
 {
@@ -414,13 +418,15 @@ Request:  { "roundId": "uuid-xxxx", "questionId": 1, "selectedOption": "A" }
 Response: { "code": 200, "data": { "correct": true, "correctOption": "A", "explanation": "..." } }
 ```
 
-#### 5.3.3 复活
+#### 5.3.3 深渊续命
 
 ```
-POST /api/questions/revive
+POST /api/abyss/revive
 Request:  { "roundId": "uuid-xxxx", "questionId": 1 }
 Response: { "code": 200, "data": { "revived": true, "remainingRevivals": 0 } }
 ```
+
+仅登录用户可调用。只有当前题首次答错且仍有机会时可续命；此时 `/api/abyss/check` 的响应不返回 `correctOption` 和 `explanation`，避免在重答前泄露答案。
 
 #### 5.3.4 提交结果
 
@@ -520,7 +526,7 @@ Response:
 #### 5.3.8 专辑抽题
 
 ```
-GET /api/albums/round?albumKey=JAY&count=10
+GET /api/albums/round?albumKey=JAY
 // 返回格式与经典模式相同（RoundDTO），题目来自指定专辑
 // 访问未解锁专辑返回 403
 ```
@@ -608,18 +614,18 @@ getAlbumList(userId):
   3. 首张专辑 (JAY) 无记录则自动创建 (unlocked=1)
   4. 组装 AlbumDTO 返回
 
-processAlbumCompletion(userId, albumKey, correctCount):
+processAlbumCompletion(userId, albumKey, correctCount, totalQuestions):
   1. 查询或新建 album_progress 记录
   2. UPDATE total_attempts + 1, last_attempted_at = NOW()
   3. IF correctCount > best_score → UPDATE best_score, isNewRecord = true
-  4. IF correctCount >= 8 (UNLOCK_THRESHOLD):
+  4. IF correctCount / totalQuestions >= game.album.pass-accuracy / 100:
        IF 首次通关 → UPDATE first_passed_at, passed = true
        IF 不是最后一张 → UPDATE next album_progress SET unlocked = 1
   5. 返回 AlbumResultDTO
 
 canAccessAlbum(userId, albumKey):
   1. 查询 album_progress WHERE user_id = #{userId} AND album_key = #{albumKey}
-  2. IF 不存在 OR unlocked = 0 → throw BusinessException(403, "请先通关{上一张专辑名}(≥8/10)")
+  2. IF 不存在 OR unlocked = 0 → throw BusinessException(403, "请先通关{上一张专辑名}(达到配置的正确率阈值)")
 ```
 
 ### 6.6 用户认证流程

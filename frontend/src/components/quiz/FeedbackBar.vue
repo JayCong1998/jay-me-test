@@ -14,7 +14,7 @@
       </div>
       <div>
         <p class="feedback-result">{{ correct ? '回答正确' : '回答错误' }}</p>
-        <p v-if="!correct" class="feedback-answer">正确答案 <strong>{{ correctOption }}</strong></p>
+        <p v-if="!correct && correctOption" class="feedback-answer">正确答案 <strong>{{ correctOption }}</strong></p>
       </div>
     </div>
 
@@ -39,12 +39,13 @@
 
     <div
       class="feedback-actions"
-      :class="{ 'feedback-actions--split': canRevive && !correct && !isAbyssMode }"
+      :class="{ 'feedback-actions--split': canRevive && !correct }"
     >
       <button
-        v-if="canRevive && !correct && !isAbyssMode"
+        v-if="canRevive && !correct"
         class="btn-revive"
         type="button"
+        :disabled="reviving"
         @click="$emit('revive')"
       >
         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -52,17 +53,19 @@
           <path d="M1 4v6h6" />
           <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
         </svg>
-        使用复活（{{ 1 }}次）
+        使用深渊续命
       </button>
 
       <button
         class="btn-next"
         type="button"
         :class="{ 'btn-abyss-fall': isAbyssMode && !correct }"
+        :disabled="reviving"
         @click="$emit('next')"
       >
-        <span v-if="isAbyssMode && !correct">堕入深渊</span>
+        <span v-if="isAbyssMode && !correct">结束挑战</span>
         <span v-else-if="isAbyssMode && correct">继续深入</span>
+        <span v-else-if="isLastQuestion">提交答卷</span>
         <span v-else>下一题</span>
         <svg v-if="!isAbyssMode || correct" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
           stroke-linecap="round" stroke-linejoin="round">
@@ -84,10 +87,12 @@ import { ref } from 'vue'
 
 defineProps<{
   correct: boolean
-  correctOption: string
-  explanation: string
+  correctOption?: string
+  explanation?: string
   canRevive: boolean
   isAbyssMode?: boolean
+  isLastQuestion?: boolean
+  reviving?: boolean
 }>()
 
 defineEmits<{
@@ -189,6 +194,11 @@ const showExplanation = ref(false)
   &:hover {
     background: rgba(var(--app-surface-rgb), 0.06);
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
 }
 
 .feedback-explain {
@@ -248,6 +258,11 @@ const showExplanation = ref(false)
   &:hover {
     background: rgba(234, 179, 8, 0.15);
     border-color: rgba(234, 179, 8, 0.5);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 
 }

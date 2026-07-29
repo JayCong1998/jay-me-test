@@ -1,6 +1,7 @@
 package com.jaymetest.service;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.jaymetest.config.ClassicGameProperties;
 import com.jaymetest.mapper.GameRecordMapper;
 import com.jaymetest.model.dto.LeaderboardEntry;
 import com.jaymetest.model.dto.LeaderboardResult;
@@ -27,6 +28,7 @@ public class LeaderboardService {
     private final GameRecordMapper gameRecordMapper;
     private final GameStrategyFactory strategyFactory;
     private final AlbumGameProperties albumGameProperties;
+    private final ClassicGameProperties classicGameProperties;
 
     public LeaderboardResult getClassicLeaderboard(int limit, int offset) {
         List<Map<String, Object>> rows = gameRecordMapper.selectClassicLeaderboardPaged(
@@ -49,40 +51,12 @@ public class LeaderboardService {
         return (int) Math.ceil(albumGameProperties.getQuestionCount() * albumGameProperties.getPassAccuracy() / 100.0);
     }
 
-    public LeaderboardResult getAbyssLeaderboard(int limit) {
-        return getAbyssLeaderboard(limit, 0);
-    }
-
     public LeaderboardResult getAbyssLeaderboard(int limit, int offset) {
         List<Map<String, Object>> rows = gameRecordMapper.selectAbyssLeaderboardPaged(
                 limit, offset, GameMode.ABYSS.name());
         List<LeaderboardEntry> list = mapAbyssEntries(rows);
         Long myRank = gameRecordMapper.selectMyAbyssRank(StpUtil.getLoginIdAsLong(), GameMode.ABYSS.name());
         return LeaderboardResult.builder().list(list).myRank(myRank).build();
-    }
-
-    public LeaderboardResult getTotalLeaderboard(int limit) {
-        return getClassicLeaderboard(limit, 0);
-    }
-
-    public LeaderboardResult getTotalLeaderboard(int limit, int offset) {
-        return getClassicLeaderboard(limit, offset);
-    }
-
-    public LeaderboardResult getDailyLeaderboard(int limit) {
-        return getClassicLeaderboard(limit, 0);
-    }
-
-    public LeaderboardResult getDailyLeaderboard(int limit, int offset) {
-        return getClassicLeaderboard(limit, offset);
-    }
-
-    public LeaderboardResult getLevelLeaderboard(String level, int limit) {
-        return getClassicLeaderboard(limit, 0);
-    }
-
-    public LeaderboardResult getLevelLeaderboard(String level, int limit, int offset) {
-        return getClassicLeaderboard(limit, offset);
     }
 
     private List<LeaderboardEntry> mapClassicEntries(List<Map<String, Object>> rows) {
@@ -98,8 +72,8 @@ public class LeaderboardService {
                     .timeSpentSecs(timeSpentSecs)
                     .levelTitle(levelInfo.getTitle())
                     .createdAt(dateTimeValue(row, "createdAt"))
-                    .scoreText(correctCount + "/10")
-                    .summaryText(correctCount + "/10")
+                    .scoreText(correctCount + "/" + classicGameProperties.getQuestionCount())
+                    .summaryText(correctCount + "/" + classicGameProperties.getQuestionCount())
                     .detailText(levelInfo.getTitle() + " | Time " + formatDuration(timeSpentSecs))
                     .build());
         }

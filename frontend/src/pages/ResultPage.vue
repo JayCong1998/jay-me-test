@@ -139,14 +139,13 @@
           </div>
         </div>
 
-        <!-- 复活标记（深渊模式不显示） -->
-        <div v-if="usedRevival && !isAbyss" class="revival-tag glass-card">
+        <div v-if="usedRevival" class="revival-tag glass-card">
           <svg class="revival-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 4v6h6" />
             <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
           </svg>
-          <span>本轮使用了复活机会</span>
+          <span>{{ isAbyss ? '本局使用了深渊续命' : '本轮使用了复活机会' }}</span>
         </div>
       </section>
 
@@ -157,10 +156,10 @@
         </h3>
         <div class="album-result-detail">
           <p v-if="result.albumResult.passed" class="album-passed">
-            ✅ 通关成功！正确率 {{ result.correctCount }}/10
+            ✅ 通关成功！本局答对 {{ result.correctCount }} 题
           </p>
           <p v-else class="album-failed">
-            ❌ 需要 {{ UNLOCK_THRESHOLD }}/10 才能解锁下一专辑（当前 {{ result.correctCount }}/10）
+            ❌ 本局未达到通关要求，再挑战一次吧
           </p>
           <p v-if="result.albumResult.unlockedNext" class="album-next">
             🎉 已解锁下一专辑：<strong>{{ result.albumResult.nextAlbumDisplayName }}</strong>
@@ -170,7 +169,7 @@
           </p>
         </div>
         <div class="album-result-stats">
-          <span class="album-best">历史最佳：<strong>{{ result.albumResult.albumBestScore }}/10</strong></span>
+          <span class="album-best">历史最佳：<strong>答对 {{ result.albumResult.albumBestScore }} 题</strong></span>
         </div>
       </section>
 
@@ -246,7 +245,6 @@ import { showFailToast } from 'vant'
 import { formatTime } from '@/utils/format'
 import { LEVELS, ABYSS_LEVELS } from '@/utils/constants'
 import { getAbyssLevelByStreak } from '@/utils/levels'
-import { UNLOCK_THRESHOLD } from '@/utils/albums'
 import type { GameResult } from '@/stores/gameStore'
 
 const router = useRouter()
@@ -289,7 +287,7 @@ const levelColor = computed(() => {
 })
 
 const usedRevival = computed(() => {
-  return result.value?.usedRevival ?? (gameStore.revivalRemaining === 0)
+  return result.value?.usedRevival ?? gameStore.revivalUsed
 })
 
 onMounted(() => {

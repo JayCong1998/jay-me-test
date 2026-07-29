@@ -61,8 +61,7 @@ app:
 # 深渊模式难度阶梯配置
 game:
   classic:
-    question-count: 10
-    revival-count: 1
+    question-count: 20
     easy-weight: 0.6
     levels:
       - { key: PASSERBY, title: "🌱 路人粉", description: "刚刚路过，杰伦的歌还等你发现", min: 0, max: 29 }
@@ -71,7 +70,7 @@ game:
       - { key: SENIOR, title: "🏆 高级杰迷", description: "铁粉认证，演唱会前排选手就是你", min: 70, max: 89 }
       - { key: ULTIMATE, title: "👑 终极杰迷", description: "你就是杰伦的编外制作人", min: 90, max: 100 }
   album:
-    question-count: 10
+    question-count: 20
     pass-accuracy: 80
     levels:
       - { key: ALBUM_NEWCOMER, title: "专辑新生", description: "继续熟悉这张专辑", min: 0, max: 59 }
@@ -79,6 +78,7 @@ game:
       - { key: ALBUM_MASTER, title: "专辑大师", description: "这张专辑你已融会贯通", min: 80, max: 100 }
   abyss:
     batch-size: 5
+    revival-count: 1
     levels:
       - { key: ABYSS_TOURIST, title: "深渊游客", description: "初入深渊，浅尝辄止", min: 0, max: 2 }
       - { key: ABYSS_EXPLORER, title: "深渊探索者", description: "开始深入杰伦的音乐迷宫", min: 3, max: 5 }

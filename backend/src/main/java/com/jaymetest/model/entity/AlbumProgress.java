@@ -32,7 +32,7 @@ public class AlbumProgress implements Serializable {
     /** 总挑战次数 */
     private Integer totalAttempts;
 
-    /** 首次通关时间 (≥UNLOCK_THRESHOLD) */
+    /** 首次达到当前专辑通关正确率阈值的时间 */
     private String firstPassedAt;
 
     /** 最近挑战时间 */

@@ -30,9 +30,6 @@ export const ALL_ALBUMS: AlbumInfo[] = [
   { key: '太阳之子', displayName: '太阳之子', year: 2026, gradient: 'linear-gradient(135deg, #f59e0b, #dc2626)' },
 ]
 
-/** 通关门槛：答对 8/10 解锁下一关 */
-export const UNLOCK_THRESHOLD = 8
-
 /** 根据 key 查找专辑信息 */
 export function getAlbumInfo(key: string): AlbumInfo | undefined {
   return ALL_ALBUMS.find(a => a.key === key)

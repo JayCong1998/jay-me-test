@@ -1,10 +1,11 @@
 import { LEVELS, ABYSS_LEVELS, type LevelConfig, type AbyssLevelConfig } from './constants'
 
 /**
- * 根据答对题数获取等级配置
+ * 根据本局正确率获取等级配置；等级常量按 10 题等价分数划分。
  */
-export function getLevelByScore(score: number): LevelConfig {
-  return LEVELS.find(l => score >= l.minScore && score <= l.maxScore) || LEVELS[0]
+export function getLevelByScore(correctCount: number, totalQuestions: number): LevelConfig {
+  const normalizedScore = totalQuestions > 0 ? (correctCount * 10) / totalQuestions : 0
+  return LEVELS.find(level => normalizedScore >= level.minScore && normalizedScore <= level.maxScore) || LEVELS[0]
 }
 
 /**

@@ -1,7 +1,7 @@
 package com.jaymetest.service.game;
 
-import com.jaymetest.exception.BusinessException;
 import com.jaymetest.config.ClassicGameProperties;
+import com.jaymetest.exception.BusinessException;
 import com.jaymetest.mapper.QuestionMapper;
 import com.jaymetest.model.dto.AnswerResultDTO;
 import com.jaymetest.model.dto.QuestionDTO;
@@ -21,7 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * 经典模式策略：60% 简单 + 40% 中等，打散出题，10 题封顶。
+ * 经典模式策略：按配置抽取简单和中等难度题目，并依据最终正确率评定等级。
  */
 @Slf4j
 @Component
@@ -43,7 +43,6 @@ public class ClassicGameStrategy implements GameStrategy {
 
     public RoundDTO generateRound(String albumKey, RoundCacheManager cacheManager) {
         int count = gameRules.getQuestionCount();
-        // 60% 简单 + 40% 中等
         int easyCount = (int) Math.round(count * gameRules.getEasyWeight());
         int mediumCount = count - easyCount;
 
@@ -60,13 +59,10 @@ public class ClassicGameStrategy implements GameStrategy {
                 Math.min(allQuestions.size(), count));
 
         String roundId = UUID.randomUUID().toString();
-
-        // 构建答案缓存
         Map<Long, String> answerMap = finalQuestions.stream()
                 .collect(Collectors.toMap(Question::getId, Question::getCorrectOption));
         cacheManager.put(roundId, new GameRoundCache(GameMode.CLASSIC, null, answerMap));
 
-        // 组装 DTO
         List<QuestionDTO> questionDTOs = QuestionAssembler.toDTOList(finalQuestions);
         RoundDTO roundDTO = new RoundDTO();
         roundDTO.setRoundId(roundId);
@@ -80,10 +76,9 @@ public class ClassicGameStrategy implements GameStrategy {
     public AnswerResultDTO checkAnswer(String roundId, Long questionId, String selectedOption,
                                        RoundCacheManager cacheManager) {
         GameRoundCache cache = cacheManager.getOrThrow(roundId);
-
         String correctOption = cache.getAnswerMap().get(questionId);
         if (correctOption == null) {
-            throw new BusinessException(404, "题目不存在于该回合中");
+            throw new BusinessException(404, "题目不属于该回合");
         }
 
         boolean correct = correctOption.equalsIgnoreCase(selectedOption.trim().toUpperCase());
@@ -95,25 +90,6 @@ public class ClassicGameStrategy implements GameStrategy {
                 .correctOption(correctOption)
                 .explanation(question != null ? question.getExplanation() : "暂无解析")
                 .build();
-    }
-
-    @Override
-    public boolean supportsRevival() {
-        return true;
-    }
-
-    @Override
-    public String revive(String roundId, Long questionId, RoundCacheManager cacheManager) {
-        GameRoundCache cache = cacheManager.getOrThrow(roundId);
-        if (cache.getRevivalUsed() >= gameRules.getRevivalCount()) {
-            throw new BusinessException(409, "本局复活机会已用完");
-        }
-        String correctOption = cache.getAnswerMap().get(questionId);
-        if (correctOption == null) {
-            throw new BusinessException(404, "题目不存在于该回合中");
-        }
-        cache.resetAnswerForRevival(questionId);
-        return correctOption;
     }
 
     @Override

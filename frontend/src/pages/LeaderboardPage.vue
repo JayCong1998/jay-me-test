@@ -196,7 +196,7 @@ function formatScore(entry: LeaderboardEntry): string {
   if (activeTab.value === 'abyss') {
     return `${entry.streak ?? entry.correctCount} 连对`
   }
-  return `${entry.correctCount}/10`
+  return `答对 ${entry.correctCount} 题`
 }
 
 function formatDetail(entry: LeaderboardEntry): string {

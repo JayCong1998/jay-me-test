@@ -16,4 +16,5 @@ public class AnswerResultDTO {
     private boolean correct;
     private String correctOption;
     private String explanation;
+    private boolean canRevive;
 }

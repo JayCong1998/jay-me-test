@@ -40,11 +40,6 @@ public interface GameStrategy {
     AnswerResultDTO checkAnswer(String roundId, Long questionId, String selectedOption,
                                 RoundCacheManager roundCacheManager);
 
-    /** 是否支持复活 */
-    default boolean supportsRevival() {
-        return false;
-    }
-
     /** 复活：返回正确答案，不做任何副作用 */
     default String revive(String roundId, Long questionId, RoundCacheManager roundCacheManager) {
         throw new UnsupportedOperationException("当前模式不支持复活");

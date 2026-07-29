@@ -61,15 +61,15 @@
         ></div>
       </div>
 
-      <!-- 复活标记（深渊模式不显示） -->
+      <!-- 深渊续命次数由服务端在开局时下发 -->
       <Transition name="slide-down">
-        <div v-if="gameStore.revivalRemaining > 0 && gameStore.mode !== 'ABYSS'" class="revival-indicator">
+        <div v-if="gameStore.revivalRemaining > 0 && gameStore.mode === 'ABYSS'" class="revival-indicator">
           <svg class="revival-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 4v6h6" />
             <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
           </svg>
-          <span>复活可用 {{ gameStore.revivalRemaining }} 次</span>
+          <span>深渊续命可用 {{ gameStore.revivalRemaining }} 次</span>
         </div>
       </Transition>
     </header>
@@ -103,8 +103,10 @@
             :correct="lastResult.correct"
             :correct-option="lastResult.correctOption"
             :explanation="lastResult.explanation"
-            :can-revive="gameStore.revivalRemaining > 0 && !lastResult.correct"
+            :can-revive="lastResult.canRevive"
             :is-abyss-mode="gameStore.mode === 'ABYSS'"
+            :is-last-question="gameStore.isLastQuestion"
+            :reviving="loading"
             @revive="handleRevive"
             @next="handleNext"
           />
@@ -114,7 +116,7 @@
             <div v-if="!showFeedback" class="submit-area">
               <button
                 class="submit-btn"
-                :disabled="!currentSelected"
+                :disabled="!currentSelected || loading"
                 :class="{ 'btn-ready': currentSelected }"
                 @click="handleSubmit"
               >
@@ -171,8 +173,9 @@ const currentSelected = ref<string | null>(null)
 const showFeedback = ref(false)
 const lastResult = ref<{
   correct: boolean
-  correctOption: string
-  explanation: string
+  correctOption?: string
+  explanation?: string
+  canRevive: boolean
 } | null>(null)
 
 const isAbyss = computed(() => gameStore.mode === 'ABYSS')
@@ -193,13 +196,6 @@ watch(() => gameStore.phase, (val) => {
   }
 })
 
-// 深渊模式：自动预加载下一批题目（倒数第 2 题时触发）
-watch(() => gameStore.currentIndex, (newVal) => {
-  if (isAbyss.value && newVal >= gameStore.totalQuestions - 2 && !gameStore.prefetching) {
-    prefetchAbyssBatch()
-  }
-})
-
 // --- 选项交互 ---
 function handleSelect(option: string) {
   if (!showFeedback.value) {
@@ -209,18 +205,12 @@ function handleSelect(option: string) {
 
 // --- 提交答案 ---
 async function handleSubmit() {
-  if (!currentSelected.value) return
+  if (!currentSelected.value || loading.value) return
   loading.value = true
   try {
     const result = isAbyss.value
       ? await submitAbyssAnswer(currentSelected.value)
       : await submitAnswer(currentSelected.value)
-
-    if (!isAbyss.value && gameStore.isLastQuestion) {
-      await finishAndSubmit()
-      router.replace('/result')
-      return
-    }
 
     lastResult.value = result
     showFeedback.value = true
@@ -231,8 +221,9 @@ async function handleSubmit() {
   }
 }
 
-// --- 复活（深渊模式不可用） ---
+// --- 深渊续命：服务端清除本题错误状态后才能重答 ---
 async function handleRevive() {
+  if (loading.value) return
   loading.value = true
   try {
     const ok = await reviveCurrent()
@@ -240,9 +231,9 @@ async function handleRevive() {
       showFeedback.value = false
       currentSelected.value = null
       lastResult.value = null
-      showSuccessToast('复活成功，请重新作答')
+      showSuccessToast('续命成功，请重新作答')
     } else {
-      showToast('复活机会已用完')
+      showToast('深渊续命机会已用完')
     }
   } catch {
     showFailToast('复活失败')
@@ -253,6 +244,7 @@ async function handleRevive() {
 
 // --- 下一题 / 完成 / 堕入深渊 ---
 async function handleNext() {
+  if (loading.value) return
   // 深渊模式答错 → 游戏结束
   if (isAbyss.value && lastResult.value && !lastResult.value.correct) {
     loading.value = true
@@ -279,6 +271,15 @@ async function handleNext() {
       loading.value = false
     }
   } else {
+    if (isAbyss.value && gameStore.isLastQuestion) {
+      loading.value = true
+      const loaded = await prefetchAbyssBatch()
+      loading.value = false
+      if (!loaded) {
+        showFailToast('下一批题目加载失败，请重试')
+        return
+      }
+    }
     // 下一题
     gameStore.nextQuestion()
     showFeedback.value = false

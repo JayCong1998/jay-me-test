@@ -6,8 +6,10 @@ import com.jaymetest.model.enums.GameMode;
 
 import java.time.Instant;
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,6 +40,11 @@ public class GameRoundCache {
     private final Set<Long> usedQuestionIds;
     private final Map<Long, Boolean> answerResults = new HashMap<>();
     private int revivalUsed;
+
+    /** 深渊模式按服务端下发顺序作答，避免客户端跳题伪造 streak。 */
+    private final List<Long> abyssQuestionOrder = new ArrayList<>();
+    private int abyssCurrentQuestionIndex;
+    private boolean abyssFailed;
 
     // ---- 经典/专辑模式构造器 ----
 
@@ -105,13 +112,71 @@ public class GameRoundCache {
     // ---- 深渊模式专有方法 ----
 
     /** 递增 streak 并返回新值 */
-    public int incrementAndGetStreak() {
+    public synchronized int incrementAndGetStreak() {
         return ++this.streak;
     }
 
     /** 追加一道题目到缓存（深渊模式逐题添加） */
-    public void addQuestion(Long questionId, String correctOption) {
+    public synchronized void addQuestion(Long questionId, String correctOption) {
         this.answerMap.put(questionId, correctOption);
         this.usedQuestionIds.add(questionId);
+        this.abyssQuestionOrder.add(questionId);
+    }
+
+    /** 仅允许作答服务端指定的当前深渊题；答错后 Round 进入失败态。 */
+    public synchronized void recordAbyssAnswer(Long questionId, boolean correct) {
+        requireCurrentAbyssQuestion(questionId);
+        if (abyssFailed) {
+            throw new BusinessException(409, "本局深渊已失败，请续命或结算");
+        }
+        recordAnswer(questionId, correct);
+        if (correct) {
+            abyssCurrentQuestionIndex++;
+        } else {
+            abyssFailed = true;
+        }
+    }
+
+    /** 续命只可清除当前错误题，并恢复到可继续作答的状态。 */
+    public synchronized void reviveAbyssAnswer(Long questionId) {
+        requireCurrentAbyssQuestion(questionId);
+        if (!abyssFailed) {
+            throw new BusinessException(400, "当前深渊题未答错，不能续命");
+        }
+        resetAnswerForRevival(questionId);
+        abyssFailed = false;
+    }
+
+    /** 深渊成绩只能在本局失败后结算，不能提前提交存活中的局。 */
+    public synchronized void requireAbyssFailed() {
+        if (mode != GameMode.ABYSS || !abyssFailed) {
+            throw new BusinessException(400, "深渊挑战仍在进行，不能提交结果");
+        }
+    }
+
+    /** 下一批难度必须基于完成当前批次后的 streak，不能在中途预取。 */
+    public synchronized void requireAbyssBatchCanBeGenerated() {
+        if (mode != GameMode.ABYSS) {
+            throw new BusinessException(400, "当前回合不是深渊模式");
+        }
+        if (abyssFailed) {
+            throw new BusinessException(409, "本局深渊已失败，不能获取下一批题目");
+        }
+        if (abyssCurrentQuestionIndex < abyssQuestionOrder.size()) {
+            throw new BusinessException(409, "请完成当前批次后再获取下一批题目");
+        }
+    }
+
+    private void requireCurrentAbyssQuestion(Long questionId) {
+        if (mode != GameMode.ABYSS) {
+            throw new BusinessException(400, "当前回合不是深渊模式");
+        }
+        if (abyssCurrentQuestionIndex >= abyssQuestionOrder.size()) {
+            throw new BusinessException(409, "当前批次已完成，请加载下一批题目");
+        }
+        Long expectedQuestionId = abyssQuestionOrder.get(abyssCurrentQuestionIndex);
+        if (!expectedQuestionId.equals(questionId)) {
+            throw new BusinessException(409, "请按题目顺序作答");
+        }
     }
 }

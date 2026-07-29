@@ -7,32 +7,26 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class ClassicGamePropertiesTest {
+class AbyssGamePropertiesTest {
 
     @Test
-    void rejectsOverlappingLevelRanges() {
-        ClassicGameProperties properties = validProperties();
-        properties.setLevels(List.of(
-                level("PASSERBY", 0, 50),
-                level("JUNIOR", 50, 100)
-        ));
+    void rejectsAnUnreasonablyHighRevivalCount() {
+        AbyssGameProperties properties = validProperties();
+        properties.setRevivalCount(4);
 
         assertThrows(IllegalStateException.class, properties::validate);
     }
 
     @Test
-    void acceptsContiguousAccuracyRangesCoveringZeroToOneHundred() {
+    void acceptsOneAbyssRevivalPerRound() {
         assertDoesNotThrow(validProperties()::validate);
     }
 
-    private ClassicGameProperties validProperties() {
-        ClassicGameProperties properties = new ClassicGameProperties();
-        properties.setQuestionCount(10);
-        properties.setEasyWeight(0.6);
-        properties.setLevels(List.of(
-                level("PASSERBY", 0, 29),
-                level("JUNIOR", 30, 100)
-        ));
+    private AbyssGameProperties validProperties() {
+        AbyssGameProperties properties = new AbyssGameProperties();
+        properties.setBatchSize(5);
+        properties.setRevivalCount(1);
+        properties.setLevels(List.of(level("TOURIST", 0, null)));
         return properties;
     }
 

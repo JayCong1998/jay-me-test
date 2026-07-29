@@ -22,8 +22,9 @@ export interface AnswerRequest {
 
 export interface AnswerResult {
   correct: boolean
-  correctOption: string
-  explanation: string
+  correctOption?: string
+  explanation?: string
+  canRevive: boolean
 }
 
 export interface ReviveRequest {
@@ -55,11 +56,6 @@ export async function checkAnswer(req: AnswerRequest): Promise<AnswerResult> {
 /**
  * 复活
  */
-export async function revive(req: ReviveRequest): Promise<ReviveResult> {
-  const res = await client.post<R<ReviveResult>>('/questions/revive', req)
-  return res.data.data
-}
-
 // ============================================================
 // 无尽深渊模式
 // ============================================================
@@ -68,6 +64,7 @@ export interface AbyssStepData {
   roundId: string
   questions: QuestionDTO[]
   streak: number
+  revivalRemaining: number
 }
 
 /**
@@ -91,5 +88,10 @@ export async function fetchAbyssBatch(roundId: string): Promise<AbyssStepData> {
  */
 export async function checkAbyssAnswer(req: AnswerRequest): Promise<AnswerResult> {
   const res = await client.post<R<AnswerResult>>('/abyss/check', req)
+  return res.data.data
+}
+
+export async function reviveAbyss(req: ReviveRequest): Promise<ReviveResult> {
+  const res = await client.post<R<ReviveResult>>('/abyss/revive', req)
   return res.data.data
 }

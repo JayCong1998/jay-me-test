@@ -69,7 +69,7 @@ export function useQuiz() {
   async function startAbyssRound() {
     try {
       const data = await questionApi.startAbyss()
-      gameStore.startGame(data.roundId, data.questions, undefined, 'ABYSS')
+      gameStore.startGame(data.roundId, data.questions, undefined, 'ABYSS', data.revivalRemaining)
       gameStore.setAbyssStreak(0)
       return true
     } catch (e: any) {
@@ -101,20 +101,17 @@ export function useQuiz() {
     }
   }
 
-  /**
-   * 静默预加载下一批深渊题目（当前批次倒数第 2 题时触发）
-   */
+  /** 当前批次完成后加载下一批，确保服务端按最新 streak 选择难度。 */
   async function prefetchAbyssBatch() {
-    if (gameStore.prefetching || !gameStore.roundId) return
+    if (gameStore.prefetching || !gameStore.roundId) return false
     gameStore.prefetching = true
     try {
       const data = await questionApi.fetchAbyssBatch(gameStore.roundId)
       gameStore.appendQuestions(data.questions)
-      // 后端返回的是生成新批次前的 streak，用它校准本地状态，避免多端或重试造成显示偏差。
-      gameStore.setAbyssStreak(data.streak)
+      return true
     } catch (e: any) {
-      // 预加载失败不打断当前答题；真正无题时会在进入下一批时由接口错误兜底提示。
-      console.warn('预加载深渊题目失败:', e.message)
+      console.warn('加载下一批深渊题目失败:', e.message)
+      return false
     } finally {
       gameStore.prefetching = false
     }
@@ -128,11 +125,11 @@ export function useQuiz() {
     if (!q || !gameStore.roundId) return false
 
     try {
-      await questionApi.revive({
+      const result = await questionApi.reviveAbyss({
         roundId: gameStore.roundId,
         questionId: q.id,
       })
-      return gameStore.useRevival()
+      return gameStore.useRevival(result.remainingRevivals)
     } catch {
       return false
     }
@@ -174,7 +171,7 @@ export function useQuiz() {
           totalQuestions: gameStore.answers.size || (gameStore.correctCount + 1),
           accuracy: gameStore.answers.size > 0 ? gameStore.correctCount / gameStore.answers.size : 0,
           timeSpentSecs: gameStore.elapsedSeconds,
-          usedRevival: false,
+          usedRevival: gameStore.revivalUsed,
           createdAt: new Date().toISOString(),
           level: abyssLevel.key,
           levelTitle: abyssLevel.title,
@@ -186,17 +183,17 @@ export function useQuiz() {
         return fallback
       }
 
-      const level = getLevelByScore(gameStore.correctCount)
+      const level = getLevelByScore(gameStore.correctCount, gameStore.totalQuestions)
       const fallback = {
         roundId: gameStore.roundId!,
         mode: gameStore.mode,
         albumKey: gameStore.albumKey,
-        score: calcScore(gameStore.correctCount),
+        score: calcScore(gameStore.correctCount, gameStore.totalQuestions),
         correctCount: gameStore.correctCount,
         totalQuestions: gameStore.totalQuestions,
         accuracy: gameStore.totalQuestions > 0 ? gameStore.correctCount / gameStore.totalQuestions : 0,
         timeSpentSecs: gameStore.elapsedSeconds,
-        usedRevival: gameStore.revivalRemaining === 0,
+        usedRevival: gameStore.revivalUsed,
         createdAt: new Date().toISOString(),
         level: level.key,
         levelTitle: level.title,

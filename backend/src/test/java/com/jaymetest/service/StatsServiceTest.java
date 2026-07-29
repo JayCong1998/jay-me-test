@@ -1,6 +1,7 @@
 package com.jaymetest.service;
 
 import com.jaymetest.mapper.GameRecordMapper;
+import com.jaymetest.exception.BusinessException;
 import com.jaymetest.model.dto.GameResultDTO;
 import com.jaymetest.model.dto.GameSubmitRequest;
 import com.jaymetest.model.entity.GameRecord;
@@ -94,8 +95,8 @@ class StatsServiceTest {
         GameRoundCache round = new GameRoundCache(true);
         round.addQuestion(1L, "A");
         round.addQuestion(2L, "B");
-        round.recordAnswer(1L, true);
-        round.recordAnswer(2L, false);
+        round.recordAbyssAnswer(1L, true);
+        round.recordAbyssAnswer(2L, false);
         when(roundCacheManager.getOrThrow("abyss-round")).thenReturn(round);
 
         GameSubmitRequest request = new GameSubmitRequest();
@@ -116,5 +117,23 @@ class StatsServiceTest {
         assertEquals(GameMode.ABYSS.name(), stored.getMode());
         assertEquals(0, stored.getUsedRevival());
         assertNotNull(stored.getCreatedAt());
+    }
+
+    @Test
+    void rejectsAbyssSubmissionWhileTheChallengeIsStillActive() {
+        when(gameRecordMapper.selectOne(any())).thenReturn(null);
+        GameRoundCache round = new GameRoundCache(true);
+        round.addQuestion(1L, "A");
+        round.recordAnswer(1L, true);
+        when(roundCacheManager.getOrThrow("active-abyss-round")).thenReturn(round);
+
+        GameSubmitRequest request = new GameSubmitRequest();
+        request.setRoundId("active-abyss-round");
+        request.setTimeSpentSecs(60);
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> statsService.submitResult(request));
+
+        assertEquals(400, exception.getCode());
     }
 }

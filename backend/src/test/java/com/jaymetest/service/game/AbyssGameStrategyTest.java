@@ -2,8 +2,10 @@ package com.jaymetest.service.game;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jaymetest.config.AbyssGameProperties;
+import com.jaymetest.exception.BusinessException;
 import com.jaymetest.mapper.QuestionMapper;
 import com.jaymetest.model.dto.AbyssStepDTO;
+import com.jaymetest.model.dto.AnswerResultDTO;
 import com.jaymetest.model.entity.Question;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -90,6 +94,88 @@ class AbyssGameStrategyTest {
         verify(questionMapper, times(10)).selectList(captor.capture());
         assertFalse(captor.getAllValues().get(0).getExpression().getNormal().isEmpty());
         assertTrue(captor.getAllValues().get(1).getExpression().getNormal().isEmpty());
+    }
+
+    @Test
+    void hidesAnswerAndExplanationUntilTheAbyssRevivalIsUsed() {
+        AbyssGameProperties rules = new AbyssGameProperties();
+        rules.setRevivalCount(1);
+        strategy = new AbyssGameStrategy(questionMapper, difficultyPolicy, rules);
+        GameRoundCache cache = new GameRoundCache(true);
+        cache.addQuestion(1L, "A");
+        when(cacheManager.getOrThrow("round-1")).thenReturn(cache);
+        Question question = question(1);
+        question.setExplanation("解析内容");
+        when(questionMapper.selectById(1L)).thenReturn(question);
+
+        AnswerResultDTO firstWrongAnswer = strategy.checkAnswer("round-1", 1L, "B", cacheManager);
+
+        assertFalse(firstWrongAnswer.isCorrect());
+        assertTrue(firstWrongAnswer.isCanRevive());
+        assertNull(firstWrongAnswer.getCorrectOption());
+        assertNull(firstWrongAnswer.getExplanation());
+
+        strategy.revive("round-1", 1L, cacheManager);
+        AnswerResultDTO retriedWrongAnswer = strategy.checkAnswer("round-1", 1L, "B", cacheManager);
+
+        assertFalse(retriedWrongAnswer.isCanRevive());
+        assertEquals("A", retriedWrongAnswer.getCorrectOption());
+        assertEquals("解析内容", retriedWrongAnswer.getExplanation());
+    }
+
+    @Test
+    void rejectsAnswersThatSkipTheCurrentAbyssQuestion() {
+        GameRoundCache cache = new GameRoundCache(true);
+        cache.addQuestion(1L, "A");
+        cache.addQuestion(2L, "A");
+        when(cacheManager.getOrThrow("round-1")).thenReturn(cache);
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> strategy.checkAnswer("round-1", 2L, "A", cacheManager));
+
+        assertEquals(409, exception.getCode());
+    }
+
+    @Test
+    void rejectsFurtherAnswersAfterAWrongAbyssAnswerUntilRevived() {
+        GameRoundCache cache = new GameRoundCache(true);
+        cache.addQuestion(1L, "A");
+        cache.addQuestion(2L, "A");
+        when(cacheManager.getOrThrow("round-1")).thenReturn(cache);
+
+        strategy.checkAnswer("round-1", 1L, "B", cacheManager);
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> strategy.checkAnswer("round-1", 2L, "A", cacheManager));
+
+        assertEquals(409, exception.getCode());
+    }
+
+    @Test
+    void generatesTheNextBatchOnlyAfterTheCurrentBatchIsCompleted() {
+        GameRoundCache cache = new GameRoundCache(true);
+        for (long questionId = 1; questionId <= 5; questionId++) {
+            cache.addQuestion(questionId, "A");
+        }
+        when(cacheManager.getOrThrow("round-1")).thenReturn(cache);
+        when(difficultyPolicy.select(any(Integer.class))).thenReturn(DifficultySelection.ANY);
+        when(questionMapper.selectList(any(LambdaQueryWrapper.class)))
+                .thenAnswer(invocation -> List.of(question(questionIds.incrementAndGet() + 5)));
+
+        BusinessException prematureRequest = assertThrows(BusinessException.class,
+                () -> strategy.generateBatch("round-1", cacheManager));
+        assertEquals(409, prematureRequest.getCode());
+
+        for (long questionId = 1; questionId <= 5; questionId++) {
+            strategy.checkAnswer("round-1", questionId, "A", cacheManager);
+        }
+
+        AbyssStepDTO batch = strategy.generateBatch("round-1", cacheManager);
+
+        assertEquals(5, batch.getStreak());
+        for (int streak = 5; streak < 10; streak++) {
+            verify(difficultyPolicy).select(streak);
+        }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

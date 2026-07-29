@@ -46,4 +46,13 @@ public class AbyssController {
                         request.getSelectedOption(), questionService.cacheManager());
         return R.ok(result);
     }
+
+    @Operation(summary = "消耗一次深渊续命机会并重答当前题")
+    @PostMapping("/revive")
+    public R<java.util.Map<String, Object>> revive(@Valid @RequestBody ReviveRequest request) {
+        questionService.abyss().revive(request.getRoundId(), request.getQuestionId(), questionService.cacheManager());
+        int remainingRevivals = questionService.abyss()
+                .getRemainingRevivals(request.getRoundId(), questionService.cacheManager());
+        return R.ok(java.util.Map.of("revived", true, "remainingRevivals", remainingRevivals));
+    }
 }

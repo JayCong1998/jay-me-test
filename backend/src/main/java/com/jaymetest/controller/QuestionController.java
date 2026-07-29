@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 /**
  * 题目 API — 经典模式入口。
@@ -38,15 +37,4 @@ public class QuestionController {
         return R.ok(result);
     }
 
-    @Operation(summary = "使用复活机会")
-    @PostMapping("/revive")
-    public R<Map<String, Object>> revive(@Valid @RequestBody ReviveRequest request) {
-        String correctAnswer = questionService.classic()
-                .revive(request.getRoundId(), request.getQuestionId(), questionService.cacheManager());
-        return R.ok(Map.of(
-                "revived", true,
-                "correctAnswer", correctAnswer,
-                "remainingRevivals", 0
-        ));
-    }
 }
