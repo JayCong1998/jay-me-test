@@ -64,12 +64,29 @@ game:
     question-count: 10
     revival-count: 1
     easy-weight: 0.6
+    levels:
+      - { key: PASSERBY, title: "🌱 路人粉", description: "刚刚路过，杰伦的歌还等你发现", min: 0, max: 29 }
+      - { key: JUNIOR, title: "🎤 初级杰迷", description: "入门粉丝，继续加油解锁更多杰伦冷知识", min: 30, max: 49 }
+      - { key: INTERMEDIATE, title: "🎧 中级杰迷", description: "资深听友，离骨灰粉只差一张专辑的距离", min: 50, max: 69 }
+      - { key: SENIOR, title: "🏆 高级杰迷", description: "铁粉认证，演唱会前排选手就是你", min: 70, max: 89 }
+      - { key: ULTIMATE, title: "👑 终极杰迷", description: "你就是杰伦的编外制作人", min: 90, max: 100 }
   album:
     question-count: 10
-    pass-threshold: 8
-    revival-count: 0
+    pass-accuracy: 80
+    levels:
+      - { key: ALBUM_NEWCOMER, title: "专辑新生", description: "继续熟悉这张专辑", min: 0, max: 59 }
+      - { key: ALBUM_LISTENER, title: "专辑听友", description: "你已熟悉这张专辑", min: 60, max: 79 }
+      - { key: ALBUM_MASTER, title: "专辑大师", description: "这张专辑你已融会贯通", min: 80, max: 100 }
   abyss:
     batch-size: 5
+    levels:
+      - { key: ABYSS_TOURIST, title: "深渊游客", description: "初入深渊，浅尝辄止", min: 0, max: 2 }
+      - { key: ABYSS_EXPLORER, title: "深渊探索者", description: "开始深入杰伦的音乐迷宫", min: 3, max: 5 }
+      - { key: ABYSS_WARRIOR, title: "深渊战士", description: "已经击败大多数杰迷", min: 6, max: 10 }
+      - { key: ABYSS_KNIGHT, title: "深渊骑士", description: "铁粉中的铁粉", min: 11, max: 20 }
+      - { key: ABYSS_LORD, title: "深渊领主", description: "杰伦编年史活字典", min: 21, max: 30 }
+      - { key: ABYSS_OVERLORD, title: "深渊霸主", description: "制作人都要请教你的程度", min: 31, max: 50 }
+      - { key: ABYSS_GOD, title: "深渊之神", description: "传说的缔造者，杰伦本伦？", min: 51 }
     difficulty:
       # from/to 按当前连续答对数匹配；最后一档不写 to，表示覆盖 30+。
       # weights 是随机抽题权重，ANY 表示不限难度，用于后期增加变化和题库兜底。

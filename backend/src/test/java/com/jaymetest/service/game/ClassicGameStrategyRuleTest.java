@@ -1,6 +1,6 @@
 package com.jaymetest.service.game;
 
-import com.jaymetest.config.GameRuleProperties;
+import com.jaymetest.config.ClassicGameProperties;
 import com.jaymetest.mapper.QuestionMapper;
 import com.jaymetest.model.entity.Question;
 import com.jaymetest.model.enums.DifficultyLevel;
@@ -27,9 +27,9 @@ class ClassicGameStrategyRuleTest {
 
     @Test
     void usesConfiguredQuestionCountAndDifficultyWeights() {
-        GameRuleProperties rules = new GameRuleProperties();
-        rules.getClassic().setQuestionCount(5);
-        rules.getClassic().setEasyWeight(0.4);
+        ClassicGameProperties rules = new ClassicGameProperties();
+        rules.setQuestionCount(5);
+        rules.setEasyWeight(0.4);
         when(questionMapper.selectRandomByDifficulty(eq(DifficultyLevel.EASY.name()), anyInt()))
                 .thenReturn(List.of(question(1), question(2)));
         when(questionMapper.selectRandomByDifficulty(eq(DifficultyLevel.MEDIUM.name()), anyInt()))

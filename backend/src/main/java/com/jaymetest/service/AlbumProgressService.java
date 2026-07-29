@@ -1,6 +1,7 @@
 package com.jaymetest.service;
 
 import com.jaymetest.exception.BusinessException;
+import com.jaymetest.config.AlbumGameProperties;
 import com.jaymetest.mapper.AlbumProgressMapper;
 import com.jaymetest.model.dto.AlbumDTO;
 import com.jaymetest.model.dto.AlbumResultDTO;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 public class AlbumProgressService {
 
     private final AlbumProgressMapper albumProgressMapper;
+    private final AlbumGameProperties albumGameProperties;
 
     private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -66,7 +68,7 @@ public class AlbumProgressService {
      * 处理专辑通关结果
      * 在 StatsService.submitResult 中调用
      */
-    public AlbumResultDTO processAlbumCompletion(Long userId, String albumKey, int correctCount) {
+    public AlbumResultDTO processAlbumCompletion(Long userId, String albumKey, int correctCount, int totalQuestions) {
         AlbumKey album = AlbumKey.fromDisplayName(albumKey);
         AlbumProgress progress = albumProgressMapper.selectByUserAndAlbum(userId, albumKey);
 
@@ -93,7 +95,7 @@ public class AlbumProgressService {
         }
 
         String now = LocalDateTime.now().format(DT_FMT);
-        boolean passed = correctCount >= AlbumKey.UNLOCK_THRESHOLD;
+        boolean passed = correctCount * 100 >= albumGameProperties.getPassAccuracy() * totalQuestions;
 
         if (progress.getId() == null) {
             // INSERT
@@ -173,7 +175,7 @@ public class AlbumProgressService {
             AlbumKey previous = album.previous();
             String prevName = previous != null ? previous.getDisplayName() : "未知";
             throw new BusinessException(403, "请先通关前置专辑「" + prevName + "」("
-                    + AlbumKey.UNLOCK_THRESHOLD + "/10) 才能解锁本关");
+                    + albumGameProperties.getPassAccuracy() + "% 正确率) 才能解锁本关");
         }
     }
 

@@ -5,6 +5,7 @@ import com.jaymetest.mapper.GameRecordMapper;
 import com.jaymetest.model.dto.LeaderboardEntry;
 import com.jaymetest.model.dto.LeaderboardResult;
 import com.jaymetest.model.enums.AlbumKey;
+import com.jaymetest.config.AlbumGameProperties;
 import com.jaymetest.model.enums.GameMode;
 import com.jaymetest.service.game.GameStrategyFactory;
 import com.jaymetest.service.game.LevelInfo;
@@ -25,6 +26,7 @@ public class LeaderboardService {
 
     private final GameRecordMapper gameRecordMapper;
     private final GameStrategyFactory strategyFactory;
+    private final AlbumGameProperties albumGameProperties;
 
     public LeaderboardResult getClassicLeaderboard(int limit, int offset) {
         List<Map<String, Object>> rows = gameRecordMapper.selectClassicLeaderboardPaged(
@@ -36,11 +38,15 @@ public class LeaderboardService {
 
     public LeaderboardResult getAlbumLeaderboard(int limit, int offset) {
         List<Map<String, Object>> rows = gameRecordMapper.selectAlbumLeaderboardPaged(
-                limit, offset, GameMode.ALBUM.name(), AlbumKey.UNLOCK_THRESHOLD);
+                limit, offset, GameMode.ALBUM.name(), requiredAlbumCorrectCount());
         List<LeaderboardEntry> list = mapAlbumEntries(rows);
         Long myRank = gameRecordMapper.selectMyAlbumRank(
-                StpUtil.getLoginIdAsLong(), GameMode.ALBUM.name(), AlbumKey.UNLOCK_THRESHOLD);
+                StpUtil.getLoginIdAsLong(), GameMode.ALBUM.name(), requiredAlbumCorrectCount());
         return LeaderboardResult.builder().list(list).myRank(myRank).build();
+    }
+
+    private int requiredAlbumCorrectCount() {
+        return (int) Math.ceil(albumGameProperties.getQuestionCount() * albumGameProperties.getPassAccuracy() / 100.0);
     }
 
     public LeaderboardResult getAbyssLeaderboard(int limit) {

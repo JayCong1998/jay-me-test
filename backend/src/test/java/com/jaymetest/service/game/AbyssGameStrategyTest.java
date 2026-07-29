@@ -1,7 +1,7 @@
 package com.jaymetest.service.game;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.jaymetest.config.GameRuleProperties;
+import com.jaymetest.config.AbyssGameProperties;
 import com.jaymetest.mapper.QuestionMapper;
 import com.jaymetest.model.dto.AbyssStepDTO;
 import com.jaymetest.model.entity.Question;
@@ -40,7 +40,7 @@ class AbyssGameStrategyTest {
 
     @BeforeEach
     void setUp() {
-        strategy = new AbyssGameStrategy(questionMapper, difficultyPolicy, new GameRuleProperties());
+        strategy = new AbyssGameStrategy(questionMapper, difficultyPolicy, new AbyssGameProperties());
         questionIds = new AtomicLong();
     }
 

@@ -20,5 +20,5 @@ public interface PostSubmitHook {
      * @param builder GameResultDTO 构建器（已填充通用字段）
      * @param userId  登录用户 ID（游客为 null）
      */
-    void afterSubmit(String albumKey, int correctCount, GameResultDTO.GameResultDTOBuilder builder, Long userId);
+    void afterSubmit(String albumKey, int correctCount, int totalQuestions, GameResultDTO.GameResultDTOBuilder builder, Long userId);
 }

@@ -1,14 +1,13 @@
 package com.jaymetest.service.game;
 
 import com.jaymetest.exception.BusinessException;
-import com.jaymetest.config.GameRuleProperties;
+import com.jaymetest.config.ClassicGameProperties;
 import com.jaymetest.mapper.QuestionMapper;
 import com.jaymetest.model.dto.AnswerResultDTO;
 import com.jaymetest.model.dto.QuestionDTO;
 import com.jaymetest.model.dto.RoundDTO;
 import com.jaymetest.model.entity.Question;
 import com.jaymetest.model.enums.DifficultyLevel;
-import com.jaymetest.model.enums.FanLevel;
 import com.jaymetest.model.enums.GameMode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +29,7 @@ import java.util.stream.Collectors;
 public class ClassicGameStrategy implements GameStrategy {
 
     private final QuestionMapper questionMapper;
-    private final GameRuleProperties gameRules;
+    private final ClassicGameProperties gameRules;
 
     @Override
     public GameMode getMode() {
@@ -43,9 +42,9 @@ public class ClassicGameStrategy implements GameStrategy {
     }
 
     public RoundDTO generateRound(String albumKey, RoundCacheManager cacheManager) {
-        int count = gameRules.getClassic().getQuestionCount();
+        int count = gameRules.getQuestionCount();
         // 60% 简单 + 40% 中等
-        int easyCount = (int) Math.round(count * gameRules.getClassic().getEasyWeight());
+        int easyCount = (int) Math.round(count * gameRules.getEasyWeight());
         int mediumCount = count - easyCount;
 
         List<Question> easyQuestions = questionMapper.selectRandomByDifficulty(
@@ -106,7 +105,7 @@ public class ClassicGameStrategy implements GameStrategy {
     @Override
     public String revive(String roundId, Long questionId, RoundCacheManager cacheManager) {
         GameRoundCache cache = cacheManager.getOrThrow(roundId);
-        if (cache.getRevivalUsed() >= gameRules.getClassic().getRevivalCount()) {
+        if (cache.getRevivalUsed() >= gameRules.getRevivalCount()) {
             throw new BusinessException(409, "本局复活机会已用完");
         }
         String correctOption = cache.getAnswerMap().get(questionId);
@@ -124,6 +123,6 @@ public class ClassicGameStrategy implements GameStrategy {
 
     @Override
     public LevelInfo evaluateLevel(int correctCount) {
-        return FanLevel.fromScore(correctCount);
+        return LevelEvaluator.evaluate(correctCount * 100 / gameRules.getQuestionCount(), gameRules.getLevels());
     }
 }

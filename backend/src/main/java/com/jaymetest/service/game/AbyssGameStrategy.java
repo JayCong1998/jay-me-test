@@ -1,7 +1,7 @@
 package com.jaymetest.service.game;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.jaymetest.config.GameRuleProperties;
+import com.jaymetest.config.AbyssGameProperties;
 import com.jaymetest.exception.BusinessException;
 import com.jaymetest.mapper.QuestionMapper;
 import com.jaymetest.model.dto.AbyssStepDTO;
@@ -9,7 +9,6 @@ import com.jaymetest.model.dto.AnswerResultDTO;
 import com.jaymetest.model.dto.QuestionDTO;
 import com.jaymetest.model.dto.RoundDTO;
 import com.jaymetest.model.entity.Question;
-import com.jaymetest.model.enums.AbyssLevel;
 import com.jaymetest.model.enums.GameMode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,7 @@ public class AbyssGameStrategy implements GameStrategy {
 
     private final QuestionMapper questionMapper;
     private final AbyssDifficultyPolicy difficultyPolicy;
-    private final GameRuleProperties gameRules;
+    private final AbyssGameProperties gameRules;
 
     @Override
     public GameMode getMode() {
@@ -79,7 +78,7 @@ public class AbyssGameStrategy implements GameStrategy {
 
     private List<Question> generateQuestions(int startStreak, GameRoundCache cache) {
         List<Question> questions = new ArrayList<>();
-        for (int i = 0; i < gameRules.getAbyss().getBatchSize(); i++) {
+        for (int i = 0; i < gameRules.getBatchSize(); i++) {
             DifficultySelection selection = difficultyPolicy.select(startStreak + i);
             Question q = selectRandomExcluding(selection, cache.getUsedQuestionIds());
             // 指定难度题库耗尽时降级到全题库兜底，保证深渊模式不会被单一难度库存卡死。
@@ -133,7 +132,7 @@ public class AbyssGameStrategy implements GameStrategy {
 
     @Override
     public LevelInfo evaluateLevel(int correctCount) {
-        return AbyssLevel.fromStreak(correctCount);
+        return LevelEvaluator.evaluate(correctCount, gameRules.getLevels());
     }
 
     // ---- 内部工具方法 ----

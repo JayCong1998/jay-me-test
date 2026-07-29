@@ -19,12 +19,12 @@ public class AlbumUnlockHook implements PostSubmitHook {
     private final AlbumProgressService albumProgressService;
 
     @Override
-    public void afterSubmit(String albumKey, int correctCount, GameResultDTO.GameResultDTOBuilder builder, Long userId) {
+    public void afterSubmit(String albumKey, int correctCount, int totalQuestions, GameResultDTO.GameResultDTOBuilder builder, Long userId) {
         if (albumKey == null || userId == null) {
             return;
         }
         AlbumResultDTO albumResult = albumProgressService.processAlbumCompletion(
-                userId, albumKey, correctCount);
+                userId, albumKey, correctCount, totalQuestions);
         builder.albumResult(albumResult);
     }
 }

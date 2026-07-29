@@ -127,7 +127,7 @@ public class StatsService {
 
         // 执行后置钩子（如专辑解锁）
         for (PostSubmitHook hook : strategy.getPostSubmitHooks()) {
-            hook.afterSubmit(round.getAlbumKey(), correctCount, builder, userId);
+            hook.afterSubmit(round.getAlbumKey(), correctCount, totalQuestions, builder, userId);
         }
         GameResultDTO result = builder.build();
         roundCacheManager.remove(request.getRoundId());
