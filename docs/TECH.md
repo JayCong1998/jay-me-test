@@ -154,7 +154,9 @@ backend/
     │   ├── AuthController.java                # 注册/登录/当前用户
     │   ├── QuestionController.java            # 经典抽题/校验
     │   ├── AbyssController.java               # 深渊开始/批次/校验/续命 (需登录)
-    │   ├── StatsController.java               # 提交结果/统计/我的记录
+    │   ├── GameResultController.java           # 提交结果
+    │   ├── GameRecordController.java           # 我的记录
+    │   ├── StatisticsController.java           # 全局统计
     │   ├── AlbumController.java               # 专辑列表/专辑抽题 (需登录)
     │   └── LeaderboardController.java         # 排行榜 (需登录)
     ├── service/
@@ -211,7 +213,7 @@ frontend/
     ├── api/
     │   ├── client.ts                         # axios 实例（baseURL + 拦截器）
     │   ├── questionApi.ts                    # /api/questions/* 接口
-    │   ├── statsApi.ts                       # /api/stats/* 接口
+    │   ├── statsApi.ts                       # 游戏结果、记录与统计接口
     │   ├── authApi.ts                        # /api/auth/* 接口
     │   ├── albumApi.ts                       # /api/albums/* 接口
     │   └── leaderboardApi.ts                 # /api/leaderboard 接口
@@ -369,9 +371,9 @@ List<AlbumProgress> selectByUserId(long userId);
 | 2 | `GET` | `/api/questions/round` | — | 经典模式随机抽题（当前 20 题） |
 | 3 | `POST` | `/api/questions/check` | — | 校验单题答案 |
 | 4 | `POST` | `/api/abyss/start` | 需登录 | 开始无尽深渊 |
-| 5 | `POST` | `/api/stats/submit` | — | 提交游戏结果 |
-| 6 | `GET` | `/api/stats/overview` | — | 全局统计概览 |
-| 7 | `GET` | `/api/stats/my-records` | 需登录 | 当前用户的考试记录 |
+| 5 | `POST` | `/api/game-results` | — | 提交游戏结果 |
+| 6 | `GET` | `/api/statistics/overview` | — | 全局统计概览 |
+| 7 | `GET` | `/api/game-records/me` | 需登录 | 当前用户的考试记录 |
 | 8 | `POST` | `/api/auth/register` | — | 注册 |
 | 9 | `POST` | `/api/auth/login` | — | 登录 |
 | 10 | `GET` | `/api/auth/me` | 需登录 | 当前用户信息 |

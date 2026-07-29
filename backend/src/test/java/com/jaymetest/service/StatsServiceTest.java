@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class StatsServiceTest {
+class GameResultServiceTest {
 
     @Mock
     private GameRecordMapper gameRecordMapper;
@@ -43,7 +43,7 @@ class StatsServiceTest {
     private RoundCacheManager roundCacheManager;
 
     @InjectMocks
-    private StatsService statsService;
+    private GameResultService gameResultService;
 
     @Test
     void testSubmitResult_classicMode() {
@@ -67,7 +67,7 @@ class StatsServiceTest {
         request.setRoundId("test-uuid");
         request.setTimeSpentSecs(120);
 
-        GameResultDTO result = statsService.submitResult(request);
+        GameResultDTO result = gameResultService.submitResult(request);
 
         assertNotNull(result);
         assertEquals(50, result.getScore());
@@ -103,7 +103,7 @@ class StatsServiceTest {
         request.setRoundId("abyss-round");
         request.setTimeSpentSecs(180);
 
-        GameResultDTO result = statsService.submitResult(request);
+        GameResultDTO result = gameResultService.submitResult(request);
 
         assertEquals("abyss-round", result.getRoundId());
         assertEquals(GameMode.ABYSS, result.getMode());
@@ -132,7 +132,7 @@ class StatsServiceTest {
         request.setTimeSpentSecs(60);
 
         BusinessException exception = assertThrows(BusinessException.class,
-                () -> statsService.submitResult(request));
+                () -> gameResultService.submitResult(request));
 
         assertEquals(400, exception.getCode());
     }

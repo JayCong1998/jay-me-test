@@ -22,7 +22,7 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 1. 客户端请求 `GET /api/questions/round`，服务端生成 UUID `roundId`，按 `game.classic.question-count` 随机抽取题目（当前为 20 题）；简单题占比由 `game.classic.easy-weight` 配置（当前为 60%）。专辑模式通过 `GET /api/albums/round?albumKey=xxx` 抽取当前配置的 20 题。
 2. 服务端将 `(questionId → correctOption)` 映射存入 `RoundCache`，返回不含答案的题目列表。
 3. 客户端逐题通过 `POST /api/questions/check` 提交答案，服务端根据 `roundId` 查找缓存比对。
-4. 客户端通过 `POST /api/stats/submit` 提交最终结果，服务端按 `roundId` 去重，计算等级和百分位，持久化到 `game_record` 表。
+4. 客户端通过 `POST /api/game-results` 提交最终结果，服务端按 `roundId` 去重，计算等级和百分位，持久化到 `game_record` 表。
 5. 专辑模式下，正确率达到 `game.album.pass-accuracy` 自动解锁下一张专辑（当前为 80%，即 16/20）。
 6. `QuestionService.cleanExpiredCache()` 每 10 分钟执行一次，清除超过 30 分钟的 round。
 
@@ -32,7 +32,7 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 |------|------|
 | [QuestionController.java](../backend/src/main/java/com/jaymetest/controller/QuestionController.java) | 经典题目 API：抽题 `/round`、校验 `/check` |
 | [AbyssController.java](../backend/src/main/java/com/jaymetest/controller/AbyssController.java) | 深渊 API：开始、批次、校验和续命 `/api/abyss/**`（均需登录） |
-| [StatsController.java](../backend/src/main/java/com/jaymetest/controller/StatsController.java) | 统计 API：提交结果 `/submit`、全局概览 `/overview`、我的记录 `/my-records` |
+| `GameResultController` / `GameRecordController` / `StatisticsController` | 游戏结算、我的记录、全局统计三个独立 API |
 | [AuthController.java](../backend/src/main/java/com/jaymetest/controller/AuthController.java) | 认证 API：注册 `/register`、登录 `/login`、当前用户 `/me` |
 | [AlbumController.java](../backend/src/main/java/com/jaymetest/controller/AlbumController.java) | 专辑 API：专辑列表 `/list`、专辑抽题 `/round`（均需登录） |
 | [LeaderboardController.java](../backend/src/main/java/com/jaymetest/controller/LeaderboardController.java) | 排行榜 API：经典、专辑、深渊三榜（需登录） |
@@ -67,7 +67,7 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 | [albumStore.ts](../frontend/src/stores/albumStore.ts) | 专辑进度状态：专辑列表、解锁状态、最高分 |
 | [client.ts](../frontend/src/api/client.ts) | Axios 实例，baseURL `/api`，10s 超时，响应拦截器解包 `R<T>`，请求拦截器注入 Sa-Token |
 | [questionApi.ts](../frontend/src/api/questionApi.ts) | `/api/questions/*` 接口：fetchRound、checkAnswer、revive |
-| [statsApi.ts](../frontend/src/api/statsApi.ts) | `/api/stats/*` 接口：submitResult、fetchOverview、fetchMyRecords |
+| [statsApi.ts](../frontend/src/api/statsApi.ts) | 游戏结算、记录与统计 API 客户端 |
 | [authApi.ts](../frontend/src/api/authApi.ts) | `/api/auth/*` 接口：register、login、fetchMe |
 | [albumApi.ts](../frontend/src/api/albumApi.ts) | `/api/albums/*` 接口：fetchAlbumList、fetchAlbumRound |
 | [leaderboardApi.ts](../frontend/src/api/leaderboardApi.ts) | `/api/leaderboard` 接口：fetchLeaderboard |
@@ -129,7 +129,7 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 ## 用户系统
 
 - Sa-Token + JWT 双令牌模式，`/api/auth/register` 和 `/api/auth/login`。
-- `SaTokenConfig` 定义路由拦截规则：公开接口（`/api/health/**`、`/api/auth/**`、`/api/questions/**`、`/api/stats/overview`、`/api/stats/submit`）放行，其余需登录。
+- `SaTokenConfig` 定义路由拦截规则：公开接口包含 `/api/game-results` 和 `/api/statistics/overview`；`/api/game-records/me` 需登录。
 - 密码 BCrypt 加密存储。
 - 游客仍可完整答题，登录后可查看历史记录、排行榜、专辑进度。
 

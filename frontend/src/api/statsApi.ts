@@ -50,7 +50,7 @@ export interface StatsOverview {
  * 提交游戏结果
  */
 export async function submitResult(req: GameSubmitRequest): Promise<GameResult> {
-  const res = await client.post<R<GameResult>>('/stats/submit', req)
+  const res = await client.post<R<GameResult>>('/game-results', req)
   return res.data.data
 }
 
@@ -58,7 +58,7 @@ export async function submitResult(req: GameSubmitRequest): Promise<GameResult> 
  * 获取全局统计概览
  */
 export async function fetchOverview(): Promise<StatsOverview> {
-  const res = await client.get<R<StatsOverview>>('/stats/overview')
+  const res = await client.get<R<StatsOverview>>('/statistics/overview')
   return res.data.data
 }
 
@@ -80,7 +80,7 @@ export interface GameRecordDTO {
  * 获取当前登录用户的考试记录（分页）
  */
 export async function fetchMyRecords(page: number = 1, size: number = 10): Promise<GameRecordDTO[]> {
-  const res = await client.get<R<GameRecordDTO[]>>('/stats/my-records', {
+  const res = await client.get<R<GameRecordDTO[]>>('/game-records/me', {
     params: { page, size }
   })
   return res.data.data
