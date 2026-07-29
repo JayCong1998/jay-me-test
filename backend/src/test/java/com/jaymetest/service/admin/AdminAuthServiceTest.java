@@ -42,7 +42,7 @@ class AdminAuthServiceTest {
         admin.setEnabled(1);
 
         when(adminUserMapper.selectOne(any())).thenReturn(admin);
-        when(adminTokenService.login(7L)).thenReturn("admin-token");
+        when(adminTokenService.login(7L, "Operator")).thenReturn("admin-token");
 
         AdminLoginRequest request = new AdminLoginRequest();
         request.setUsername(" admin ");
@@ -54,6 +54,7 @@ class AdminAuthServiceTest {
         assertEquals(7L, response.getAdmin().getId());
         assertEquals("admin", response.getAdmin().getUsername());
         assertEquals("SUPER_ADMIN", response.getAdmin().getRole());
+        verify(adminTokenService).login(7L, "Operator");
         verify(adminUserMapper).updateById(admin);
     }
 

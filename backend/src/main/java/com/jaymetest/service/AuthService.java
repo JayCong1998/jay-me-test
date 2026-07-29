@@ -1,6 +1,7 @@
 package com.jaymetest.service;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.stp.SaLoginModel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jaymetest.exception.BusinessException;
 import com.jaymetest.mapper.UserMapper;
@@ -49,7 +50,7 @@ public class AuthService {
         userMapper.insert(user);
 
         // 签发 Token（Sa-Token JWT 模式）
-        StpUtil.login(user.getId());
+        StpUtil.login(user.getId(), new SaLoginModel().setExtra("nickname", user.getNickname()));
         String token = StpUtil.getTokenValue();
 
         log.info("用户注册成功 id={}, email={}", user.getId(), user.getEmail());
@@ -75,7 +76,7 @@ public class AuthService {
         }
 
         // 签发 Token
-        StpUtil.login(user.getId());
+        StpUtil.login(user.getId(), new SaLoginModel().setExtra("nickname", user.getNickname()));
         String token = StpUtil.getTokenValue();
 
         log.info("用户登录成功 id={}, email={}", user.getId(), user.getEmail());

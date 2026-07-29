@@ -34,7 +34,7 @@ public class AdminAuthService {
             throw new BusinessException(403, "管理员账号已禁用");
         }
 
-        String token = adminTokenService.login(admin.getId());
+        String token = adminTokenService.login(admin.getId(), admin.getNickname());
         admin.setLastLoginAt(LocalDateTime.now());
         adminUserMapper.updateById(admin);
 

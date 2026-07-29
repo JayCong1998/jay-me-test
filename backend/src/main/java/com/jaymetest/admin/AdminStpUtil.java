@@ -1,6 +1,7 @@
 package com.jaymetest.admin;
 
 import cn.dev33.satoken.jwt.StpLogicJwtForSimple;
+import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpLogic;
 
 public final class AdminStpUtil {
@@ -13,6 +14,10 @@ public final class AdminStpUtil {
 
     public static void login(Object id) {
         STP_LOGIC.login(id);
+    }
+
+    public static void login(Object id, SaLoginModel loginModel) {
+        STP_LOGIC.login(id, loginModel);
     }
 
     public static void logout() {
