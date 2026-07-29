@@ -8,7 +8,7 @@ import com.jaymetest.model.dto.GameResultDTO;
 import com.jaymetest.model.dto.GameSubmitRequest;
 import com.jaymetest.model.dto.StatsOverviewDTO;
 import com.jaymetest.model.entity.GameRecord;
-import com.jaymetest.model.enums.FanLevel;
+import com.jaymetest.config.ClassicGameProperties;
 import com.jaymetest.model.enums.GameMode;
 import com.jaymetest.service.game.GameStrategy;
 import com.jaymetest.service.game.GameStrategyFactory;
@@ -42,6 +42,7 @@ public class StatsService {
     private final GameStrategyFactory strategyFactory;
     private final GameRecordDTOAssembler gameRecordDTOAssembler;
     private final RoundCacheManager roundCacheManager;
+    private final ClassicGameProperties classicGameProperties;
 
     /**
      * 提交游戏结果 — 模式差异完全委托给策略。
@@ -143,18 +144,19 @@ public class StatsService {
 
         Map<String, Double> levelDistribution = new HashMap<>();
         List<Map<String, Object>> distribution = gameRecordMapper.selectLevelDistribution();
-        for (FanLevel level : FanLevel.values()) {
+        for (var level : classicGameProperties.getLevels()) {
             long count = 0;
             for (Map<String, Object> row : distribution) {
                 int correctCount = ((Number) row.get("correct_count")).intValue();
-                if (correctCount >= level.getMinScore() && correctCount <= level.getMaxScore()) {
+                int accuracy = correctCount * 100 / classicGameProperties.getQuestionCount();
+                if (accuracy >= level.getMin() && accuracy <= level.getMax()) {
                     count += ((Number) row.get("cnt")).longValue();
                 }
             }
             double pct = totalGames > 0
                     ? Math.round(((double) count / totalGames) * 10000.0) / 100.0
                     : 0.0;
-            levelDistribution.put(level.name(), pct);
+            levelDistribution.put(level.getKey(), pct);
         }
 
         return StatsOverviewDTO.builder()

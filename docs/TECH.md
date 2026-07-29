@@ -176,7 +176,6 @@ backend/
     │   │   └── AlbumProgress.java             # @TableName("album_progress")
     │   ├── dto/                               # 请求/响应 DTO (~20 个类)
     │   └── enums/
-    │       ├── FanLevel.java                  # 5 级杰迷等级
     │       ├── QuestionCategory.java          # LYRICS | WORKS | SCREEN | KNOWLEDGE
     │       ├── DifficultyLevel.java           # EASY | MEDIUM | HARD
     │       └── AlbumKey.java                  # 16 张专辑枚举

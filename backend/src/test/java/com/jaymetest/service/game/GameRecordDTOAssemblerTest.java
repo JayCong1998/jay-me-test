@@ -2,8 +2,6 @@ package com.jaymetest.service.game;
 
 import com.jaymetest.model.dto.GameRecordDTO;
 import com.jaymetest.model.entity.GameRecord;
-import com.jaymetest.model.enums.AbyssLevel;
-import com.jaymetest.model.enums.FanLevel;
 import com.jaymetest.model.enums.GameMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +37,7 @@ class GameRecordDTOAssemblerTest {
         GameRecord record = record(GameMode.CLASSIC, null, 8, 10);
         when(strategyFactory.get(GameMode.CLASSIC)).thenReturn(strategy);
         when(strategy.calculateScore(8, 10)).thenReturn(80);
-        when(strategy.evaluateLevel(8)).thenReturn(FanLevel.SENIOR);
+        when(strategy.evaluateLevel(8)).thenReturn(new ConfiguredLevel("SENIOR", "🏆 高级杰迷", "desc"));
 
         GameRecordDTO result = assembler.toDTO(record);
 
@@ -47,8 +45,8 @@ class GameRecordDTOAssemblerTest {
         assertEquals(GameMode.CLASSIC, result.getMode());
         assertNull(result.getAlbumKey());
         assertEquals(80, result.getScore());
-        assertEquals(FanLevel.SENIOR.name(), result.getLevel());
-        assertEquals(FanLevel.SENIOR.getTitle(), result.getLevelTitle());
+        assertEquals("SENIOR", result.getLevel());
+        assertEquals("🏆 高级杰迷", result.getLevelTitle());
         assertEquals("2026-07-20T18:00:00", result.getCreatedAt());
     }
 
@@ -57,14 +55,14 @@ class GameRecordDTOAssemblerTest {
         GameRecord record = record(GameMode.ABYSS, null, 12, 13);
         when(strategyFactory.get(GameMode.ABYSS)).thenReturn(strategy);
         when(strategy.calculateScore(12, 13)).thenReturn(12);
-        when(strategy.evaluateLevel(12)).thenReturn(AbyssLevel.ABYSS_KNIGHT);
+        when(strategy.evaluateLevel(12)).thenReturn(new ConfiguredLevel("ABYSS_KNIGHT", "深渊骑士", "desc"));
 
         GameRecordDTO result = assembler.toDTO(record);
 
         assertEquals(GameMode.ABYSS, result.getMode());
         assertEquals(12, result.getScore());
-        assertEquals(AbyssLevel.ABYSS_KNIGHT.name(), result.getLevel());
-        assertEquals(AbyssLevel.ABYSS_KNIGHT.getTitle(), result.getLevelTitle());
+        assertEquals("ABYSS_KNIGHT", result.getLevel());
+        assertEquals("深渊骑士", result.getLevelTitle());
     }
 
     @Test

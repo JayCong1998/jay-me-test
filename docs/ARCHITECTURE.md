@@ -47,7 +47,7 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 | [GameRecordMapper.java](../backend/src/main/java/com/jaymetest/mapper/GameRecordMapper.java) | 游戏记录查询：百分位计数、排行数据、用户记录 |
 | [UserMapper.java](../backend/src/main/java/com/jaymetest/mapper/UserMapper.java) | 用户查询：按邮箱查找 |
 | [AlbumProgressMapper.java](../backend/src/main/java/com/jaymetest/mapper/AlbumProgressMapper.java) | 专辑进度 CRUD：按 userId+albumKey 查询/更新 |
-| [FanLevel.java](../backend/src/main/java/com/jaymetest/model/enums/FanLevel.java) | 5 级枚举：PASSERBY(0-2) → JUNIOR(3-4) → INTERMEDIATE(5-6) → SENIOR(7-8) → ULTIMATE(9-10) |
+| `game.*.levels` 配置 | 三种玩法独立的等级 key、证书文案与区间规则 |
 | [AlbumKey.java](../backend/src/main/java/com/jaymetest/model/enums/AlbumKey.java) | 16 张录音室专辑枚举（JAY → SUN_CHILD） |
 | [R.java](../backend/src/main/java/com/jaymetest/model/dto/R.java) | 统一响应包装 `{code, msg, data, timestamp}` |
 | [GlobalExceptionHandler.java](../backend/src/main/java/com/jaymetest/exception/GlobalExceptionHandler.java) | `@RestControllerAdvice` 统一异常拦截 |

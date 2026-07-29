@@ -4,12 +4,11 @@ import com.jaymetest.mapper.GameRecordMapper;
 import com.jaymetest.model.dto.GameResultDTO;
 import com.jaymetest.model.dto.GameSubmitRequest;
 import com.jaymetest.model.entity.GameRecord;
-import com.jaymetest.model.enums.AbyssLevel;
-import com.jaymetest.model.enums.FanLevel;
 import com.jaymetest.model.enums.GameMode;
 import com.jaymetest.service.game.GameStrategy;
 import com.jaymetest.service.game.GameStrategyFactory;
 import com.jaymetest.service.game.LevelInfo;
+import com.jaymetest.service.game.ConfiguredLevel;
 import com.jaymetest.service.game.PostSubmitHook;
 import com.jaymetest.service.game.RoundCacheManager;
 import com.jaymetest.service.game.GameRoundCache;
@@ -50,7 +49,7 @@ class StatsServiceTest {
         // 工厂和策略 Mock
         when(strategyFactory.get(GameMode.CLASSIC)).thenReturn(gameStrategy);
         when(gameStrategy.calculateScore(1, 2)).thenReturn(50);
-        when(gameStrategy.evaluateLevel(1)).thenReturn(FanLevel.PASSERBY);
+        when(gameStrategy.evaluateLevel(1)).thenReturn(new ConfiguredLevel("PASSERBY", "🌱 路人粉", "desc"));
         when(gameStrategy.getPostSubmitHooks()).thenReturn(List.of());
 
         // Mapper Mock
@@ -73,8 +72,8 @@ class StatsServiceTest {
         assertEquals(50, result.getScore());
         assertEquals(1, result.getCorrectCount());
         assertEquals(2, result.getTotalQuestions());
-        assertEquals(FanLevel.PASSERBY.name(), result.getLevel());
-        assertEquals(FanLevel.PASSERBY.getTitle(), result.getLevelTitle());
+        assertEquals("PASSERBY", result.getLevel());
+        assertEquals("🌱 路人粉", result.getLevelTitle());
         assertEquals("test-uuid", result.getRoundId());
         assertEquals(GameMode.CLASSIC, result.getMode());
         assertNull(result.getAlbumKey());
@@ -86,7 +85,7 @@ class StatsServiceTest {
     void submitAbyssResultKeepsGuestRecordButNormalizesRevival() {
         when(strategyFactory.get(GameMode.ABYSS)).thenReturn(gameStrategy);
         when(gameStrategy.calculateScore(1, 2)).thenReturn(1);
-        when(gameStrategy.evaluateLevel(1)).thenReturn(AbyssLevel.ABYSS_TOURIST);
+        when(gameStrategy.evaluateLevel(1)).thenReturn(new ConfiguredLevel("ABYSS_TOURIST", "深渊游客", "desc"));
         when(gameStrategy.getPostSubmitHooks()).thenReturn(List.of());
         when(gameRecordMapper.selectOne(any())).thenReturn(null);
         when(gameRecordMapper.insert(any(GameRecord.class))).thenReturn(1);

@@ -1,7 +1,7 @@
 package com.jaymetest.service.game;
 
 /**
- * 统一等级接口 — FanLevel 和 AbyssLevel 共同抽象
+ * 统一等级接口，由各玩法的配置等级实现。
  */
 public interface LevelInfo {
 
