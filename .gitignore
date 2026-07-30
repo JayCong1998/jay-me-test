@@ -56,7 +56,6 @@ logs/
 .claude/settings.local.json
 .claude/worktrees/
 .superpowers/
-prompt/
 
 # TypeScript build info
 *.tsbuildinfo

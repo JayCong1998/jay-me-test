@@ -19,8 +19,8 @@ database/
 │   │   ├── 001_migrate_question_categories.sql
 │   │   └── README.md
 │   └── v5/
-│       ├── 001_seed_question_bank_500.sql
-│       ├── question_bank_500_sources.md
+│       ├── 001_seed_question_bank_1000.sql
+│       ├── question_bank_1000_sources.md
 │       └── README.md
 └── snapshots/
     └── 2026-07-28_schema.sql
