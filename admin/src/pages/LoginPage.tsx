@@ -1,8 +1,7 @@
-import { FormEvent, useState } from 'react'
+import { type ChangeEvent, useState } from 'react'
+import { LockOutlined, UserOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, Form, Input, Typography } from 'antd'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Panel } from '@/components/ui/Panel'
 import { useAuth } from '@/context/AuthContext'
 
 export function LoginPage() {
@@ -17,8 +16,7 @@ export function LoginPage() {
     return <Navigate to="/dashboard" replace />
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
+  async function handleSubmit() {
     setError('')
     setLoading(true)
     try {
@@ -32,32 +30,20 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Panel className="w-full max-w-sm p-6">
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold">Jay Me Admin</h1>
-          <p className="mt-1 text-sm text-muted-foreground">使用管理员账号登录</p>
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-950 via-indigo-800 to-violet-700 px-4">
+      <Card className="w-full max-w-md !border-0 !p-3 shadow-2xl">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-xl font-bold text-white">J</div>
+          <Typography.Title level={2} className="!mb-1 !text-2xl">Jay Me Admin</Typography.Title>
+          <Typography.Text type="secondary">使用管理员账号登录运营后台</Typography.Text>
         </div>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium">账号</span>
-            <Input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" />
-          </label>
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium">密码</span>
-            <Input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-            />
-          </label>
-          {error && <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-          <Button className="w-full" disabled={loading || !username || !password}>
-            {loading ? '登录中' : '登录'}
-          </Button>
-        </form>
-      </Panel>
+        <Form layout="vertical" onFinish={handleSubmit} requiredMark={false}>
+          <Form.Item label="账号"><Input prefix={<UserOutlined />} value={username} onChange={(event: ChangeEvent<HTMLInputElement>) => setUsername(event.target.value)} autoComplete="username" size="large" /></Form.Item>
+          <Form.Item label="密码"><Input.Password prefix={<LockOutlined />} value={password} onChange={(event: ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)} autoComplete="current-password" size="large" /></Form.Item>
+          {error && <Alert className="mb-5" type="error" message={error} showIcon />}
+          <Button htmlType="submit" type="primary" size="large" block loading={loading} disabled={!username || !password}>登录</Button>
+        </Form>
+      </Card>
     </main>
   )
 }

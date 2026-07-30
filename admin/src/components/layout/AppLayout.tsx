@@ -1,19 +1,19 @@
-import { BarChart3, ClipboardList, Database, LogOut, Users } from 'lucide-react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
+import { DashboardOutlined, DatabaseOutlined, FileTextOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons'
+import { Avatar, Button, Layout, Menu, Space, Typography } from 'antd'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { cn } from '@/lib/utils'
 
 const navItems = [
-  { to: '/dashboard', label: '工作台', icon: BarChart3 },
-  { to: '/questions', label: '题库管理', icon: Database },
-  { to: '/users', label: '用户列表', icon: Users },
-  { to: '/records', label: '答题记录', icon: ClipboardList },
+  { key: '/dashboard', label: '工作台', icon: <DashboardOutlined /> },
+  { key: '/questions', label: '题库管理', icon: <DatabaseOutlined /> },
+  { key: '/users', label: '用户列表', icon: <UserOutlined /> },
+  { key: '/records', label: '答题记录', icon: <FileTextOutlined /> },
 ]
 
 export function AppLayout() {
   const { admin, signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   async function handleLogout() {
     await signOut()
@@ -21,54 +21,39 @@ export function AppLayout() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="fixed inset-y-0 left-0 w-64 border-r border-border bg-white">
-        <div className="flex h-16 items-center border-b border-border px-5">
+    <Layout className="min-h-screen">
+      <Layout.Sider width={248} theme="dark" className="!bg-[#171a3a]">
+        <div className="flex h-20 items-center gap-3 px-6 text-white">
+          <Avatar shape="square" size={36} className="!bg-violet-500">J</Avatar>
           <div>
-            <div className="text-base font-semibold">Jay Me Admin</div>
-            <div className="text-xs text-muted-foreground">运营管理端</div>
+            <Typography.Text className="!text-base !font-semibold !text-white">Jay Me Admin</Typography.Text>
+            <div className="mt-0.5 text-xs text-indigo-200">运营管理中心</div>
           </div>
         </div>
-        <nav className="space-y-1 p-3">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    'flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition',
-                    isActive ? 'bg-muted text-foreground' : 'hover:bg-muted hover:text-foreground',
-                  )
-                }
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            )
-          })}
-        </nav>
-      </aside>
-
-      <div className="ml-64 flex min-h-screen flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur">
-          <div className="text-sm text-muted-foreground">管理端 API：/api/admin</div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="text-sm font-medium">{admin?.nickname || admin?.username}</div>
-              <div className="text-xs text-muted-foreground">{admin?.role}</div>
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          items={navItems}
+          className="!border-0 !bg-transparent px-3"
+          onClick={({ key }: { key: string }) => navigate(key)}
+        />
+      </Layout.Sider>
+      <Layout>
+        <Layout.Header className="flex h-16 items-center justify-end border-b border-slate-200 !bg-white px-8">
+          <Space size="middle">
+            <Avatar icon={<UserOutlined />} className="!bg-indigo-100 !text-indigo-600" />
+            <div className="leading-tight">
+              <div className="font-medium text-slate-800">{admin?.nickname || admin?.username}</div>
+              <Typography.Text type="secondary" className="!text-xs">{admin?.role}</Typography.Text>
             </div>
-            <Button variant="secondary" onClick={handleLogout}>
-              <LogOut className="h-4 w-4" />
-              退出
-            </Button>
-          </div>
-        </header>
-        <main className="flex-1 p-6">
-          <Outlet />
-        </main>
-      </div>
-    </div>
+            <Button type="text" icon={<LogoutOutlined />} onClick={handleLogout}>退出</Button>
+          </Space>
+        </Layout.Header>
+        <Layout.Content className="p-6">
+          <div className="mx-auto max-w-[1600px]"><Outlet /></div>
+        </Layout.Content>
+      </Layout>
+    </Layout>
   )
 }

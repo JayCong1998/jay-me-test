@@ -25,7 +25,7 @@ public class Question implements Serializable {
     /** 所属专辑 (NULL = 跨专辑通用) */
     private String album;
 
-    /** 难度: EASY | MEDIUM */
+    /** 难度: EASY | MEDIUM | HARD */
     private String difficulty;
 
     /** 题目正文 */

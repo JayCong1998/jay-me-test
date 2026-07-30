@@ -1,22 +1,19 @@
-import { Search } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { SearchOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, DatePicker, Input, Pagination, Select, Space, Table, Tag, Typography } from 'antd'
+import dayjs from 'dayjs'
+import { type ChangeEvent, useEffect, useState } from 'react'
 import { fetchRecords } from '@/api/recordApi'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Panel } from '@/components/ui/Panel'
-import { Select } from '@/components/ui/Select'
-import { Table, Td, Th } from '@/components/ui/Table'
 import type { GameRecord, PageResponse } from '@/types'
 
-function toApiDate(value: string) {
+function toApiDate(value?: string) {
   return value ? `${value.replace('T', ' ')}:00` : undefined
 }
 
 export function RecordPage() {
   const [keyword, setKeyword] = useState('')
   const [mode, setMode] = useState('')
-  const [startAt, setStartAt] = useState('')
-  const [endAt, setEndAt] = useState('')
+  const [startAt, setStartAt] = useState<string | undefined>()
+  const [endAt, setEndAt] = useState<string | undefined>()
   const [page, setPage] = useState(1)
   const [data, setData] = useState<PageResponse<GameRecord> | null>(null)
   const [error, setError] = useState('')
@@ -42,71 +39,28 @@ export function RecordPage() {
   }, [page])
 
   return (
-    <div className="space-y-5">
-      <div>
+    <div className="space-y-4">
+      <div className="space-y-1">
         <h1 className="text-2xl font-semibold">答题记录</h1>
         <p className="mt-1 text-sm text-muted-foreground">按模式、用户和时间查看提交记录</p>
       </div>
 
-      <Panel>
-        <div className="flex flex-wrap items-center gap-3">
-          <Input className="w-72" value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="昵称或 roundId" />
-          <Select className="w-40" value={mode} onChange={(event) => setMode(event.target.value)}>
-            <option value="">全部模式</option>
-            <option value="CLASSIC">CLASSIC</option>
-            <option value="ALBUM">ALBUM</option>
-            <option value="ABYSS">ABYSS</option>
-          </Select>
-          <Input className="w-64" type="datetime-local" value={startAt} onChange={(event) => setStartAt(event.target.value)} />
-          <Input className="w-64" type="datetime-local" value={endAt} onChange={(event) => setEndAt(event.target.value)} />
-          <Button className="min-w-24 whitespace-nowrap" onClick={() => { setPage(1); load() }}>
-            <Search className="h-4 w-4" />
-            查询
-          </Button>
+      <Card size="small">
+        <div className="grid grid-cols-[minmax(220px,1.2fr)_150px_220px_220px_auto] gap-3">
+          <Input value={keyword} onChange={(event: ChangeEvent<HTMLInputElement>) => setKeyword(event.target.value)} placeholder="昵称或 roundId" allowClear />
+          <Select value={mode || undefined} onChange={(value: string | undefined) => setMode(value ?? '')} placeholder="全部模式" allowClear options={['CLASSIC', 'ALBUM', 'ABYSS'].map((value) => ({ value, label: value }))} />
+          <DatePicker className="w-full" showTime value={startAt ? dayjs(startAt) : null} onChange={(value: dayjs.Dayjs | null) => setStartAt(value?.format('YYYY-MM-DDTHH:mm') || undefined)} placeholder="开始时间" />
+          <DatePicker className="w-full" showTime value={endAt ? dayjs(endAt) : null} onChange={(value: dayjs.Dayjs | null) => setEndAt(value?.format('YYYY-MM-DDTHH:mm') || undefined)} placeholder="结束时间" />
+          <Button type="primary" icon={<SearchOutlined />} onClick={() => { setPage(1); load() }}>查询</Button>
         </div>
-      </Panel>
+      </Card>
 
-      {error && <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {error && <Alert type="error" message={error} showIcon />}
 
-      <Panel className="p-0">
-        <Table>
-          <thead>
-            <tr>
-              <Th>ID</Th>
-              <Th>模式</Th>
-              <Th>昵称</Th>
-              <Th>用户</Th>
-              <Th>成绩</Th>
-              <Th>用时</Th>
-              <Th>复活</Th>
-              <Th>专辑</Th>
-              <Th>提交时间</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.records || []).map((record) => (
-              <tr key={record.id}>
-                <Td>{record.id}</Td>
-                <Td>{record.mode}</Td>
-                <Td>{record.nickname || '-'}</Td>
-                <Td>{record.userId || '游客'}</Td>
-                <Td>{record.correctCount}/{record.totalQuestions}</Td>
-                <Td>{record.timeSpentSecs}s</Td>
-                <Td>{record.usedRevival ? '是' : '否'}</Td>
-                <Td>{record.albumKey || '-'}</Td>
-                <Td>{record.createdAt}</Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-        <div className="flex items-center justify-between px-4 py-3 text-sm text-muted-foreground">
-          <span>共 {data?.total || 0} 条</span>
-          <div className="flex gap-2">
-            <Button variant="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>上一页</Button>
-            <Button variant="secondary" disabled={!data || page * data.size >= data.total} onClick={() => setPage(page + 1)}>下一页</Button>
-          </div>
-        </div>
-      </Panel>
+      <Card size="small" className="shadow-sm"><Table<GameRecord> rowKey="id" loading={!data && !error} dataSource={data?.records ?? []} pagination={false} scroll={{ x: 1050 }} columns={[
+        { title: 'ID', dataIndex: 'id', width: 75 }, { title: '模式', dataIndex: 'mode', width: 100, render: (value: string) => <Tag color="geekblue">{value}</Tag> }, { title: '昵称', dataIndex: 'nickname', render: (value: string | null) => value || '-' }, { title: '用户', dataIndex: 'userId', render: (value: number | null) => value || '游客' }, { title: '成绩', width: 90, render: (_: unknown, record: GameRecord) => `${record.correctCount}/${record.totalQuestions}` }, { title: '用时', dataIndex: 'timeSpentSecs', width: 85, render: (value: number) => `${value}s` }, { title: '复活', dataIndex: 'usedRevival', width: 80, render: (value: boolean) => value ? '是' : '否' }, { title: '专辑', dataIndex: 'albumKey', render: (value: string | null) => value || '-' }, { title: '提交时间', dataIndex: 'createdAt', width: 190 },
+      ]} />
+      <div className="mt-5 flex items-center justify-between"><Typography.Text type="secondary">共 {data?.total ?? 0} 条</Typography.Text><Pagination current={data?.page ?? page} pageSize={data?.size ?? 10} total={data?.total ?? 0} showSizeChanger={false} onChange={setPage} /></div></Card>
     </div>
   )
 }

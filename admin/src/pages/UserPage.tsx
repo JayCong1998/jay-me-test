@@ -1,10 +1,7 @@
-import { Search } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { SearchOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, Input, Pagination, Space, Table, Typography } from 'antd'
+import { type ChangeEvent, useEffect, useState } from 'react'
 import { fetchUsers } from '@/api/userApi'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Panel } from '@/components/ui/Panel'
-import { Table, Td, Th } from '@/components/ui/Table'
 import type { PageResponse, UserRecord } from '@/types'
 
 export function UserPage() {
@@ -27,55 +24,20 @@ export function UserPage() {
   }, [page])
 
   return (
-    <div className="space-y-5">
-      <div>
+    <div className="space-y-4">
+      <div className="space-y-1">
         <h1 className="text-2xl font-semibold">用户列表</h1>
         <p className="mt-1 text-sm text-muted-foreground">查看注册用户基础信息</p>
       </div>
 
-      <Panel>
-        <div className="flex gap-3">
-          <Input className="max-w-xs" value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="邮箱或昵称" />
-          <Button onClick={() => { setPage(1); load() }}>
-            <Search className="h-4 w-4" />
-            查询
-          </Button>
-        </div>
-      </Panel>
+      <Card size="small"><Space><Input className="w-72" value={keyword} onChange={(event: ChangeEvent<HTMLInputElement>) => setKeyword(event.target.value)} placeholder="邮箱或昵称" allowClear /><Button type="primary" icon={<SearchOutlined />} onClick={() => { setPage(1); load() }}>查询</Button></Space></Card>
 
-      {error && <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {error && <Alert type="error" message={error} showIcon />}
 
-      <Panel className="p-0">
-        <Table>
-          <thead>
-            <tr>
-              <Th>ID</Th>
-              <Th>邮箱</Th>
-              <Th>昵称</Th>
-              <Th>创建时间</Th>
-              <Th>更新时间</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.records || []).map((user) => (
-              <tr key={user.id}>
-                <Td>{user.id}</Td>
-                <Td>{user.email}</Td>
-                <Td>{user.nickname}</Td>
-                <Td>{user.createdAt}</Td>
-                <Td>{user.updatedAt}</Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-        <div className="flex items-center justify-between px-4 py-3 text-sm text-muted-foreground">
-          <span>共 {data?.total || 0} 条</span>
-          <div className="flex gap-2">
-            <Button variant="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>上一页</Button>
-            <Button variant="secondary" disabled={!data || page * data.size >= data.total} onClick={() => setPage(page + 1)}>下一页</Button>
-          </div>
-        </div>
-      </Panel>
+      <Card size="small" className="shadow-sm"><Table<UserRecord> rowKey="id" loading={!data && !error} dataSource={data?.records ?? []} pagination={false} columns={[
+        { title: 'ID', dataIndex: 'id', width: 90 }, { title: '邮箱', dataIndex: 'email' }, { title: '昵称', dataIndex: 'nickname' }, { title: '创建时间', dataIndex: 'createdAt', width: 190 }, { title: '更新时间', dataIndex: 'updatedAt', width: 190 },
+      ]} />
+      <div className="mt-5 flex items-center justify-between"><Typography.Text type="secondary">共 {data?.total ?? 0} 条</Typography.Text><Pagination current={data?.page ?? page} pageSize={data?.size ?? 10} total={data?.total ?? 0} showSizeChanger={false} onChange={setPage} /></div></Card>
     </div>
   )
 }

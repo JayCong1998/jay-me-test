@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { App as AntdApp, ConfigProvider } from 'antd'
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
@@ -42,8 +43,19 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#5b5bd6',
+          fontFamily: 'Inter, "PingFang SC", "Microsoft YaHei", sans-serif',
+        },
+      }}
+    >
+      <AntdApp>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </AntdApp>
+    </ConfigProvider>
   </React.StrictMode>,
 )

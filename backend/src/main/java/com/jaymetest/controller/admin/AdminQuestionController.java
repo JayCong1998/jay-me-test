@@ -2,6 +2,7 @@ package com.jaymetest.controller.admin;
 
 import com.jaymetest.model.admin.AdminQuestionRequest;
 import com.jaymetest.model.admin.PageResponse;
+import com.jaymetest.model.admin.QuestionOptionRebalanceResponse;
 import com.jaymetest.model.dto.R;
 import com.jaymetest.model.entity.Question;
 import com.jaymetest.service.admin.AdminQuestionService;
@@ -33,8 +34,18 @@ public class AdminQuestionController {
         return R.ok(adminQuestionService.create(request));
     }
 
+    @GetMapping("/{id}")
+    public R<Question> get(@PathVariable long id) {
+        return R.ok(adminQuestionService.get(id));
+    }
+
     @PutMapping("/{id}")
     public R<Question> update(@PathVariable long id, @Valid @RequestBody AdminQuestionRequest request) {
         return R.ok(adminQuestionService.update(id, request));
+    }
+
+    @PostMapping("/rebalance-options")
+    public R<QuestionOptionRebalanceResponse> rebalanceOptions() {
+        return R.ok(adminQuestionService.rebalanceOptions());
     }
 }

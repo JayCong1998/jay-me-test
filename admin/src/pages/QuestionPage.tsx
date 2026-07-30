@@ -1,12 +1,8 @@
-import { Plus, Search } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { createQuestion, fetchQuestions, updateQuestion } from '@/api/questionApi'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, Input, Pagination, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
+import { type ChangeEvent, useEffect, useState } from 'react'
+import { createQuestion, fetchQuestions, rebalanceQuestionOptions, updateQuestion } from '@/api/questionApi'
 import { QuestionForm } from '@/components/questions/QuestionForm'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Panel } from '@/components/ui/Panel'
-import { Select } from '@/components/ui/Select'
-import { Table, Td, Th } from '@/components/ui/Table'
 import type { PageResponse, Question } from '@/types'
 
 export function QuestionPage() {
@@ -15,10 +11,12 @@ export function QuestionPage() {
   const [category, setCategory] = useState('')
   const [difficulty, setDifficulty] = useState('')
   const [page, setPage] = useState(1)
-  const [editing, setEditing] = useState<Question | null>(null)
+  const [editingId, setEditingId] = useState<number | undefined>()
   const [formOpen, setFormOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [rebalancing, setRebalancing] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
 
   async function load() {
     setError('')
@@ -36,100 +34,79 @@ export function QuestionPage() {
   async function handleSubmit(question: Question) {
     setSubmitting(true)
     try {
-      if (editing?.id) {
-        await updateQuestion(editing.id, question)
+      if (question.id) {
+        await updateQuestion(question.id, question)
       } else {
         await createQuestion(question)
       }
       setFormOpen(false)
-      setEditing(null)
+      setEditingId(undefined)
       await load()
     } finally {
       setSubmitting(false)
     }
   }
 
+  async function handleRebalance() {
+    setRebalancing(true)
+    setError('')
+    setNotice('')
+    try {
+      const result = await rebalanceQuestionOptions()
+      const { A, B, C, D } = result.answerDistribution
+      setNotice(`已调整 ${result.adjustedCount} 题；A/B/C/D：${A}/${B}/${C}/${D}`)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '均衡答案分布失败')
+    } finally {
+      setRebalancing(false)
+    }
+  }
+
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold">题库管理</h1>
           <p className="mt-1 text-sm text-muted-foreground">维护经典模式和专辑模式题目</p>
         </div>
-        <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
-          <Plus className="h-4 w-4" />
-          新增题目
-        </Button>
+        <Space>
+          <Popconfirm title="均衡答案分布" description="将随机重排全部题目的选项位置，是否继续？" okText="确认" cancelText="取消" onConfirm={handleRebalance}>
+            <Button loading={rebalancing}>均衡答案分布</Button>
+          </Popconfirm>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingId(undefined); setFormOpen(true) }}>
+            新增题目
+          </Button>
+        </Space>
       </div>
 
-      <Panel>
-        <div className="flex gap-3">
-          <Input className="max-w-xs" value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="题干或选项关键词" />
-          <Select value={category} onChange={(event) => setCategory(event.target.value)}>
-            <option value="">全部分类</option>
-            <option value="LYRICS">歌词</option>
-            <option value="WORKS">作品</option>
-            <option value="SCREEN">影视</option>
-            <option value="KNOWLEDGE">知识</option>
-          </Select>
-          <Select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}>
-            <option value="">全部难度</option>
-            <option value="EASY">简单</option>
-            <option value="MEDIUM">中等</option>
-            <option value="HARD">困难</option>
-          </Select>
-          <Button onClick={() => { setPage(1); load() }}>
-            <Search className="h-4 w-4" />
-            查询
-          </Button>
-        </div>
-      </Panel>
+      <Card size="small"><Space wrap>
+        <Input className="w-72" value={keyword} onChange={(event: ChangeEvent<HTMLInputElement>) => setKeyword(event.target.value)} placeholder="题干或选项关键词" allowClear />
+        <Select className="w-32" value={category || undefined} onChange={(value: string | undefined) => setCategory(value ?? '')} placeholder="全部分类" allowClear options={[{ value: 'LYRICS', label: '歌词' }, { value: 'WORKS', label: '作品' }, { value: 'SCREEN', label: '影视' }, { value: 'KNOWLEDGE', label: '知识' }]} />
+        <Select className="w-32" value={difficulty || undefined} onChange={(value: string | undefined) => setDifficulty(value ?? '')} placeholder="全部难度" allowClear options={[{ value: 'EASY', label: '简单' }, { value: 'MEDIUM', label: '中等' }, { value: 'HARD', label: '困难' }]} />
+        <Button type="primary" icon={<SearchOutlined />} onClick={() => { setPage(1); load() }}>查询</Button>
+      </Space></Card>
 
-      {error && <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {error && <Alert type="error" message={error} showIcon />}
+      {notice && <Alert type="success" message={notice} showIcon />}
 
-      <Panel className="p-0">
-        <Table>
-          <thead>
-            <tr>
-              <Th>ID</Th>
-              <Th>题干</Th>
-              <Th>分类</Th>
-              <Th>难度</Th>
-              <Th>专辑</Th>
-              <Th>答案</Th>
-              <Th className="w-24">操作</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.records || []).map((question) => (
-              <tr key={question.id}>
-                <Td>{question.id}</Td>
-                <Td className="max-w-xl">{question.questionText}</Td>
-                <Td>{question.category}</Td>
-                <Td>{question.difficulty}</Td>
-                <Td>{question.album || '-'}</Td>
-                <Td>{question.correctOption}</Td>
-                <Td>
-                  <Button variant="secondary" onClick={() => { setEditing(question); setFormOpen(true) }}>编辑</Button>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-        <div className="flex items-center justify-between px-4 py-3 text-sm text-muted-foreground">
-          <span>共 {data?.total || 0} 条</span>
-          <div className="flex gap-2">
-            <Button variant="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>上一页</Button>
-            <Button variant="secondary" disabled={!data || page * data.size >= data.total} onClick={() => setPage(page + 1)}>下一页</Button>
-          </div>
-        </div>
-      </Panel>
+      <Card size="small" className="shadow-sm"><Table<Question> rowKey="id" loading={!data && !error} dataSource={data?.records ?? []} pagination={false} columns={[
+        { title: 'ID', dataIndex: 'id', width: 72 },
+        { title: '题干', dataIndex: 'questionText', ellipsis: true },
+        { title: '分类', dataIndex: 'category', width: 110, render: (value: string) => <Tag color="blue">{value}</Tag> },
+        { title: '难度', dataIndex: 'difficulty', width: 100, render: (value: string) => <Tag color={value === 'HARD' ? 'red' : value === 'MEDIUM' ? 'orange' : 'green'}>{value}</Tag> },
+        { title: '专辑', dataIndex: 'album', width: 160, render: (value: string | null) => value || '-' },
+        { title: '答案', dataIndex: 'correctOption', width: 80 },
+        { title: '操作', width: 90, render: (_: unknown, question: Question) => <Button type="link" onClick={() => { setEditingId(question.id); setFormOpen(true) }}>编辑</Button> },
+      ]} />
+        <div className="mt-5 flex items-center justify-between"><Typography.Text type="secondary">共 {data?.total ?? 0} 条</Typography.Text><Pagination current={data?.page ?? page} pageSize={data?.size ?? 10} total={data?.total ?? 0} showSizeChanger={false} onChange={setPage} /></div>
+      </Card>
 
       {formOpen && (
         <QuestionForm
-          initial={editing}
+          questionId={editingId}
           submitting={submitting}
-          onCancel={() => { setFormOpen(false); setEditing(null) }}
+          onCancel={() => { setFormOpen(false); setEditingId(undefined) }}
           onSubmit={handleSubmit}
         />
       )}

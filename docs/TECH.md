@@ -40,6 +40,21 @@
 
 ---
 
+### 1.3 管理端技术栈
+
+管理端位于 `admin/`，为独立的 React SPA：
+
+| 分类 | 技术 | 说明 |
+|------|------|------|
+| 前端框架 | React 18 + TypeScript | 使用 React Router 管理管理端路由 |
+| 构建工具 | Vite 6 | 开发端口为 5174，`/api` 代理至后端 |
+| 样式 | Tailwind CSS 3 | 管理端原子化样式与主题 Token |
+| UI 组件 | shadcn/ui | 组件源码维护在 `admin/src/components/ui/`，结合 Radix UI Dialog 与 CVA 构建可组合组件 |
+| 图标 | lucide-react | 管理端操作和导航图标 |
+| HTTP 客户端 | Axios | 通过 `admin/src/api/` 统一访问 `/api/admin/**` |
+
+shadcn/ui 不作为运行时组件包使用；项目将组件源码置于仓库内维护，使用 `components.json` 记录生成配置。列表分页使用本地 `Pagination` 组件，题库编辑表单通过详情接口 `GET /api/admin/questions/{id}` 获取完整数据后再渲染。
+
 ## 2. 系统架构
 
 ### 2.1 整体架构图

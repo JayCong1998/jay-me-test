@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { BarChartOutlined, DatabaseOutlined, FileTextOutlined, TrophyOutlined, UserOutlined } from '@ant-design/icons'
+import { Alert, Card, Empty, Statistic, Typography } from 'antd'
 import { fetchDashboardOverview } from '@/api/dashboardApi'
-import { Panel } from '@/components/ui/Panel'
 import type { DashboardOverview } from '@/types'
 
 export function DashboardPage() {
@@ -15,43 +16,26 @@ export function DashboardPage() {
 
   const stats = overview
     ? [
-        ['题目总数', overview.totalQuestions],
-        ['注册用户', overview.totalUsers],
-        ['答题记录', overview.totalRecords],
-        ['今日答题', overview.todayRecords],
-        ['平均答对', overview.averageCorrectCount.toFixed(1)],
+        { label: '题目总数', value: overview.totalQuestions, icon: <DatabaseOutlined /> },
+        { label: '注册用户', value: overview.totalUsers, icon: <UserOutlined /> },
+        { label: '答题记录', value: overview.totalRecords, icon: <FileTextOutlined /> },
+        { label: '今日答题', value: overview.todayRecords, icon: <BarChartOutlined /> },
+        { label: '平均答对', value: overview.averageCorrectCount.toFixed(1), icon: <TrophyOutlined /> },
       ]
     : []
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">工作台</h1>
         <p className="mt-1 text-sm text-muted-foreground">查看题库、用户和答题数据概览</p>
       </div>
 
-      {error && <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {error && <Alert type="error" message={error} showIcon />}
 
-      <div className="grid grid-cols-5 gap-4">
-        {stats.map(([label, value]) => (
-          <Panel key={label}>
-            <div className="text-sm text-muted-foreground">{label}</div>
-            <div className="mt-2 text-2xl font-semibold">{value}</div>
-          </Panel>
-        ))}
-      </div>
+      <div className="grid grid-cols-5 gap-5">{stats.map((stat) => <Card className="h-full shadow-sm" key={stat.label}><Statistic title={stat.label} value={stat.value} prefix={stat.icon} /></Card>)}</div>
 
-      <Panel>
-        <h2 className="mb-4 text-base font-semibold">模式分布</h2>
-        <div className="space-y-3">
-          {Object.entries(overview?.modeDistribution || {}).map(([mode, count]) => (
-            <div key={mode} className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0">
-              <span className="text-sm font-medium">{mode}</span>
-              <span className="text-sm text-muted-foreground">{count} 次</span>
-            </div>
-          ))}
-        </div>
-      </Panel>
+      <Card title="模式分布" className="shadow-sm">{Object.keys(overview?.modeDistribution || {}).length ? <div className="grid grid-cols-3 gap-4">{Object.entries(overview?.modeDistribution || {}).map(([mode, count]) => <div className="rounded-lg bg-slate-50 p-5" key={mode}><Typography.Text type="secondary">{mode}</Typography.Text><div className="mt-2 text-2xl font-semibold text-slate-800">{count}</div></div>)}</div> : <Empty description="暂无答题数据" />}</Card>
     </div>
   )
 }
