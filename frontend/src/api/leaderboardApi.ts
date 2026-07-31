@@ -30,11 +30,10 @@ export interface LeaderboardResult {
  */
 export async function fetchLeaderboard(
   type: LeaderboardType = 'classic',
-  limit: number = 50,
   page: number = 1,
   size: number = 20
 ): Promise<LeaderboardResult> {
-  const params: Record<string, any> = { type, limit, page, size }
+  const params: Record<string, any> = { type, page, size }
   const res = await client.get<R<LeaderboardResult>>('/leaderboard', { params })
   return res.data.data
 }

@@ -31,8 +31,7 @@ public class AuthService {
      */
     public LoginResponse register(UserRegisterRequest request) {
         // 检查邮箱是否已注册
-        User existing = userMapper.selectOne(
-                new LambdaQueryWrapper<User>().eq(User::getEmail, request.getEmail()));
+        User existing = userMapper.findByEmail(request.getEmail().trim());
         if (existing != null) {
             throw new BusinessException(400, "该邮箱已注册");
         }
@@ -43,10 +42,15 @@ public class AuthService {
         }
 
         // 创建用户
+        String nickname = request.getNickname().trim();
+        if (userMapper.findByNickname(nickname) != null) {
+            throw new BusinessException(400, "该昵称已被使用");
+        }
+
         User user = new User();
         user.setEmail(request.getEmail().trim());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setNickname(request.getNickname().trim());
+        user.setNickname(nickname);
         userMapper.insert(user);
 
         // 签发 Token（Sa-Token JWT 模式）
@@ -65,8 +69,7 @@ public class AuthService {
      * 登录
      */
     public LoginResponse login(UserLoginRequest request) {
-        User user = userMapper.selectOne(
-                new LambdaQueryWrapper<User>().eq(User::getEmail, request.getEmail().trim()));
+        User user = userMapper.findByEmail(request.getEmail().trim());
         if (user == null) {
             throw new BusinessException(400, "邮箱或密码错误");
         }

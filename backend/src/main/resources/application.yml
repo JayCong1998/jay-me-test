@@ -1,68 +1,93 @@
 server:
+  # 后端 API 端口；前端和管理端开发代理都指向 localhost:8080。
   port: 8080
 
 spring:
   ai:
     dashscope:
+      # DashScope API Key 从环境变量读取，避免把真实密钥提交到仓库。
       api-key: ${AI_DASHSCOPE_API_KEY}
   datasource:
+    # 本地 MySQL 连接；createDatabaseIfNotExist 便于首次开发启动时自动创建库。
     url: jdbc:mysql://localhost:3306/jaymetest?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
     driver-class-name: com.mysql.cj.jdbc.Driver
+    # 本地开发默认账号；生产环境应通过外部配置覆盖。
     username: root
     password: root
     hikari:
+      # Hikari 连接池参数：当前题库和并发规模下保持少量空闲连接即可。
       minimum-idle: 5
       maximum-pool-size: 20
       idle-timeout: 300000
       max-lifetime: 1200000
       connection-timeout: 30000
   jackson:
+    # API 响应不输出 null 字段，减少前端判空噪音。
     default-property-inclusion: non_null
+    # 与数据库和前端展示统一使用北京时间格式。
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
 
 mybatis-plus:
   configuration:
+    # 数据库下划线字段自动映射到 Java 驼峰属性。
     map-underscore-to-camel-case: true
+    # 开发期输出 SQL，便于排查抽题、排行榜和记录查询逻辑。
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
+      # 主键默认由 MySQL 自增生成；实体无需手动设置 id。
       id-type: auto
+      # 不使用统一表前缀，表名与数据库脚本保持一致。
       table-prefix: ""
 
 knife4j:
+  # 开启 Knife4j 文档，访问 /doc.html 查看接口。
   enable: true
   setting:
+    # 文档界面语言和模型展示配置。
     language: zh-CN
     enable-swagger-models: true
     swagger-model-name: 实体类
 
 springdoc:
   swagger-ui:
+    # OpenAPI 原生 Swagger UI 地址。
     path: /swagger-ui.html
   api-docs:
+    # OpenAPI JSON 文档地址，Knife4j 也依赖它生成接口文档。
     path: /v3/api-docs
 
 # Sa-Token 配置
 sa-token:
+  # 前端请求头名称；登录后客户端把 token 放在 Authorization 中。
   token-name: Authorization
+  # token 有效期 7 天，单位秒。
   timeout: 604800
+  # -1 表示不启用无操作超时，只按 timeout 过期。
   active-timeout: -1
+  # 允许同一账号多端登录，但每次登录生成独立 token。
   is-concurrent: true
   is-share: false
+  # 使用随机 64 位 token，降低被猜测风险。
   token-style: random-64
+  # 关闭 Sa-Token 内部日志，避免开发控制台过于嘈杂。
   is-log: false
+  # JWT 签名密钥；生产环境应通过外部安全配置覆盖。
   jwt-secret-key: jaymetest2024secretkeyformusic
 
 # 应用配置
 app:
+  # 应用自定义 JWT 密钥，需与认证服务中的签发/解析逻辑一致。
   jwt-secret: jaymetest2024secretkeyformusic
 
-# 深渊模式难度阶梯配置
+# 游戏模式配置：经典、专辑和深渊都从这里读取题量、等级和难度规则。
 game:
   classic:
+    # 经典模式每局题量和 EASY 抽题权重。
     question-count: 20
     easy-weight: 0.6
+    # 经典模式按正确率百分比计算等级。
     levels:
       - { key: PASSERBY, title: "🌱 路人粉", description: "刚刚路过，杰伦的歌还等你发现", min: 0, max: 29 }
       - { key: JUNIOR, title: "🎤 初级杰迷", description: "入门粉丝，继续加油解锁更多杰伦冷知识", min: 30, max: 49 }
@@ -70,15 +95,19 @@ game:
       - { key: SENIOR, title: "🏆 高级杰迷", description: "铁粉认证，演唱会前排选手就是你", min: 70, max: 89 }
       - { key: ULTIMATE, title: "👑 终极杰迷", description: "你就是杰伦的编外制作人", min: 90, max: 100 }
   album:
+    # 专辑闯关每局题量和通关正确率阈值。
     question-count: 20
     pass-accuracy: 80
+    # 专辑模式按正确率百分比计算单局等级。
     levels:
       - { key: ALBUM_NEWCOMER, title: "专辑新生", description: "继续熟悉这张专辑", min: 0, max: 59 }
       - { key: ALBUM_LISTENER, title: "专辑听友", description: "你已熟悉这张专辑", min: 60, max: 79 }
       - { key: ALBUM_MASTER, title: "专辑大师", description: "这张专辑你已融会贯通", min: 80, max: 100 }
   abyss:
+    # 深渊模式按批次预加载题目，答错后可使用一次续命。
     batch-size: 5
     revival-count: 1
+    # 深渊模式按连续答对题数计算等级，最后一档不写 max 表示无上限。
     levels:
       - { key: ABYSS_TOURIST, title: "深渊游客", description: "初入深渊，浅尝辄止", min: 0, max: 2 }
       - { key: ABYSS_EXPLORER, title: "深渊探索者", description: "开始深入杰伦的音乐迷宫", min: 3, max: 5 }

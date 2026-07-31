@@ -39,11 +39,20 @@ describe('leaderboard mode tabs', () => {
     expect(pageSource).toContain('loadData()')
   })
 
+  it('can open a specific leaderboard mode from the result page', () => {
+    expect(pageSource).toContain('resolveLeaderboardType(type)')
+    expect(pageSource).toContain('route.query.type')
+    expect(pageSource).toContain("query: { type: tab }")
+  })
+
   it('narrows the api type to the three modes and exposes detail fields', () => {
     expect(apiSource).toContain("type: LeaderboardType = 'classic'")
     expect(apiSource).toContain("'classic' | 'album' | 'abyss'")
     expect(apiSource).toContain('completedAlbumCount?: number')
     expect(apiSource).toContain('summaryText?: string')
+    expect(apiSource).toContain('const params: Record<string, any> = { type, page, size }')
+    expect(apiSource).not.toContain('limit: number')
+    expect(apiSource).not.toContain('type, limit, page, size')
     expect(apiSource).not.toContain("'total' | 'daily' | 'level' | 'abyss'")
   })
 })

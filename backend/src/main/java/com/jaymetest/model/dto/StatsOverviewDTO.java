@@ -18,5 +18,6 @@ public class StatsOverviewDTO {
     private long totalPlayers;
     private long totalGames;
     private double averageScore;
+    private int maxAbyssStreak;
     private Map<String, Double> levelDistribution;
 }

@@ -2,6 +2,7 @@ package com.jaymetest.service;
 
 import com.jaymetest.config.ClassicGameProperties;
 import com.jaymetest.mapper.GameRecordMapper;
+import com.jaymetest.mapper.UserMapper;
 import com.jaymetest.model.dto.StatsOverviewDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class StatisticsService {
     private final GameRecordMapper gameRecordMapper;
+    private final UserMapper userMapper;
     private final ClassicGameProperties classicGameProperties;
 
     public StatsOverviewDTO getOverview() {
@@ -29,8 +31,9 @@ public class StatisticsService {
             }
             levelDistribution.put(level.getKey(), totalGames > 0 ? Math.round(((double) count / totalGames) * 10000.0) / 100.0 : 0.0);
         }
-        return StatsOverviewDTO.builder().totalPlayers(totalGames).totalGames(totalGames)
+        return StatsOverviewDTO.builder().totalPlayers(userMapper.countTotalUsers()).totalGames(totalGames)
                 .averageScore(Math.round(gameRecordMapper.selectAverageScore() * 10.0) / 10.0)
+                .maxAbyssStreak(gameRecordMapper.selectMaxAbyssStreak())
                 .levelDistribution(levelDistribution).build();
     }
 }

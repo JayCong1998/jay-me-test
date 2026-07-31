@@ -26,8 +26,8 @@
               </g>
             </svg>
           </div>
-          <h1 class="app-title text-gold">杰迷结业考试</h1>
-          <p class="app-subtitle">测试你的杰伦知识储备，解锁专属杰迷等级</p>
+          <h1 class="app-title text-gold">杰迷试炼</h1>
+          <p class="app-subtitle">硬核杰伦答题挑战，解锁专属杰迷等级</p>
         </section>
 
         <!-- ===== 模式选择 ===== -->
@@ -86,11 +86,11 @@
           <div class="stats-grid">
             <div class="stat-card glass-card">
               <span class="stat-number">{{ formatNumber(overview.totalGames) }}</span>
-              <span class="stat-label">累计考试</span>
+              <span class="stat-label">累计挑战</span>
             </div>
             <div class="stat-card glass-card">
-              <span class="stat-number">{{ formatNumber(overview.totalPlayers) }}</span>
-              <span class="stat-label">考生人数</span>
+              <span class="stat-number">{{ formatNumber(overview.maxAbyssStreak) }}</span>
+              <span class="stat-label">最高连对</span>
             </div>
             <div class="stat-card glass-card">
               <span class="stat-number stat-number--accent">{{ overview.averageScore }}</span>

@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
+        <!-- 统一继承 Spring Boot 依赖管理和默认 Maven 插件配置。 -->
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.3.0</version>
@@ -18,6 +19,7 @@
     <description>杰迷结业考试 - 周杰伦粉丝答题应用</description>
 
     <properties>
+        <!-- 项目统一版本入口：Java 21 与关键三方依赖版本集中管理，避免散落在 dependency 中。 -->
         <java.version>21</java.version>
         <mybatis-plus.version>3.5.7</mybatis-plus.version>
         <mysql.version>8.3.0</mysql.version>
@@ -27,26 +29,26 @@
     </properties>
 
     <dependencies>
-        <!-- Spring Boot Web -->
+        <!-- Spring MVC：提供 REST Controller、JSON 序列化和嵌入式 Tomcat。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Spring Boot Validation -->
+        <!-- 请求 DTO 参数校验，配合 @Valid 和 jakarta.validation 使用。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- MyBatis Plus -->
+        <!-- MyBatis Plus：Mapper、分页和基础 CRUD 能力。 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>${mybatis-plus.version}</version>
         </dependency>
 
-        <!-- MySQL Connector -->
+        <!-- MySQL JDBC 驱动仅运行期需要，编译期不直接依赖驱动 API。 -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
@@ -54,52 +56,54 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Knife4j API 文档 -->
+        <!-- Knife4j：基于 OpenAPI 3 生成中文友好的接口文档页面。 -->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
             <version>${knife4j.version}</version>
         </dependency>
 
-        <!-- Lombok -->
+        <!-- Lombok：减少 DTO、Entity、Service 构造器等样板代码；打包时会排除。 -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- Sa-Token 轻量级认证框架 -->
+        <!-- Sa-Token：公共用户和管理端登录态校验的基础认证框架。 -->
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-spring-boot3-starter</artifactId>
             <version>${sa-token.version}</version>
         </dependency>
 
-        <!-- Sa-Token JWT 集成 -->
+        <!-- Sa-Token JWT 集成：支持 token 的签发、解析和跨端传递。 -->
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-jwt</artifactId>
             <version>${sa-token.version}</version>
         </dependency>
 
-        <!-- Spring Security Crypto (BCrypt) -->
+        <!-- Spring Security Crypto：只使用 BCrypt 密码哈希能力，不引入完整 Spring Security 登录流程。 -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
         </dependency>
 
+        <!-- WebFlux：为 AI/外部 HTTP 调用提供 WebClient 等响应式客户端能力。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
+        <!-- DashScope AI 接入：用于项目中的 AI 问答能力。 -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
             <version>${spring.ai.alibaba.version}</version>
         </dependency>
 
-        <!-- Test -->
+        <!-- 单元测试和 Spring Boot 测试支持，scope=test 不进入运行时包。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -110,11 +114,13 @@
     <build>
         <plugins>
             <plugin>
+                <!-- Spring Boot 打包插件：生成可直接运行的 fat jar。 -->
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <excludes>
                         <exclude>
+                            <!-- Lombok 只在编译期生效，运行包不需要携带。 -->
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
                         </exclude>

@@ -1,5 +1,5 @@
 <template>
-  <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+  <van-pull-refresh v-model="refreshing" :disabled="!isPullRefreshEnabled" @refresh="onRefresh">
     <div ref="scrollRoot" class="lb-page page-bg" @scroll="onScroll">
       <div class="bg-orb bg-orb--top"></div>
       <div class="bg-orb bg-orb--bottom"></div>
@@ -138,15 +138,17 @@
 defineOptions({ name: 'LeaderboardPage' })
 
 import { ref, computed, onActivated, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import * as leaderboardApi from '@/api/leaderboardApi'
 import type { LeaderboardResult, LeaderboardEntry, LeaderboardType } from '@/api/leaderboardApi'
 import { LEVELS } from '@/utils/constants'
 import { getAbyssLevelByStreak } from '@/utils/levels'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+import { getBottomLoadState, isPullRefreshEnabled as getPullRefreshEnabled } from '@/utils/bottomLoadTrigger'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const tabs = [
@@ -160,6 +162,9 @@ const isAbyssTab = computed(() => activeTab.value === 'abyss')
 
 const myRank = ref<number | null>(null)
 const scrollRoot = ref<HTMLElement | null>(null)
+const isPullRefreshEnabled = ref(true)
+let previousScrollTop = 0
+let wasNearBottom = false
 
 const {
   items: allEntries,
@@ -175,7 +180,7 @@ const {
 } = useInfiniteScroll<LeaderboardEntry>({
   pageSize: 10,
   fetchPage: async (page) => {
-    const result: LeaderboardResult = await leaderboardApi.fetchLeaderboard(activeTab.value, 10, page, 10)
+    const result: LeaderboardResult = await leaderboardApi.fetchLeaderboard(activeTab.value, page, 10)
     if (page === 1) {
       myRank.value = result.myRank
     }
@@ -188,6 +193,13 @@ const visibleRankList = computed(() =>
 )
 
 let hasActivated = false
+
+function resolveLeaderboardType(type: unknown): LeaderboardType {
+  const value = Array.isArray(type) ? type[0] : type
+  return value === 'album' || value === 'abyss' || value === 'classic'
+    ? value
+    : 'classic'
+}
 
 function formatScore(entry: LeaderboardEntry): string {
   if (activeTab.value === 'album') {
@@ -208,7 +220,7 @@ function formatDetail(entry: LeaderboardEntry): string {
 
 function switchTab(tab: LeaderboardType) {
   activeTab.value = tab
-  loadData()
+  router.replace({ path: '/leaderboard', query: { type: tab } })
 }
 
 async function loadData() {
@@ -219,19 +231,31 @@ async function loadData() {
 }
 
 function goLogin() {
-  router.push('/login?redirect=' + encodeURIComponent('/leaderboard'))
+  router.push('/login?redirect=' + encodeURIComponent(`/leaderboard?type=${activeTab.value}`))
 }
 
 // 滚动触底 - rAF 节流
 let scrollPending = false
 function onScroll() {
+  const el = scrollRoot.value
+  if (!el) return
+  isPullRefreshEnabled.value = getPullRefreshEnabled(el.scrollTop)
   if (scrollPending) return
   scrollPending = true
   requestAnimationFrame(() => {
     scrollPending = false
-    const el = scrollRoot.value
-    if (!el) return
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
+    const currentScrollRoot = scrollRoot.value
+    if (!currentScrollRoot) return
+    const state = getBottomLoadState({
+      scrollTop: currentScrollRoot.scrollTop,
+      previousScrollTop,
+      clientHeight: currentScrollRoot.clientHeight,
+      scrollHeight: currentScrollRoot.scrollHeight,
+      wasNearBottom,
+    })
+    previousScrollTop = currentScrollRoot.scrollTop
+    wasNearBottom = state.isNearBottom
+    if (state.shouldLoad) {
       loadMore()
     }
   })
@@ -265,6 +289,17 @@ watch(
       reset()
       myRank.value = null
     }
+  }
+)
+
+watch(
+  () => route.query.type,
+  (type) => {
+    const nextTab = resolveLeaderboardType(type)
+    if (activeTab.value !== nextTab) {
+      activeTab.value = nextTab
+    }
+    loadData()
   },
   { immediate: true }
 )

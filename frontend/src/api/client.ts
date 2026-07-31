@@ -76,7 +76,13 @@ client.interceptors.response.use(
       return Promise.reject(new AuthExpiredError())
     }
 
-    return Promise.reject(error)
+    const payload = error.response.data as { msg?: unknown; message?: unknown } | undefined
+    const message = typeof payload?.msg === 'string'
+      ? payload.msg
+      : typeof payload?.message === 'string'
+        ? payload.message
+        : '请求失败，请稍后重试'
+    return Promise.reject(new Error(message))
   },
 )
 

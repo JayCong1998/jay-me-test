@@ -35,13 +35,12 @@ class LeaderboardRankingSqlTest {
     }
 
     @Test
-    void albumLeaderboardCountsBestCompletedAlbumOncePerUser() {
+    void albumLeaderboardRanksAlbumParticipantsAndCountsPassedAlbums() {
         assertTrue(mapperSource.contains("gr.mode = #{albumMode}"));
-        assertTrue(mapperSource.contains("gr.correct_count >= #{completionScore}"));
         assertTrue(mapperSource.contains("PARTITION BY gr.user_id, gr.album_key"));
-        assertTrue(mapperSource.contains("COUNT(*) AS completedAlbumCount"));
+        assertTrue(mapperSource.contains("SUM(CASE WHEN picked.correct_count * 100 >= picked.total_questions * #{passAccuracy} THEN 1 ELSE 0 END) AS completedAlbumCount"));
         assertTrue(mapperSource.contains("SUM(time_spent_secs) AS totalAlbumTimeSecs"));
-        assertTrue(mapperSource.contains("ORDER BY completed_album_count DESC, total_album_time_secs ASC, created_at ASC"));
+        assertTrue(mapperSource.contains("ORDER BY completed_album_count DESC, total_album_score DESC"));
         assertTrue(mapperSource.contains("selectMyAlbumRank"));
     }
 

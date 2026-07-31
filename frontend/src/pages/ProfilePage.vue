@@ -1,5 +1,5 @@
 <template>
-  <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+  <van-pull-refresh v-model="refreshing" :disabled="!isPullRefreshEnabled" @refresh="onRefresh">
     <div ref="scrollRoot" class="profile-page page-bg" @scroll="onScroll">
       <!-- 背景装饰光斑 -->
       <div class="bg-orb bg-orb--top"></div>
@@ -54,10 +54,10 @@
           </div>
         </section>
 
-        <!-- ===== 考试记录 ===== -->
+        <!-- ===== 游戏记录 ===== -->
         <section class="profile-section">
           <div class="section-header">
-            <h3 class="section-title">考试记录</h3>
+            <h3 class="section-title">游戏记录</h3>
             <span v-if="authStore.isLoggedIn && recordStore.records.length > 0" class="section-count">
               {{ recordStore.records.length }}+ 场
             </span>
@@ -125,11 +125,11 @@
 
           <!-- 已登录：空记录 -->
           <div v-else-if="authStore.isLoggedIn" class="state-card glass-card">
-            <p class="state-text">暂无考试记录，快去答题吧！</p>
+            <p class="state-text">暂无游戏记录，快去挑战吧！</p>
           </div>
 
           <div v-else class="state-card glass-card">
-            <p class="state-text">登录后可查看你的考试记录</p>
+            <p class="state-text">登录后可查看你的游戏记录</p>
             <button class="btn-retry" @click="router.push('/login?redirect=/profile')">去登录</button>
           </div>
 
@@ -137,8 +137,7 @@
 
         <!-- ===== App 信息 ===== -->
         <section class="profile-section app-info">
-          <p class="app-name">杰迷结业考试</p>
-          <p class="app-version">v2.0.0</p>
+          <p class="app-name">杰迷试炼</p>
         </section>
 
         <!-- 底部间距 -->
@@ -158,6 +157,7 @@ import { useRecordStore } from '@/stores/recordStore'
 import { useUserStore } from '@/stores/userStore'
 import { formatDate } from '@/utils/format'
 import { getRecordPresentation } from '@/utils/recordPresentation'
+import { getBottomLoadState, isPullRefreshEnabled as getPullRefreshEnabled } from '@/utils/bottomLoadTrigger'
 import ThemeSwitcher from '@/components/common/ThemeSwitcher.vue'
 
 const router = useRouter()
@@ -167,6 +167,9 @@ const userStore = useUserStore()
 
 const scrollRoot = ref<HTMLElement | null>(null)
 const refreshing = ref(false)
+const isPullRefreshEnabled = ref(true)
+let previousScrollTop = 0
+let wasNearBottom = false
 
 const historyItems = computed(() =>
   recordStore.records.map(record => ({
@@ -205,7 +208,17 @@ async function onRefresh() {
 function onScroll() {
   const el = scrollRoot.value
   if (!el) return
-  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
+  isPullRefreshEnabled.value = getPullRefreshEnabled(el.scrollTop)
+  const state = getBottomLoadState({
+    scrollTop: el.scrollTop,
+    previousScrollTop,
+    clientHeight: el.clientHeight,
+    scrollHeight: el.scrollHeight,
+    wasNearBottom,
+  })
+  previousScrollTop = el.scrollTop
+  wasNearBottom = state.isNearBottom
+  if (state.shouldLoad) {
     recordStore.loadMore()
   }
 }
@@ -468,7 +481,7 @@ function formatDuration(secs: number): string {
   }
 }
 
-/* ======== 考试记录列表 ======== */
+/* ======== 游戏记录列表 ======== */
 .history-list {
   overflow: hidden;
 }
@@ -599,12 +612,6 @@ function formatDuration(secs: number): string {
     font-size: 15px;
     font-weight: 600;
     color: var(--app-text-primary);
-    margin-bottom: 4px;
-  }
-
-  .app-version {
-    font-size: 12px;
-    color: var(--app-text-muted);
   }
 }
 

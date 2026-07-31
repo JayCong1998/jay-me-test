@@ -37,13 +37,13 @@
             </div>
 
             <!-- 标题 -->
-            <h3 class="cert-title text-gold">杰迷结业考试</h3>
+            <h3 class="cert-title text-gold">杰迷试炼</h3>
             <span class="cert-divider"></span>
 
             <!-- 正文 -->
             <p class="cert-subtitle">兹 证 明</p>
             <p class="cert-nickname">{{ userStore.nickname }}</p>
-            <p class="cert-meta-text">在杰迷结业考试中获得</p>
+            <p class="cert-meta-text">在杰迷试炼中获得</p>
             <p class="cert-level" :style="{ color: levelColor }">{{ levelConfig.title }}</p>
 
             <!-- 分数 -->
@@ -63,11 +63,11 @@
             </div>
 
             <!-- 日期 -->
-            <p class="cert-date">考试日期：{{ examDate }}</p>
+            <p class="cert-date">挑战日期：{{ examDate }}</p>
 
             <!-- 底部 -->
             <div class="cert-bottom">
-              <p class="cert-org">杰迷结业考试 组委会</p>
+              <p class="cert-org">杰迷试炼 认证中心</p>
               <p class="cert-brand">— JayMe Certificate —</p>
             </div>
 
@@ -252,7 +252,7 @@ async function handleShare() {
   if (navigator.share) {
     try {
       await navigator.share({
-        title: '杰迷结业考试',
+        title: '杰迷试炼',
         text: shareText,
         url: shareUrl,
       })

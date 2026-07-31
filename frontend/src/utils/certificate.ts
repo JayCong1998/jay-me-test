@@ -167,7 +167,7 @@ export function renderCertificate(data: CertData): HTMLCanvasElement {
   drawMusicNote(ctx, W / 2, deckY, 36, COLORS.gold)
 
   // --- 5. 标题 ---
-  textCenter(ctx, '杰迷结业考试', 210, 'bold 48px "Poppins","PingFang SC","Microsoft YaHei",sans-serif', COLORS.gold)
+  textCenter(ctx, '杰迷试炼', 210, 'bold 48px "Poppins","PingFang SC","Microsoft YaHei",sans-serif', COLORS.gold)
 
   // 装饰线 (标题下方)
   const titleLineY = 260
@@ -185,7 +185,7 @@ export function renderCertificate(data: CertData): HTMLCanvasElement {
   textCenter(ctx, data.nickname, 430, 'bold 52px "Poppins","PingFang SC","Microsoft YaHei",sans-serif', COLORS.gold)
 
   // 小字
-  textCenter(ctx, '在杰迷结业考试中获得', 500, '400 22px "PingFang SC","Microsoft YaHei",sans-serif', COLORS.textSecondary)
+  textCenter(ctx, '在杰迷试炼中获得', 500, '400 22px "PingFang SC","Microsoft YaHei",sans-serif', COLORS.textSecondary)
 
   // 等级称号（大字）
   textCenter(ctx, data.levelTitle, 590, 'bold 64px "Poppins","PingFang SC","Microsoft YaHei",sans-serif', COLORS.goldLight)
@@ -218,11 +218,11 @@ export function renderCertificate(data: CertData): HTMLCanvasElement {
   ctx.closePath()
   ctx.fill()
 
-  // --- 9. 考试日期 ---
-  textCenter(ctx, `考试日期：${data.examDate}`, 840, '400 20px "Poppins","PingFang SC","Microsoft YaHei",sans-serif', COLORS.textSecondary)
+  // --- 9. 挑战日期 ---
+  textCenter(ctx, `挑战日期：${data.examDate}`, 840, '400 20px "Poppins","PingFang SC","Microsoft YaHei",sans-serif', COLORS.textSecondary)
 
   // --- 10. 底部 ---
-  textCenter(ctx, '杰迷结业考试 组委会', 920, 'bold 24px "Poppins","PingFang SC","Microsoft YaHei",sans-serif', COLORS.gold)
+  textCenter(ctx, '杰迷试炼 认证中心', 920, 'bold 24px "Poppins","PingFang SC","Microsoft YaHei",sans-serif', COLORS.gold)
 
   textCenter(ctx, '— JayMe Certificate —', 970, '400 16px "Poppins",sans-serif', COLORS.textMuted)
 

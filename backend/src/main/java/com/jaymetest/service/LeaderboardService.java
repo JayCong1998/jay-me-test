@@ -40,15 +40,11 @@ public class LeaderboardService {
 
     public LeaderboardResult getAlbumLeaderboard(int limit, int offset) {
         List<Map<String, Object>> rows = gameRecordMapper.selectAlbumLeaderboardPaged(
-                limit, offset, GameMode.ALBUM.name(), requiredAlbumCorrectCount());
+                limit, offset, GameMode.ALBUM.name(), albumGameProperties.getPassAccuracy());
         List<LeaderboardEntry> list = mapAlbumEntries(rows);
         Long myRank = gameRecordMapper.selectMyAlbumRank(
-                StpUtil.getLoginIdAsLong(), GameMode.ALBUM.name(), requiredAlbumCorrectCount());
+                StpUtil.getLoginIdAsLong(), GameMode.ALBUM.name(), albumGameProperties.getPassAccuracy());
         return LeaderboardResult.builder().list(list).myRank(myRank).build();
-    }
-
-    private int requiredAlbumCorrectCount() {
-        return (int) Math.ceil(albumGameProperties.getQuestionCount() * albumGameProperties.getPassAccuracy() / 100.0);
     }
 
     public LeaderboardResult getAbyssLeaderboard(int limit, int offset) {

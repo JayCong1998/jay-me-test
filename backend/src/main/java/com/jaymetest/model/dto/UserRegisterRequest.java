@@ -16,10 +16,10 @@ public class UserRegisterRequest {
     private String email;
 
     @NotBlank(message = "密码不能为空")
-    @Size(min = 6, max = 20, message = "密码长度为6-20位")
+    @Size(min = 6, max = 10, message = "密码长度为 6–10 位")
     private String password;
 
     @NotBlank(message = "昵称不能为空")
-    @Size(min = 1, max = 20, message = "昵称长度为1-20个字符")
+    @Size(min = 2, max = 10, message = "昵称长度为 2–10 个字符")
     private String nickname;
 }

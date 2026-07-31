@@ -43,6 +43,7 @@ export interface StatsOverview {
   totalPlayers: number
   totalGames: number
   averageScore: number
+  maxAbyssStreak: number
   levelDistribution: Record<string, number>
 }
 
@@ -77,7 +78,7 @@ export interface GameRecordDTO {
 }
 
 /**
- * 获取当前登录用户的考试记录（分页）
+ * 获取当前登录用户的游戏记录（分页）
  */
 export async function fetchMyRecords(page: number = 1, size: number = 10): Promise<GameRecordDTO[]> {
   const res = await client.get<R<GameRecordDTO[]>>('/game-records/me', {

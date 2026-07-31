@@ -6,7 +6,7 @@ export const routes: RouteRecordRaw[] = [
     path: '/',
     name: 'Home',
     component: () => import('@/pages/HomePage.vue'),
-    meta: { title: '杰迷结业考试', showTabbar: true },
+    meta: { title: '杰迷试炼', showTabbar: true },
   },
   {
     path: '/quiz',
@@ -18,7 +18,7 @@ export const routes: RouteRecordRaw[] = [
     path: '/result',
     name: 'Result',
     component: () => import('@/pages/ResultPage.vue'),
-    meta: { title: '考试结果', showTabbar: false },
+    meta: { title: '游戏结果', showTabbar: false },
   },
   {
     path: '/certificate',
@@ -65,7 +65,7 @@ const router = createRouter({
 
 // 全局路由守卫 - 设置页面标题 + 登录校验
 router.beforeEach((to, _from, next) => {
-  document.title = (to.meta.title as string) || '杰迷结业考试'
+  document.title = (to.meta.title as string) || '杰迷试炼'
 
   // 需要登录的页面，检查是否有有效 token
   if (to.meta.requiresAuth) {

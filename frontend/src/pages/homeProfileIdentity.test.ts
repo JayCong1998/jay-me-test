@@ -15,9 +15,20 @@ describe('home and profile identity copy', () => {
 
   it('shows guest login prompts on the profile page', () => {
     expect(profileSource).toContain('登录后保存成绩、查看记录、参与排行')
-    expect(profileSource).toContain('登录后可查看你的考试记录')
+    expect(profileSource).toContain('登录后可查看你的游戏记录')
     expect(profileSource).toContain("router.push('/login?redirect=/profile')")
+    expect(profileSource).not.toContain('v2.0.0')
+    expect(profileSource).not.toContain('app-version')
   })
+
+  it('uses challenge-focused home stats without exposing small user counts', () => {
+    expect(homeSource).toContain('累计挑战')
+    expect(homeSource).toContain('最高连对')
+    expect(homeSource).toContain('平均分')
+    expect(homeSource).not.toContain('玩家人数')
+    expect(homeSource).not.toContain('overview.totalPlayers')
+  })
+
   it('loads exam records when login state changes on the profile page', () => {
     expect(profileSource).toContain('watch(')
     expect(profileSource).toContain('authStore.isLoggedIn')

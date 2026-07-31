@@ -57,7 +57,7 @@ export const LEVELS: LevelConfig[] = [
 /**
  * 默认分享文案模板
  */
-export const SHARE_TEXT_TEMPLATE = '我在杰迷结业考试中获得了「{level}」称号！你也来测测你是几级杰迷？'
+export const SHARE_TEXT_TEMPLATE = '我在杰迷试炼中获得了「{level}」称号！你也来挑战硬核杰迷题库？'
 
 /**
  * 无尽深渊等级配置

@@ -1,26 +1,34 @@
 {
   "compilerOptions": {
+    // Vite 面向现代浏览器构建，ES2020 覆盖当前 H5 运行环境和常用语法。
     "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    // 跳过依赖库类型检查，减少第三方声明文件对本项目构建速度和稳定性的影响。
     "skipLibCheck": true,
+    // bundler 模式贴近 Vite/Rollup 的解析方式，支持 package exports 等现代前端约定。
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
+    // 类型检查交给 vue-tsc，实际代码输出由 Vite 完成。
     "noEmit": true,
     "jsx": "preserve",
+    // 保持严格类型检查；未使用变量暂不报错，方便页面迭代和模板引用。
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
+    // 与 vite.config.ts 的 alias 保持一致。
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     },
     "types": []
   },
+  // Vue 单文件组件、TS/TSX 和环境声明都纳入类型检查。
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/env.d.ts"],
+  // 单元测试由 Vitest 单独处理，不参与生产类型构建。
   "exclude": ["src/**/*.test.ts"]
 }

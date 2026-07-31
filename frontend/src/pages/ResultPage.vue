@@ -135,7 +135,7 @@
                 d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
             </svg>
             <span class="stat-val">{{ formatNumber(result.totalPlayers) }}</span>
-            <span class="stat-lbl">总考生</span>
+            <span class="stat-lbl">总玩家</span>
           </div>
         </div>
 
@@ -191,7 +191,7 @@
           查看证书
         </button>
         <!-- 登录用户：查看排行榜 -->
-        <button v-if="authStore.isLoggedIn" class="btn-leaderboard" @click="router.push('/leaderboard')">
+        <button v-if="authStore.isLoggedIn" class="btn-leaderboard" @click="goLeaderboard">
           🏆 查看排行榜
         </button>
         <!-- 专辑模式专属按钮 -->
@@ -229,8 +229,8 @@
         <path stroke-linecap="round" stroke-linejoin="round"
           d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
       </svg>
-      <p class="empty-text">还没有考试结果</p>
-      <button class="btn-cert" @click="goHome">去考试</button>
+      <p class="empty-text">还没有游戏结果</p>
+      <button class="btn-cert" @click="goHome">去挑战</button>
     </div>
   </div>
 </template>
@@ -245,7 +245,7 @@ import { showFailToast } from 'vant'
 import { formatTime } from '@/utils/format'
 import { LEVELS, ABYSS_LEVELS } from '@/utils/constants'
 import { getAbyssLevelByStreak } from '@/utils/levels'
-import type { GameResult } from '@/stores/gameStore'
+import type { GameMode, GameResult } from '@/stores/gameStore'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -304,6 +304,17 @@ function formatNumber(n: number): string {
 
 function goCertificate() {
   router.push('/certificate')
+}
+
+function getLeaderboardType(mode: GameMode) {
+  if (mode === 'ALBUM') return 'album'
+  if (mode === 'ABYSS') return 'abyss'
+  return 'classic'
+}
+
+function goLeaderboard() {
+  const mode = result.value?.mode || gameStore.mode
+  router.push({ path: '/leaderboard', query: { type: getLeaderboardType(mode) } })
 }
 
 async function handleRetry() {

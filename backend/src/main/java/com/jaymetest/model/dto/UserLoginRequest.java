@@ -2,6 +2,7 @@ package com.jaymetest.model.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -15,5 +16,6 @@ public class UserLoginRequest {
     private String email;
 
     @NotBlank(message = "密码不能为空")
+    @Size(min = 6, max = 10, message = "密码长度为 6–10 位")
     private String password;
 }

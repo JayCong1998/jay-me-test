@@ -1,13 +1,16 @@
 {
+  "_comment": "独立管理端项目配置；package.json 是标准 JSON，不能写 // 注释，因此使用 _comment 字段说明配置意图。",
   "name": "jay-me-test-admin",
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "_scriptsComment": "dev 启动管理端 Vite 服务；build 先执行 TypeScript 项目构建再打包；preview 预览 dist 产物。",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
+  "_dependenciesComment": "运行时依赖：React 18 + React Router + Ant Design 组成后台管理 UI，axios 访问 /api/admin 等后端接口。",
   "dependencies": {
     "@ant-design/icons": "^5.6.1",
     "@vitejs/plugin-react": "^4.3.4",
@@ -18,6 +21,7 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.1"
   },
+  "_devDependenciesComment": "开发构建依赖：Vite/TypeScript、React 类型声明，以及 Tailwind/PostCSS/Autoprefixer 样式工具链。",
   "devDependencies": {
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",

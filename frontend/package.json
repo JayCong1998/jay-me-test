@@ -1,14 +1,17 @@
 {
+  "_comment": "用户端 H5 项目配置；package.json 是标准 JSON，不能写 // 注释，因此使用 _comment 字段说明配置意图。",
   "name": "jay-me-test",
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "_scriptsComment": "dev 启动 Vite 开发服务；build 先做 Vue/TS 类型检查再产出生产包；test 运行 Vitest；preview 预览 dist 产物。",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "test": "vitest run",
     "preview": "vite preview"
   },
+  "_dependenciesComment": "运行时依赖：Vue 3 + Pinia + Vant 构成移动端 H5，axios 访问后端 API，vue-router 使用 Hash 路由。",
   "dependencies": {
     "axios": "^1.7.9",
     "pinia": "^2.2.6",
@@ -16,6 +19,7 @@
     "vue": "^3.5.13",
     "vue-router": "^4.4.5"
   },
+  "_devDependenciesComment": "开发构建依赖：Vite/Vue 插件、Sass、TypeScript、自动导入 Vant 组件、Vitest 和 vue-tsc。",
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.5",
     "sass": "^1.80.7",

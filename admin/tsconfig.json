@@ -1,25 +1,33 @@
 {
   "compilerOptions": {
+    // 管理端面向现代浏览器，ES2020 足够覆盖当前 React/Vite 运行环境。
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    // 管理端只允许 TypeScript/TSX 源码进入构建，避免混入未类型化 JS。
     "allowJs": false,
     "skipLibCheck": true,
+    // 兼容 CommonJS 默认导入写法，减少第三方库类型差异带来的噪音。
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
+    // Bundler 解析模式与 Vite 保持一致。
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    // tsc 只做类型检查，实际产物由 Vite 输出。
     "noEmit": true,
     "jsx": "react-jsx",
+    // 与 vite.config.ts 的 alias 保持一致。
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
+  // 管理端源码都在 src 下。
   "include": ["src"],
+  // 当前不是 TypeScript 复合项目，保留空引用便于后续拆分。
   "references": []
 }
