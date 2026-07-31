@@ -1,0 +1,8 @@
+{
+  "cssAnimations": ["float", "fade-in-up", "shimmer", "glow-pulse"],
+  "notes": [
+    "Home hero uses a floating music-note logo.",
+    "Mode cards and stats enter with fade-in-up timing.",
+    "Gold title uses a subtle shimmer gradient."
+  ]
+}

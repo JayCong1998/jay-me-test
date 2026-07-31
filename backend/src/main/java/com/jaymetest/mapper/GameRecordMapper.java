@@ -18,8 +18,29 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
     /**
      * 统计得分低于指定分数的记录数
      */
-    @Select("SELECT COUNT(*) FROM game_record WHERE correct_count < #{score}")
-    long countByCorrectCountLessThan(@Param("score") int score);
+    @Select("""
+            SELECT COUNT(*)
+            FROM (
+                SELECT user_id, MAX(score) AS best_score
+                FROM game_record
+                WHERE mode = #{mode} AND user_id IS NOT NULL
+                GROUP BY user_id
+            ) ranked
+            """)
+    long countDistinctPlayersByMode(@Param("mode") String mode);
+
+    @Select("""
+            SELECT COUNT(*)
+            FROM (
+                SELECT user_id, MAX(score) AS best_score
+                FROM game_record
+                WHERE mode = #{mode} AND user_id IS NOT NULL
+                GROUP BY user_id
+            ) ranked
+            WHERE ranked.best_score < #{score}
+            """)
+    long countDistinctPlayersByModeWithScoreLessThan(@Param("mode") String mode,
+                                                     @Param("score") int score);
 
     /**
      * 统计总记录数
@@ -30,7 +51,7 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
     /**
      * 计算平均分
      */
-    @Select("SELECT COALESCE(AVG(correct_count * 10.0), 0) FROM game_record")
+    @Select("SELECT COALESCE(AVG(score), 0) FROM game_record")
     double selectAverageScore();
 
     @Select("SELECT COALESCE(AVG(correct_count), 0) FROM game_record")

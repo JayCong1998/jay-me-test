@@ -33,10 +33,10 @@ class GameRecordDTOAssemblerTest {
     }
 
     @Test
-    void convertsClassicRecordWithServerCalculatedScoreAndLevel() {
+    void convertsClassicRecordWithPersistedScoreAndLevel() {
         GameRecord record = record(GameMode.CLASSIC, null, 8, 10);
+        record.setScore(80);
         when(strategyFactory.get(GameMode.CLASSIC)).thenReturn(strategy);
-        when(strategy.calculateScore(8, 10)).thenReturn(80);
         when(strategy.evaluateLevel(8)).thenReturn(new ConfiguredLevel("SENIOR", "🏆 高级杰迷", "desc"));
 
         GameRecordDTO result = assembler.toDTO(record);
@@ -53,8 +53,8 @@ class GameRecordDTOAssemblerTest {
     @Test
     void convertsAbyssRecordWithoutTenQuestionScoreFallback() {
         GameRecord record = record(GameMode.ABYSS, null, 12, 13);
+        record.setScore(12);
         when(strategyFactory.get(GameMode.ABYSS)).thenReturn(strategy);
-        when(strategy.calculateScore(12, 13)).thenReturn(12);
         when(strategy.evaluateLevel(12)).thenReturn(new ConfiguredLevel("ABYSS_KNIGHT", "深渊骑士", "desc"));
 
         GameRecordDTO result = assembler.toDTO(record);

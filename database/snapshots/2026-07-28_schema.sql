@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS game_record (
     time_spent_secs  INT          NOT NULL COMMENT '答题总用时（秒）',
     used_revival     TINYINT      NOT NULL DEFAULT 0 COMMENT '0=未使用 1=已使用',
     created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    score            INT          NOT NULL DEFAULT 0 COMMENT 'Final game score',
     CONSTRAINT uk_round_id UNIQUE (round_id),
     CONSTRAINT chk_game_record_mode CHECK (mode IN ('CLASSIC', 'ALBUM', 'ABYSS')),
     CONSTRAINT chk_game_record_album CHECK (

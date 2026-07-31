@@ -56,8 +56,8 @@ class GameResultServiceTest {
         // Mapper Mock
         when(gameRecordMapper.selectOne(any())).thenReturn(null);
         when(gameRecordMapper.insert(any(com.jaymetest.model.entity.GameRecord.class))).thenReturn(1);
-        when(gameRecordMapper.countTotal()).thenReturn(100L);
-        when(gameRecordMapper.countByCorrectCountLessThan(eq(1))).thenReturn(65L);
+        when(gameRecordMapper.countDistinctPlayersByMode(GameMode.CLASSIC.name())).thenReturn(8L);
+        when(gameRecordMapper.countDistinctPlayersByModeWithScoreLessThan(GameMode.CLASSIC.name(), 50)).thenReturn(5L);
         GameRoundCache round = new GameRoundCache(GameMode.CLASSIC, null, java.util.Map.of(1L, "A", 2L, "B"));
         round.recordAnswer(1L, true);
         round.recordAnswer(2L, false);
@@ -80,6 +80,14 @@ class GameResultServiceTest {
         assertNull(result.getAlbumKey());
         assertFalse(result.isUsedRevival());
         assertNotNull(result.getCreatedAt());
+        assertEquals(8L, result.getTotalPlayers());
+        assertEquals(62.5, result.getBeatPercentage());
+
+        ArgumentCaptor<GameRecord> recordCaptor = ArgumentCaptor.forClass(GameRecord.class);
+        verify(gameRecordMapper).insert(recordCaptor.capture());
+        assertEquals(50, recordCaptor.getValue().getScore());
+        verify(gameRecordMapper).countDistinctPlayersByMode(GameMode.CLASSIC.name());
+        verify(gameRecordMapper).countDistinctPlayersByModeWithScoreLessThan(GameMode.CLASSIC.name(), 50);
     }
 
     @Test
@@ -90,8 +98,8 @@ class GameResultServiceTest {
         when(gameStrategy.getPostSubmitHooks()).thenReturn(List.of());
         when(gameRecordMapper.selectOne(any())).thenReturn(null);
         when(gameRecordMapper.insert(any(GameRecord.class))).thenReturn(1);
-        when(gameRecordMapper.countTotal()).thenReturn(101L);
-        when(gameRecordMapper.countByCorrectCountLessThan(1)).thenReturn(90L);
+        when(gameRecordMapper.countDistinctPlayersByMode(GameMode.ABYSS.name())).thenReturn(3L);
+        when(gameRecordMapper.countDistinctPlayersByModeWithScoreLessThan(GameMode.ABYSS.name(), 1)).thenReturn(1L);
         GameRoundCache round = new GameRoundCache(true);
         round.addQuestion(1L, "A");
         round.addQuestion(2L, "B");
@@ -115,8 +123,11 @@ class GameResultServiceTest {
         GameRecord stored = recordCaptor.getValue();
         assertNull(stored.getUserId());
         assertEquals(GameMode.ABYSS.name(), stored.getMode());
+        assertEquals(1, stored.getScore());
         assertEquals(0, stored.getUsedRevival());
         assertNotNull(stored.getCreatedAt());
+        assertEquals(3L, result.getTotalPlayers());
+        assertEquals(33.33, result.getBeatPercentage());
     }
 
     @Test

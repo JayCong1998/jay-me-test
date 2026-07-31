@@ -94,7 +94,7 @@ public class ClassicGameStrategy implements GameStrategy {
 
     @Override
     public int calculateScore(int correctCount, int totalQuestions) {
-        return correctCount * 10;
+        return totalQuestions == 0 ? 0 : (int) Math.round(correctCount * 100.0 / totalQuestions);
     }
 
     @Override

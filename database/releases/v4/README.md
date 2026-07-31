@@ -1,11 +1,20 @@
 # V4 Database Scripts
 
+### `003_add_game_record_score.sql`
+
+- Purpose: adds `game_record.score` to persist final scores. Classic and album modes use a percentage score; abyss uses the streak.
+- Affected table: `game_record`
+- Prerequisite: existing V4 schema after scripts 001 and 002.
+- Idempotency: safe to rerun on MySQL 8.0+.
+- Existing rows: retain the default score `0`, because their configured question count is not reliably available.
+
 第四版题库分类增量脚本。
 
 ## 执行顺序
 
 1. `001_migrate_question_categories.sql`
 2. `002_add_user_nickname_unique.sql`
+3. `003_add_game_record_score.sql`
 
 ## 脚本说明
 

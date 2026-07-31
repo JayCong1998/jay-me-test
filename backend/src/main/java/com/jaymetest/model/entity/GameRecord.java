@@ -39,6 +39,9 @@ public class GameRecord implements Serializable {
     /** 答对数量 */
     private Integer correctCount;
 
+    /** Final score for this game. */
+    private Integer score;
+
     /** 答题总用时（秒） */
     private Integer timeSpentSecs;
 

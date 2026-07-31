@@ -61,13 +61,14 @@ public class GameResultService {
         record.setNickname(request.getNickname() != null ? request.getNickname() : "匿名杰迷");
         record.setTotalQuestions(totalQuestions);
         record.setCorrectCount(correctCount);
+        record.setScore(score);
         record.setTimeSpentSecs(request.getTimeSpentSecs());
         record.setUsedRevival(usedRevival);
         record.setCreatedAt(createdAt);
         gameRecordMapper.insert(record);
 
-        long totalPlayers = gameRecordMapper.countTotal();
-        long lowerCount = gameRecordMapper.countByCorrectCountLessThan(correctCount);
+        long totalPlayers = gameRecordMapper.countDistinctPlayersByMode(mode.name());
+        long lowerCount = gameRecordMapper.countDistinctPlayersByModeWithScoreLessThan(mode.name(), score);
         double beatPercentage = totalPlayers > 0 ? Math.round(((double) lowerCount / totalPlayers) * 10000.0) / 100.0 : 0.0;
         GameResultDTO.GameResultDTOBuilder builder = GameResultDTO.builder()
                 .roundId(request.getRoundId()).mode(mode).albumKey(round.getAlbumKey())

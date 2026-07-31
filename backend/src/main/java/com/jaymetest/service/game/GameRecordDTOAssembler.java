@@ -31,7 +31,7 @@ public class GameRecordDTOAssembler {
                 .roundId(record.getRoundId())
                 .mode(mode)
                 .albumKey(record.getAlbumKey())
-                .score(strategy.calculateScore(record.getCorrectCount(), record.getTotalQuestions()))
+                .score(record.getScore())
                 .correctCount(record.getCorrectCount())
                 .totalQuestions(record.getTotalQuestions())
                 .timeSpentSecs(record.getTimeSpentSecs())
