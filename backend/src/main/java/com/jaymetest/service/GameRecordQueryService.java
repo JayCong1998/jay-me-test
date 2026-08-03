@@ -3,7 +3,7 @@ package com.jaymetest.service;
 import cn.dev33.satoken.stp.StpUtil;
 import com.jaymetest.mapper.GameRecordMapper;
 import com.jaymetest.model.dto.GameRecordDTO;
-import com.jaymetest.service.game.GameRecordDTOAssembler;
+import com.jaymetest.service.game.support.GameRecordDTOAssembler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

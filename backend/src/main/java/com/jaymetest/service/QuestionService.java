@@ -1,12 +1,12 @@
 package com.jaymetest.service;
 
 import com.jaymetest.model.dto.AnswerResultDTO;
-import com.jaymetest.service.game.AbyssGameStrategy;
-import com.jaymetest.service.game.AlbumGameStrategy;
-import com.jaymetest.service.game.ClassicGameStrategy;
-import com.jaymetest.service.game.GameRoundCache;
-import com.jaymetest.service.game.GameStrategyFactory;
-import com.jaymetest.service.game.RoundCacheManager;
+import com.jaymetest.service.game.strategy.impl.AbyssGameStrategy;
+import com.jaymetest.service.game.strategy.impl.AlbumGameStrategy;
+import com.jaymetest.service.game.strategy.impl.ClassicGameStrategy;
+import com.jaymetest.service.game.cache.GameRoundCache;
+import com.jaymetest.service.game.strategy.GameStrategyFactory;
+import com.jaymetest.service.game.cache.RoundCacheManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

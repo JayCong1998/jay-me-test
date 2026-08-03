@@ -12,25 +12,26 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 
 ## 核心安全模式
 
-- **经典模式**：`GET /api/questions/round` 返回的 `QuestionDTO` **不含** `correctOption`。答案校验在服务端通过 `POST /api/questions/check` 完成；后端持有 `ConcurrentHashMap<String, RoundCache>`，前端无法获取正确答案、无法预测 roundId。
+- **经典模式**：`GET /api/classic/round` 返回的 `QuestionDTO` **不含** `correctOption`。答案校验仍在通用题目入口通过 `POST /api/questions/check` 完成；后端通过 Guava Cache 持有 `roundId -> GameRoundCache` 本地缓存，前端无法获取正确答案、无法预测 roundId。
 - **用户系统**：Sa-Token + JWT 双令牌模式。注册密码 BCrypt 加密。敏感接口（排行榜、专辑进度、我的记录）需登录，游客可正常答题。
 - **无尽深渊**：仅登录用户可进入。首次答错且仍有续命机会时，`POST /api/abyss/check` 不返回正确答案和解析；`POST /api/abyss/revive` 只重置当前错误题并返回剩余续命次数。
 - `game_record` 表 `uk_round_id` 唯一约束防重复提交。
 
 ## Round 生命周期
 
-1. 客户端请求 `GET /api/questions/round`，服务端生成 UUID `roundId`，按 `game.classic.question-count` 随机抽取题目（当前为 20 题）；简单题占比由 `game.classic.easy-weight` 配置（当前为 60%）。专辑模式通过 `GET /api/albums/round?albumKey=xxx` 抽取当前配置的 20 题。
+1. 客户端请求 `GET /api/classic/round`，服务端生成 UUID `roundId`，按 `game.classic.question-count` 随机抽取题目（当前为 20 题）；简单题占比由 `game.classic.easy-weight` 配置（当前为 60%）。专辑模式通过 `GET /api/albums/round?albumKey=xxx` 抽取当前配置的 20 题。
 2. 服务端将 `(questionId → correctOption)` 映射存入 `RoundCache`，返回不含答案的题目列表。
 3. 客户端逐题通过 `POST /api/questions/check` 提交答案，服务端根据 `roundId` 查找缓存比对。
 4. 客户端通过 `POST /api/game-results` 提交最终结果，服务端按 `roundId` 去重，计算等级和百分位，持久化到 `game_record` 表。
 5. 专辑模式下，正确率达到 `game.album.pass-accuracy` 自动解锁下一张专辑（当前为 80%，即 16/20）。
-6. `QuestionService.cleanExpiredCache()` 每 10 分钟执行一次，清除超过 30 分钟的 round。
+6. `RoundCacheManager` 使用 Guava Cache `expireAfterWrite(30 分钟)` 管理 round TTL；过期 round 在缓存读写和 Guava 内部维护时自动失效。
 
 ## 后端关键文件
 
 | 文件 | 职责 |
 |------|------|
-| [QuestionController.java](../backend/src/main/java/com/jaymetest/controller/QuestionController.java) | 经典题目 API：抽题 `/round`、校验 `/check` |
+| [ClassicController.java](../backend/src/main/java/com/jaymetest/controller/ClassicController.java) | 经典模式 API：抽题 `/api/classic/round` |
+| [QuestionController.java](../backend/src/main/java/com/jaymetest/controller/QuestionController.java) | 题目通用 API：校验 `/api/questions/check` |
 | [AbyssController.java](../backend/src/main/java/com/jaymetest/controller/AbyssController.java) | 深渊 API：开始、批次、校验和续命 `/api/abyss/**`（均需登录） |
 | `GameResultController` / `GameRecordController` / `StatisticsController` | 游戏结算、我的记录、全局统计三个独立 API |
 | [AuthController.java](../backend/src/main/java/com/jaymetest/controller/AuthController.java) | 认证 API：注册 `/register`、登录 `/login`、当前用户 `/me` |
@@ -43,7 +44,7 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 | [AuthService.java](../backend/src/main/java/com/jaymetest/service/AuthService.java) | 注册/登录逻辑、BCrypt 密码验证、JWT 令牌生成 |
 | [AlbumProgressService.java](../backend/src/main/java/com/jaymetest/service/AlbumProgressService.java) | 专辑解锁判断、进度查询/更新、闯关权限校验 |
 | [LeaderboardService.java](../backend/src/main/java/com/jaymetest/service/LeaderboardService.java) | 经典、专辑、深渊三榜的排行查询 |
-| [RoundCache.java](../backend/src/main/java/com/jaymetest/service/RoundCache.java) | Round 缓存数据结构（answerMap + createdAt + 30min TTL） |
+| [GameRoundCache.java](../backend/src/main/java/com/jaymetest/service/game/cache/GameRoundCache.java) | Round 缓存状态对象（answerMap + mode + albumKey + 作答状态；TTL 由 `RoundCacheManager` 管理） |
 | [QuestionMapper.java](../backend/src/main/java/com/jaymetest/mapper/QuestionMapper.java) | 题目查询：按难度随机抽取、按专辑随机抽取、总数统计 |
 | [GameRecordMapper.java](../backend/src/main/java/com/jaymetest/mapper/GameRecordMapper.java) | 游戏记录查询：百分位计数、排行数据、用户记录 |
 | [UserMapper.java](../backend/src/main/java/com/jaymetest/mapper/UserMapper.java) | 用户查询：按邮箱查找 |
@@ -66,7 +67,7 @@ Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spri
 | [authStore.ts](../frontend/src/stores/authStore.ts) | 登录态管理：token 持久化、用户信息、登录/注册/登出操作 |
 | [albumStore.ts](../frontend/src/stores/albumStore.ts) | 专辑进度状态：专辑列表、解锁状态、最高分 |
 | [client.ts](../frontend/src/api/client.ts) | Axios 实例，baseURL `/api`，10s 超时，响应拦截器解包 `R<T>`，请求拦截器注入 Sa-Token |
-| [questionApi.ts](../frontend/src/api/questionApi.ts) | `/api/questions/*` 接口：fetchRound、checkAnswer、revive |
+| [questionApi.ts](../frontend/src/api/questionApi.ts) | 经典和通用题目接口：`/api/classic/round`、`/api/questions/check`、`/api/abyss/*` |
 | [statsApi.ts](../frontend/src/api/statsApi.ts) | 游戏结算、记录与统计 API 客户端 |
 | [authApi.ts](../frontend/src/api/authApi.ts) | `/api/auth/*` 接口：register、login、fetchMe |
 | [albumApi.ts](../frontend/src/api/albumApi.ts) | `/api/albums/*` 接口：fetchAlbumList、fetchAlbumRound |

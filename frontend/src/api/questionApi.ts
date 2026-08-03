@@ -41,7 +41,7 @@ export interface ReviveResult {
  * 获取一局题目
  */
 export async function fetchRound(): Promise<RoundData> {
-  const res = await client.get<R<RoundData>>('/questions/round')
+  const res = await client.get<R<RoundData>>('/classic/round')
   return res.data.data
 }
 

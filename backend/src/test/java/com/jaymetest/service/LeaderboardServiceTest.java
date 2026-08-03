@@ -5,9 +5,9 @@ import com.jaymetest.config.ClassicGameProperties;
 import com.jaymetest.mapper.GameRecordMapper;
 import com.jaymetest.model.dto.LeaderboardEntry;
 import com.jaymetest.model.enums.GameMode;
-import com.jaymetest.service.game.ConfiguredLevel;
-import com.jaymetest.service.game.GameStrategy;
-import com.jaymetest.service.game.GameStrategyFactory;
+import com.jaymetest.service.game.level.ConfiguredLevel;
+import com.jaymetest.service.game.strategy.GameStrategy;
+import com.jaymetest.service.game.strategy.GameStrategyFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
