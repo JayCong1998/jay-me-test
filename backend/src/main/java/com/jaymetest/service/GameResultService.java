@@ -58,7 +58,7 @@ public class GameResultService {
         record.setMode(mode.name());
         record.setAlbumKey(round.getAlbumKey());
         record.setUserId(userId);
-        record.setNickname(request.getNickname() != null ? request.getNickname() : "匿名杰迷");
+        record.setNickname(userId == null ? null : request.getNickname());
         record.setTotalQuestions(totalQuestions);
         record.setCorrectCount(correctCount);
         record.setScore(score);

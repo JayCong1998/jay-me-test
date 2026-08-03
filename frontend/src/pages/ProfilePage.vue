@@ -154,7 +154,6 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useRecordStore } from '@/stores/recordStore'
-import { useUserStore } from '@/stores/userStore'
 import { formatDate } from '@/utils/format'
 import { getRecordPresentation } from '@/utils/recordPresentation'
 import { getBottomLoadState, isPullRefreshEnabled as getPullRefreshEnabled } from '@/utils/bottomLoadTrigger'
@@ -163,7 +162,6 @@ import ThemeSwitcher from '@/components/common/ThemeSwitcher.vue'
 const router = useRouter()
 const authStore = useAuthStore()
 const recordStore = useRecordStore()
-const userStore = useUserStore()
 
 const scrollRoot = ref<HTMLElement | null>(null)
 const refreshing = ref(false)
@@ -226,7 +224,6 @@ function onScroll() {
 function handleLogout() {
   authStore.logout()
   recordStore.clear()
-  userStore.reset()
 }
 
 function formatDuration(secs: number): string {

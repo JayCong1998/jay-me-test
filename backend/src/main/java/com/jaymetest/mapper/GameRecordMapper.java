@@ -48,11 +48,17 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
     @Select("SELECT COUNT(*) FROM game_record")
     long countTotal();
 
+    @Select("SELECT COUNT(*) FROM game_record WHERE user_id IS NOT NULL")
+    long countTotalByRegisteredUsers();
+
     /**
      * 计算平均分
      */
     @Select("SELECT COALESCE(AVG(score), 0) FROM game_record")
     double selectAverageScore();
+
+    @Select("SELECT COALESCE(AVG(score), 0) FROM game_record WHERE user_id IS NOT NULL")
+    double selectAverageScoreByRegisteredUsers();
 
     @Select("SELECT COALESCE(AVG(correct_count), 0) FROM game_record")
     double selectAverageCorrectCount();
@@ -63,6 +69,9 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
     @Select("SELECT COALESCE(MAX(correct_count), 0) FROM game_record WHERE mode = 'ABYSS'")
     int selectMaxAbyssStreak();
 
+    @Select("SELECT COALESCE(MAX(correct_count), 0) FROM game_record WHERE mode = 'ABYSS' AND user_id IS NOT NULL")
+    int selectMaxAbyssStreakByRegisteredUsers();
+
     @Select("SELECT mode, COUNT(*) as cnt FROM game_record GROUP BY mode ORDER BY cnt DESC")
     List<Map<String, Object>> selectModeDistribution();
 
@@ -71,6 +80,9 @@ public interface GameRecordMapper extends BaseMapper<GameRecord> {
      */
     @Select("SELECT correct_count, COUNT(*) as cnt FROM game_record GROUP BY correct_count")
     List<Map<String, Object>> selectLevelDistribution();
+
+    @Select("SELECT correct_count, COUNT(*) as cnt FROM game_record WHERE user_id IS NOT NULL GROUP BY correct_count")
+    List<Map<String, Object>> selectLevelDistributionByRegisteredUsers();
 
     @Select("""
             SELECT ranked.`rank`, ranked.nickname, ranked.correct_count AS correctCount,

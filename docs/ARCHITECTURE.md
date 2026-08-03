@@ -1,142 +1,266 @@
-# 架构说明
+# 杰迷试炼架构说明
 
-本文档记录项目的数据流、安全边界、核心业务生命周期和关键文件索引。`AGENTS.md` 只保留入口说明，详细架构维护在这里。
+> 本文档只记录系统运行时结构、模块协作、核心生命周期和安全边界。产品规则见 [PRD.md](PRD.md)；技术栈、接口清单和开发命令见 [TECH.md](TECH.md)。
 
-## 数据流
+## 1. 系统边界
 
 ```text
-Vue 组件 → API 模块 (questionApi/statsApi/...) → Axios (/api/*) → Spring Controller → Service → Mapper (MyBatis Plus) → MySQL
-                                      ↑
-                              Sa-Token JWT (登录用户)
+用户浏览器
+  ├─ frontend: Vue 3 H5，面向普通用户
+  └─ admin: React 管理端，面向运营管理员
+
+Spring Boot Backend
+  ├─ 公共用户 API: /api/**
+  ├─ 管理端 API: /api/admin/**
+  ├─ 本地 Round 缓存: Guava Cache
+  └─ MySQL: 持久化题库、用户、记录、专辑进度、管理员
 ```
 
-## 核心安全模式
+前端和管理端都是独立 SPA。开发期通过 Vite 代理访问后端；生产期可将用户端构建产物放入 Spring Boot 静态资源，也可以由独立静态服务托管。
 
-- **经典模式**：`GET /api/classic/round` 返回的 `QuestionDTO` **不含** `correctOption`。答案校验仍在通用题目入口通过 `POST /api/questions/check` 完成；后端通过 Guava Cache 持有 `roundId -> GameRoundCache` 本地缓存，前端无法获取正确答案、无法预测 roundId。
-- **用户系统**：Sa-Token + JWT 双令牌模式。注册密码 BCrypt 加密。敏感接口（排行榜、专辑进度、我的记录）需登录，游客可正常答题。
-- **无尽深渊**：仅登录用户可进入。首次答错且仍有续命机会时，`POST /api/abyss/check` 不返回正确答案和解析；`POST /api/abyss/revive` 只重置当前错误题并返回剩余续命次数。
-- `game_record` 表 `uk_round_id` 唯一约束防重复提交。
+## 2. 请求数据流
 
-## Round 生命周期
+```text
+Vue / React 页面
+  -> api 模块
+  -> Axios
+  -> Spring Controller
+  -> Service
+  -> Strategy / Hook / Cache
+  -> Mapper
+  -> MySQL
+```
 
-1. 客户端请求 `GET /api/classic/round`，服务端生成 UUID `roundId`，按 `game.classic.question-count` 随机抽取题目（当前为 20 题）；简单题占比由 `game.classic.easy-weight` 配置（当前为 60%）。专辑模式通过 `GET /api/albums/round?albumKey=xxx` 抽取当前配置的 20 题。
-2. 服务端将 `(questionId → correctOption)` 映射存入 `RoundCache`，返回不含答案的题目列表。
-3. 客户端逐题通过 `POST /api/questions/check` 提交答案，服务端根据 `roundId` 查找缓存比对。
-4. 客户端通过 `POST /api/game-results` 提交最终结果，服务端按 `roundId` 去重，计算等级和百分位，持久化到 `game_record` 表。
-5. 专辑模式下，正确率达到 `game.album.pass-accuracy` 自动解锁下一张专辑（当前为 80%，即 16/20）。
-6. `RoundCacheManager` 使用 Guava Cache `expireAfterWrite(30 分钟)` 管理 round TTL；过期 round 在缓存读写和 Guava 内部维护时自动失效。
+响应统一由 `R<T>` 包装。业务错误由 `BusinessException` 抛出，再由 `GlobalExceptionHandler` 转为统一失败响应。
 
-## 后端关键文件
+## 3. 认证边界
+
+### 3.1 用户端认证
+
+- 用户注册和登录使用 `/api/auth/register`、`/api/auth/login`。
+- 密码以 BCrypt 哈希存储。
+- 登录后 token 放入 `Authorization` 请求头。
+- 用户端本地存储键为 `jaymetest_auth`。
+- 公开接口包括健康检查、注册登录、经典开局、通用答题校验、结果提交和统计概览。
+- 专辑、深渊、排行榜、个人记录和 `/api/auth/me` 需要登录。
+
+### 3.2 管理端认证
+
+- 管理端路径统一为 `/api/admin/**`。
+- 管理端使用 `AdminStpUtil` 和独立登录类型。
+- `/api/admin/auth/login` 放行，其余管理端接口必须管理员登录。
+- 管理端本地存储键为 `jaymetest_admin_auth`。
+
+### 3.3 关键安全原则
+
+- `QuestionDTO` 不返回 `correctOption`。
+- 答案校验必须经过后端 Round 缓存。
+- 结算成绩以服务端 Round 缓存统计为准，不信任前端提交的正确数。
+- `game_record.round_id` 有唯一约束，防止同一 Round 重复提交。
+- 专辑解锁由服务端校验，前端展示状态不能作为权限依据。
+- 深渊续命前不返回正确答案和解析，避免重答前泄题。
+
+## 4. 游戏策略结构
+
+```text
+QuestionService
+  ├─ ClassicGameStrategy
+  ├─ AlbumGameStrategy
+  └─ AbyssGameStrategy
+
+GameResultService
+  -> GameStrategyFactory
+  -> Strategy.calculateScore()
+  -> Strategy.evaluateLevel()
+  -> Strategy.getPostSubmitHooks()
+```
+
+`QuestionService` 是题目相关入口。开局时直接调用对应策略；通用校验时先从 `RoundCacheManager` 取出 Round，再通过 `GameStrategyFactory` 按 `GameMode` 分派给对应策略。
+
+固定题量玩法共享 `AbstractFixedRoundGameStrategy`：
+
+- 生成 `roundId`。
+- 抽题并组装 `QuestionDTO`。
+- 保存 `questionId -> correctOption`。
+- 单题校验时记录作答结果。
+
+深渊玩法实现批次式策略：
+
+- 开局创建可变 Round 缓存。
+- 按当前 streak 选择难度阶梯。
+- 题目逐批追加到同一个 Round。
+- 强制按服务端题目顺序作答。
+
+## 5. Round 生命周期
+
+### 5.1 固定题量模式
+
+```text
+GET /api/classic/round
+或 GET /api/albums/round
+  -> 策略抽取 20 道题
+  -> RoundCacheManager 保存 Round
+  -> 返回不含答案的题目列表
+
+POST /api/questions/check
+  -> 按 roundId 读取缓存
+  -> 校验 questionId 和 selectedOption
+  -> 记录该题是否正确
+  -> 返回正确答案和解析
+
+POST /api/game-results
+  -> 校验 Round 存在且未提交
+  -> 固定题量模式要求已答完整局
+  -> 从缓存统计 correctCount
+  -> 计算 score、accuracy、level、beatPercentage
+  -> 插入 game_record
+  -> 执行玩法后置钩子
+  -> 删除 Round 缓存
+```
+
+### 5.2 深渊模式
+
+```text
+POST /api/abyss/start
+  -> 创建深渊 Round
+  -> 按 streak=0 生成首批 5 题
+  -> 返回题目、streak、剩余续命次数
+
+POST /api/abyss/check
+  -> 校验当前题必须是服务端顺序中的下一题
+  -> 答对：记录正确，streak + 1，推进题目指针
+  -> 答错：记录错误，Round 进入 failed 状态
+  -> 若可续命：不返回正确答案和解析
+
+POST /api/abyss/revive
+  -> 只允许当前答错题续命
+  -> 清除该题错误记录
+  -> 消耗 1 次续命
+  -> Round 退出 failed 状态
+
+POST /api/abyss/batch
+  -> 仅当当前批次全部答完且未失败时允许
+  -> 按最新 streak 生成下一批题
+
+POST /api/game-results
+  -> 仅当 Round 已失败时允许
+  -> correctCount 即 streak
+  -> score 等于 streak
+```
+
+### 5.3 缓存有效期
+
+`RoundCacheManager` 使用 Guava Cache，Round 写入后 30 分钟过期。过期后继续校验或结算会返回业务错误，前端应提示重新开局。
+
+## 6. 结算与后置钩子
+
+`GameResultService` 是唯一结算入口：
+
+1. 按 `roundId` 查询 `game_record`，拒绝重复提交。
+2. 从 `RoundCacheManager` 读取 Round。
+3. 按 Round 内部状态判断是否允许结算。
+4. 通过策略计算分数和等级。
+5. 尝试读取当前登录用户；游客记录允许 `user_id = null`。
+6. 插入 `game_record`。
+7. 计算同模式击败率。
+8. 执行策略后置钩子。
+9. 删除 Round 缓存。
+
+当前后置钩子：
+
+| Hook | 触发玩法 | 职责 |
+| --- | --- | --- |
+| `AlbumUnlockHook` | `ALBUM` | 更新专辑最佳分、挑战次数、通关时间，并在达到阈值时解锁下一张专辑。 |
+
+## 7. 专辑进度模型
+
+专辑枚举 `AlbumKey` 按发行顺序排列。当前 API 入参和数据库 `album_key` 使用专辑显示名，例如 `Jay`、`范特西`、`太阳之子`。
+
+```text
+用户首次请求专辑列表
+  -> 查询 album_progress
+  -> 若第一张专辑无记录，自动创建 unlocked=1
+  -> 返回所有专辑及进度
+
+用户请求专辑题目
+  -> AlbumProgressService.canAccessAlbum()
+  -> 已解锁才允许抽题
+
+专辑结算
+  -> 更新当前专辑 best_score / total_attempts / first_passed_at
+  -> 若正确率 >= game.album.pass-accuracy
+  -> 创建或更新下一专辑 unlocked=1
+```
+
+## 8. 排行榜聚合
+
+排行榜只统计登录用户。
+
+| 榜单 | 聚合方式 |
+| --- | --- |
+| 经典榜 | 用户维度取最佳经典记录。 |
+| 专辑榜 | 用户每张专辑取最佳记录，再聚合通关专辑数、总成绩和总用时。 |
+| 深渊榜 | 用户维度取最高 streak。 |
+
+排序都包含稳定 tie-breaker，避免分页时排名抖动。
+
+## 9. 前端运行时状态
+
+### 9.1 用户端
+
+- `gameStore` 只保存当前答题 Round 的内存状态，刷新后不会恢复。
+- `authStore` 持久化 token 和用户信息。
+- `albumStore` 保存专辑列表、加载态和错误态。
+- `recordStore` 支持个人记录分页、下拉刷新和触底加载。
+- `useQuiz` 统一编排开局、答题、深渊续命、深渊预加载和结算。
+
+### 9.2 管理端
+
+- `AuthContext` 保存管理员 token。
+- `ProtectedRoute` 负责登录守卫。
+- 管理端 API 客户端遇到 401/403 会清除本地登录态并跳转登录页。
+
+## 10. 关键文件索引
+
+### 10.1 后端
 
 | 文件 | 职责 |
-|------|------|
-| [ClassicController.java](../backend/src/main/java/com/jaymetest/controller/ClassicController.java) | 经典模式 API：抽题 `/api/classic/round` |
-| [QuestionController.java](../backend/src/main/java/com/jaymetest/controller/QuestionController.java) | 题目通用 API：校验 `/api/questions/check` |
-| [AbyssController.java](../backend/src/main/java/com/jaymetest/controller/AbyssController.java) | 深渊 API：开始、批次、校验和续命 `/api/abyss/**`（均需登录） |
-| `GameResultController` / `GameRecordController` / `StatisticsController` | 游戏结算、我的记录、全局统计三个独立 API |
-| [AuthController.java](../backend/src/main/java/com/jaymetest/controller/AuthController.java) | 认证 API：注册 `/register`、登录 `/login`、当前用户 `/me` |
-| [AlbumController.java](../backend/src/main/java/com/jaymetest/controller/AlbumController.java) | 专辑 API：专辑列表 `/list`、专辑抽题 `/round`（均需登录） |
-| [LeaderboardController.java](../backend/src/main/java/com/jaymetest/controller/LeaderboardController.java) | 排行榜 API：经典、专辑、深渊三榜（需登录） |
-| [HealthController.java](../backend/src/main/java/com/jaymetest/controller/HealthController.java) | 健康检查 `/api/health` |
-| [AiController.java](../backend/src/main/java/com/jaymetest/ai/controller/AiController.java) | AI 问答 `/api/ai/query`（DashScope 流式响应） |
-| [QuestionService.java](../backend/src/main/java/com/jaymetest/service/QuestionService.java) | 抽题、答案校验和 Round 缓存入口 |
-| [StatsService.java](../backend/src/main/java/com/jaymetest/service/StatsService.java) | 等级匹配、百分位计算、结果持久化、全局统计 |
-| [AuthService.java](../backend/src/main/java/com/jaymetest/service/AuthService.java) | 注册/登录逻辑、BCrypt 密码验证、JWT 令牌生成 |
-| [AlbumProgressService.java](../backend/src/main/java/com/jaymetest/service/AlbumProgressService.java) | 专辑解锁判断、进度查询/更新、闯关权限校验 |
-| [LeaderboardService.java](../backend/src/main/java/com/jaymetest/service/LeaderboardService.java) | 经典、专辑、深渊三榜的排行查询 |
-| [GameRoundCache.java](../backend/src/main/java/com/jaymetest/service/game/cache/GameRoundCache.java) | Round 缓存状态对象（answerMap + mode + albumKey + 作答状态；TTL 由 `RoundCacheManager` 管理） |
-| [QuestionMapper.java](../backend/src/main/java/com/jaymetest/mapper/QuestionMapper.java) | 题目查询：按难度随机抽取、按专辑随机抽取、总数统计 |
-| [GameRecordMapper.java](../backend/src/main/java/com/jaymetest/mapper/GameRecordMapper.java) | 游戏记录查询：百分位计数、排行数据、用户记录 |
-| [UserMapper.java](../backend/src/main/java/com/jaymetest/mapper/UserMapper.java) | 用户查询：按邮箱查找 |
-| [AlbumProgressMapper.java](../backend/src/main/java/com/jaymetest/mapper/AlbumProgressMapper.java) | 专辑进度 CRUD：按 userId+albumKey 查询/更新 |
-| `game.*.levels` 配置 | 三种玩法独立的等级 key、证书文案与区间规则 |
-| [AlbumKey.java](../backend/src/main/java/com/jaymetest/model/enums/AlbumKey.java) | 16 张录音室专辑枚举（JAY → SUN_CHILD） |
-| [R.java](../backend/src/main/java/com/jaymetest/model/dto/R.java) | 统一响应包装 `{code, msg, data, timestamp}` |
-| [GlobalExceptionHandler.java](../backend/src/main/java/com/jaymetest/exception/GlobalExceptionHandler.java) | `@RestControllerAdvice` 统一异常拦截 |
-| [SaTokenConfig.java](../backend/src/main/java/com/jaymetest/config/SaTokenConfig.java) | Sa-Token 路由拦截规则（白名单 + 需登录名单） |
-| [StpInterfaceImpl.java](../backend/src/main/java/com/jaymetest/config/StpInterfaceImpl.java) | 权限/角色加载实现 |
+| --- | --- |
+| `backend/src/main/java/com/jaymetest/controller/ClassicController.java` | 经典模式开局入口。 |
+| `backend/src/main/java/com/jaymetest/controller/QuestionController.java` | 通用单题校验入口。 |
+| `backend/src/main/java/com/jaymetest/controller/AbyssController.java` | 深渊开局、批次、校验和续命。 |
+| `backend/src/main/java/com/jaymetest/controller/AlbumController.java` | 专辑列表和专辑开局。 |
+| `backend/src/main/java/com/jaymetest/controller/GameResultController.java` | 游戏结果提交。 |
+| `backend/src/main/java/com/jaymetest/controller/LeaderboardController.java` | 三类排行榜查询。 |
+| `backend/src/main/java/com/jaymetest/service/GameResultService.java` | 结算主流程。 |
+| `backend/src/main/java/com/jaymetest/service/game/cache/GameRoundCache.java` | Round 内部状态和深渊状态机。 |
+| `backend/src/main/java/com/jaymetest/service/game/cache/RoundCacheManager.java` | Round TTL 缓存。 |
+| `backend/src/main/java/com/jaymetest/service/game/strategy/impl/ClassicGameStrategy.java` | 经典模式策略。 |
+| `backend/src/main/java/com/jaymetest/service/game/strategy/impl/AlbumGameStrategy.java` | 专辑模式策略。 |
+| `backend/src/main/java/com/jaymetest/service/game/strategy/impl/AbyssGameStrategy.java` | 深渊模式策略。 |
+| `backend/src/main/java/com/jaymetest/service/AlbumProgressService.java` | 专辑解锁和进度。 |
+| `backend/src/main/java/com/jaymetest/mapper/GameRecordMapper.java` | 记录统计和排行榜 SQL。 |
+| `backend/src/main/java/com/jaymetest/config/SaTokenConfig.java` | 用户端和管理端认证拦截。 |
 
-## 前端关键文件
+### 10.2 用户端
 
 | 文件 | 职责 |
-|------|------|
-| [useQuiz.ts](../frontend/src/composables/useQuiz.ts) | 编排完整答题流程：开始 → 提交答案 → 复活 → 完成并提交 |
-| [useTimer.ts](../frontend/src/composables/useTimer.ts) | 答题计时器 composable |
-| [gameStore.ts](../frontend/src/stores/gameStore.ts) | 内存状态（Pinia）：roundId、题目列表、当前索引、答案/结果 Map、复活、游戏阶段 |
-| [userStore.ts](../frontend/src/stores/userStore.ts) | localStorage 持久化：昵称、历史记录（最多 20 条）、最高分 |
-| [authStore.ts](../frontend/src/stores/authStore.ts) | 登录态管理：token 持久化、用户信息、登录/注册/登出操作 |
-| [albumStore.ts](../frontend/src/stores/albumStore.ts) | 专辑进度状态：专辑列表、解锁状态、最高分 |
-| [client.ts](../frontend/src/api/client.ts) | Axios 实例，baseURL `/api`，10s 超时，响应拦截器解包 `R<T>`，请求拦截器注入 Sa-Token |
-| [questionApi.ts](../frontend/src/api/questionApi.ts) | 经典和通用题目接口：`/api/classic/round`、`/api/questions/check`、`/api/abyss/*` |
-| [statsApi.ts](../frontend/src/api/statsApi.ts) | 游戏结算、记录与统计 API 客户端 |
-| [authApi.ts](../frontend/src/api/authApi.ts) | `/api/auth/*` 接口：register、login、fetchMe |
-| [albumApi.ts](../frontend/src/api/albumApi.ts) | `/api/albums/*` 接口：fetchAlbumList、fetchAlbumRound |
-| [leaderboardApi.ts](../frontend/src/api/leaderboardApi.ts) | `/api/leaderboard` 接口：fetchLeaderboard |
-| [constants.ts](../frontend/src/utils/constants.ts) | `R<T>` 类型、`LevelConfig[]` 等级配置、证书尺寸常量、分享文案模板 |
-| [levels.ts](../frontend/src/utils/levels.ts) | 客户端等级计算逻辑（API 提交失败时的降级方案） |
-| [albums.ts](../frontend/src/utils/albums.ts) | 15 张专辑常量（key、displayName、year、gradient）+ 解锁阈值 |
-| [format.ts](../frontend/src/utils/format.ts) | 日期/时间格式化工具 |
-| [router/index.ts](../frontend/src/router/index.ts) | Hash 路由：`/`→首页，`/quiz`→答题，`/result`→结果，`/certificate`→证书，`/albums`→专辑，`/leaderboard`→排行，`/login`→登录，`/register`→注册 |
-| [HomePage.vue](../frontend/src/pages/HomePage.vue) | 首页：昵称输入、模式选择（经典/专辑）、开始答题 |
-| [QuizPage.vue](../frontend/src/pages/QuizPage.vue) | 答题页：进度条、题目卡片、选项、反馈 |
-| [ResultPage.vue](../frontend/src/pages/ResultPage.vue) | 结果页：等级展示、数据面板、分享 |
-| [CertificatePage.vue](../frontend/src/pages/CertificatePage.vue) | 证书页：Canvas 预览、保存/分享 |
-| [AlbumListPage.vue](../frontend/src/pages/AlbumListPage.vue) | 专辑闯关列表：15 张专辑卡片、解锁状态、最高分 |
-| [LeaderboardPage.vue](../frontend/src/pages/LeaderboardPage.vue) | 排行榜：经典、专辑、深渊三榜切换 |
-| [QuestionCard.vue](../frontend/src/components/quiz/QuestionCard.vue) | 题目卡片 + `el-radio-group` 选项 |
-| [FeedbackBar.vue](../frontend/src/components/quiz/FeedbackBar.vue) | 答题对错反馈条 |
-| [AlbumCard.vue](../frontend/src/components/album/AlbumCard.vue) | 专辑卡片：封面渐变、年份、锁定/解锁状态、最高分 |
+| --- | --- |
+| `frontend/src/composables/useQuiz.ts` | 答题流程编排。 |
+| `frontend/src/stores/gameStore.ts` | 当前游戏状态。 |
+| `frontend/src/api/client.ts` | Axios 客户端。 |
+| `frontend/src/pages/HomePage.vue` | 首页和玩法入口。 |
+| `frontend/src/pages/QuizPage.vue` | 答题交互。 |
+| `frontend/src/pages/ResultPage.vue` | 结果展示和后续动作。 |
+| `frontend/src/pages/AlbumListPage.vue` | 专辑列表和挑战入口。 |
+| `frontend/src/pages/LeaderboardPage.vue` | 排行榜。 |
+| `frontend/src/pages/ProfilePage.vue` | 用户身份和个人记录。 |
 
-## 数据库
+### 10.3 管理端
 
-`jaymetest` 库中 5 张表：
-
-| 表 | 说明 |
-|----|------|
-| `question` | 题库（基础 70 题，可通过扩充脚本增加到 200 题），含 `category`、`difficulty`、`album` 列 |
-| `game_record` | 匿名/登录游戏记录，`round_id` UUID 去重，含 `mode`、`album_key`、`user_id`、`nickname` |
-| `user` | 注册用户，邮箱+BCrypt 哈希密码+昵称 |
-| `album_progress` | 专辑闯关进度，`(user_id, album_key)` 唯一约束，含 `unlocked`、`best_score`、`total_attempts` |
-| `admin_user` | 后台管理用户，含 `username`、`password`、`role`、`enabled` |
-
-脚本位于 `database/`，不使用 Flyway、Liquibase 等迁移框架：
-
-- `baseline/schema.sql`：从零初始化基础表结构
-- `baseline/seed_001_initial_questions.sql`：初始 70 道题目
-- `baseline/seed_002_question_expansion.sql`：题库扩充到 200 题
-- `baseline/seed_003_test_users.sql`：本地测试用户
-- `releases/v3/001_add_admin_console.sql`：第三版后台管理表和默认本地管理员账号
-- `snapshots/2026-07-28_schema.sql`：当前表结构快照，只用于查看全貌和人工排查
-
-## 数据库脚本管理规范
-
-- 所有数据库变更按产品版本放入 `database/releases/vX/`，文件名使用 `{三位递增编号}_{action}_{object}.sql`，例如 `002_add_abyss_record_indexes.sql`。
-- `baseline/` 只放从零初始化所需脚本；版本升级脚本只放 `releases/vX/`。
-- 已提交或已执行到共享环境的历史 SQL 不直接修改；发现问题时新增下一个编号脚本修正。
-- 一个脚本只处理一个清晰的业务变更，脚本顶部写明用途、前置条件和影响表。
-- 涉及种子数据或回填数据时，优先写成幂等脚本；不能幂等时必须在版本 `README.md` 中注明。
-- 本地从零初始化按 `baseline/schema.sql`、`baseline/seed_*.sql` 顺序执行。
-- 版本升级按 `releases/vX/` 下编号顺序执行，并在对应版本 `README.md` 记录执行说明。
-- `snapshots/` 需要随表结构变化同步更新，但不能替代 `releases/vX/` 下的增量脚本。
-- 提交数据库相关改动时，变更摘要必须列出新增或调整的 SQL 文件。
-
-## 专辑闯关模式
-
-- 15 张录音室专辑（Jay 2000 → 最伟大的作品 2022），按发行时间排序。
-- 首张专辑 `JAY` 默认解锁，后续专辑需前一专辑正确率达到 80%（当前为 16/20）解锁。
-- 每道题关联 `album` 字段，跨专辑/非录音室曲目 `album = NULL`，不纳入专辑模式抽题。
-- 专辑进度持久化到 `album_progress` 表，记录最高分和挑战次数。
-
-## 用户系统
-
-- Sa-Token + JWT 双令牌模式，`/api/auth/register` 和 `/api/auth/login`。
-- `SaTokenConfig` 定义路由拦截规则：公开接口包含 `/api/game-results` 和 `/api/statistics/overview`；`/api/game-records/me` 需登录。
-- 密码 BCrypt 加密存储。
-- 游客仍可完整答题，登录后可查看历史记录、排行榜、专辑进度。
-
-## 移动端与分享
-
-- Hash 路由 (`createWebHashHistory`)：静态部署无需 Nginx fallback。
-- Element Plus 中文语言包，触摸区域 ≥ 44×44px。
-- 分享三级降级：Web Share API → 剪贴板复制 → 手动引导蒙层。
-- Canvas 生成证书图片，规格 1080×1520px。
+| 文件 | 职责 |
+| --- | --- |
+| `admin/src/main.tsx` | 路由、主题和登录守卫。 |
+| `admin/src/context/AuthContext.tsx` | 管理员登录态。 |
+| `admin/src/api/client.ts` | 管理端 Axios 客户端。 |
+| `backend/src/main/java/com/jaymetest/controller/admin` | 管理端后端入口。 |

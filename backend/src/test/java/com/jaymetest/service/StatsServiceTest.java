@@ -122,6 +122,7 @@ class GameResultServiceTest {
         verify(gameRecordMapper).insert(recordCaptor.capture());
         GameRecord stored = recordCaptor.getValue();
         assertNull(stored.getUserId());
+        assertNull(stored.getNickname());
         assertEquals(GameMode.ABYSS.name(), stored.getMode());
         assertEquals(1, stored.getScore());
         assertEquals(0, stored.getUsedRevival());

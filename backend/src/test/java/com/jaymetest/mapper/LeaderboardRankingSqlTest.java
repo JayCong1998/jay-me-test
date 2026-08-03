@@ -37,6 +37,7 @@ class LeaderboardRankingSqlTest {
     @Test
     void albumLeaderboardRanksAlbumParticipantsAndCountsPassedAlbums() {
         assertTrue(mapperSource.contains("gr.mode = #{albumMode}"));
+        assertTrue(mapperSource.contains("gr.mode = #{albumMode}\n                              AND gr.user_id IS NOT NULL"));
         assertTrue(mapperSource.contains("PARTITION BY gr.user_id, gr.album_key"));
         assertTrue(mapperSource.contains("SUM(CASE WHEN picked.correct_count * 100 >= picked.total_questions * #{passAccuracy} THEN 1 ELSE 0 END) AS completedAlbumCount"));
         assertTrue(mapperSource.contains("SUM(time_spent_secs) AS totalAlbumTimeSecs"));
@@ -47,6 +48,7 @@ class LeaderboardRankingSqlTest {
     @Test
     void abyssLeaderboardRanksLoggedInAbyssRecordsWithCreatedAtTieBreak() {
         assertTrue(mapperSource.contains("gr.mode = #{abyssMode}"));
+        assertTrue(mapperSource.contains("gr.mode = #{abyssMode}\n                      AND gr.user_id IS NOT NULL"));
         assertTrue(mapperSource.contains("correct_count AS streak"));
         assertTrue(mapperSource.contains("ORDER BY gr.correct_count DESC, gr.time_spent_secs ASC, gr.created_at ASC"));
         assertTrue(mapperSource.contains("selectAbyssLeaderboardPaged"));

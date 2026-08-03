@@ -16,7 +16,7 @@
     <artifactId>jay-me-test</artifactId>
     <version>1.0.0</version>
     <name>jay-me-test</name>
-    <description>杰迷结业考试 - 周杰伦粉丝答题应用</description>
+    <description>杰迷试炼 - 周杰伦粉丝答题应用</description>
 
     <properties>
         <!-- 项目统一版本入口：Java 21 与关键三方依赖版本集中管理，避免散落在 dependency 中。 -->
@@ -91,23 +91,10 @@
             <artifactId>spring-security-crypto</artifactId>
         </dependency>
 
-        <!-- WebFlux：为 AI/外部 HTTP 调用提供 WebClient 等响应式客户端能力。 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
-        </dependency>
-
-        <!-- DashScope AI 接入：用于项目中的 AI 问答能力。 -->
-        <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
-            <version>${spring.ai.alibaba.version}</version>
         </dependency>
 
         <!-- 单元测试和 Spring Boot 测试支持，scope=test 不进入运行时包。 -->

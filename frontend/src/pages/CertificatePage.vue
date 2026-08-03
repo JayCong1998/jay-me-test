@@ -42,7 +42,7 @@
 
             <!-- 正文 -->
             <p class="cert-subtitle">兹 证 明</p>
-            <p class="cert-nickname">{{ userStore.nickname }}</p>
+            <p v-if="authStore.user?.nickname" class="cert-nickname">{{ authStore.user.nickname }}</p>
             <p class="cert-meta-text">在杰迷试炼中获得</p>
             <p class="cert-level" :style="{ color: levelColor }">{{ levelConfig.title }}</p>
 
@@ -146,7 +146,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showSuccessToast, showToast } from 'vant'
 import { useGameStore } from '@/stores/gameStore'
-import { useUserStore } from '@/stores/userStore'
+import { useAuthStore } from '@/stores/authStore'
 import { formatDate } from '@/utils/format'
 import { LEVELS, ABYSS_LEVELS, SHARE_TEXT_TEMPLATE, ABYSS_SHARE_TEXT_TEMPLATE } from '@/utils/constants'
 import { renderCertificate, downloadCertificate } from '@/utils/certificate'
@@ -154,7 +154,7 @@ import type { CertData } from '@/utils/certificate'
 
 const router = useRouter()
 const gameStore = useGameStore()
-const userStore = useUserStore()
+const authStore = useAuthStore()
 
 const certCardRef = ref<HTMLElement>()
 const certPreviewRef = ref<HTMLElement>()
@@ -219,7 +219,7 @@ async function handleSaveImage() {
   saving.value = true
   try {
     const certData: CertData = {
-      nickname: userStore.nickname,
+      nickname: authStore.user?.nickname ?? '',
       levelTitle: levelConfig.value.title,
       levelKey: levelConfig.value.key,
       correctCount: result.value.correctCount,

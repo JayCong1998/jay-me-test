@@ -4,7 +4,6 @@ import * as questionApi from '@/api/questionApi'
 import * as statsApi from '@/api/statsApi'
 import * as albumApi from '@/api/albumApi'
 import { getLevelByScore, getAbyssLevelByStreak, calcScore } from '@/utils/levels'
-import { generateGuestNickname } from '@/utils/nickname'
 
 /**
  * 答题流程编排 composable
@@ -144,14 +143,10 @@ export function useQuiz() {
     const isAbyss = gameStore.mode === 'ABYSS'
 
     try {
-      const nickname = authStore.isLoggedIn
-        ? authStore.user!.nickname
-        : generateGuestNickname()
-
       const result = await statsApi.submitResult({
         roundId: gameStore.roundId!,
         timeSpentSecs: gameStore.elapsedSeconds,
-        nickname,
+        ...(authStore.isLoggedIn ? { nickname: authStore.user!.nickname } : {}),
       })
 
       // 保存 API 结果到 gameStore，供结果页使用

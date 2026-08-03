@@ -108,16 +108,13 @@ defineOptions({ name: 'HomePage' })
 
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/userStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useQuiz } from '@/composables/useQuiz'
 import { fetchOverview } from '@/api/statsApi'
 import { showFailToast } from 'vant'
 import type { StatsOverview } from '@/api/statsApi'
-import { generateGuestNickname } from '@/utils/nickname'
 
 const router = useRouter()
-const userStore = useUserStore()
 const authStore = useAuthStore()
 const { startNewRound, startAbyssRound } = useQuiz()
 
@@ -151,10 +148,6 @@ async function onRefresh() {
 
 // --- 方法 ---
 async function handleStart() {
-  if (!authStore.isLoggedIn) {
-    userStore.setNickname(generateGuestNickname())
-  }
-
   loading.value = true
   try {
     await startNewRound()

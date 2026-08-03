@@ -11,6 +11,12 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
+try {
+  localStorage.removeItem('jaymetest_user')
+} catch {
+  // localStorage 不可用时不影响应用启动
+}
+
 // 在 mount 前初始化主题（恢复 localStorage 中的主题偏好）
 useThemeStore()
 

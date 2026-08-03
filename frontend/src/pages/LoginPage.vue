@@ -70,14 +70,12 @@
 import { reactive, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { useUserStore } from '@/stores/userStore'
 import * as authApi from '@/api/authApi'
 import { validateEmail, validatePassword } from '@/utils/authValidation'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
-const userStore = useUserStore()
 
 const form = reactive({ email: '', password: '' })
 const loading = ref(false)
@@ -106,10 +104,6 @@ async function handleLogin() {
       password: form.password,
     })
     authStore.setAuth(res.token, res.user)
-
-    // 登录成功后清空游客数据，同步昵称
-    userStore.reset()
-    userStore.setNickname(res.user.nickname)
 
     // 重定向
     const redirect = (route.query.redirect as string) || '/'

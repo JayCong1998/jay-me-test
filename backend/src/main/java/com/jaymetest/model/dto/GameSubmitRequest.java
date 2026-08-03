@@ -14,7 +14,7 @@ public class GameSubmitRequest {
     @NotNull(message = "timeSpentSecs 不能为空")
     private Integer timeSpentSecs;
 
-    /** 昵称快照（游客时前端生成 "杰迷XXXX"） */
+    /** 登录用户昵称快照。游客不提交昵称。 */
     private String nickname;
 
 }

@@ -27,11 +27,11 @@ class StatisticsServiceTest {
                 level("ULTIMATE", 90, 100)
         ));
 
-        when(gameRecordMapper.countTotal()).thenReturn(32L);
+        when(gameRecordMapper.countTotalByRegisteredUsers()).thenReturn(32L);
         when(userMapper.countTotalUsers()).thenReturn(4L);
-        when(gameRecordMapper.selectAverageScore()).thenReturn(72.34);
-        when(gameRecordMapper.selectMaxAbyssStreak()).thenReturn(18);
-        when(gameRecordMapper.selectLevelDistribution()).thenReturn(List.of(
+        when(gameRecordMapper.selectAverageScoreByRegisteredUsers()).thenReturn(72.34);
+        when(gameRecordMapper.selectMaxAbyssStreakByRegisteredUsers()).thenReturn(18);
+        when(gameRecordMapper.selectLevelDistributionByRegisteredUsers()).thenReturn(List.of(
                 Map.of("correct_count", 4, "cnt", 2L),
                 Map.of("correct_count", 20, "cnt", 1L)
         ));

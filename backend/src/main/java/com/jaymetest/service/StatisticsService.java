@@ -19,9 +19,9 @@ public class StatisticsService {
     private final ClassicGameProperties classicGameProperties;
 
     public StatsOverviewDTO getOverview() {
-        long totalGames = gameRecordMapper.countTotal();
+        long totalGames = gameRecordMapper.countTotalByRegisteredUsers();
         Map<String, Double> levelDistribution = new HashMap<>();
-        List<Map<String, Object>> distribution = gameRecordMapper.selectLevelDistribution();
+        List<Map<String, Object>> distribution = gameRecordMapper.selectLevelDistributionByRegisteredUsers();
         for (var level : classicGameProperties.getLevels()) {
             long count = 0;
             for (Map<String, Object> row : distribution) {
@@ -32,8 +32,8 @@ public class StatisticsService {
             levelDistribution.put(level.getKey(), totalGames > 0 ? Math.round(((double) count / totalGames) * 10000.0) / 100.0 : 0.0);
         }
         return StatsOverviewDTO.builder().totalPlayers(userMapper.countTotalUsers()).totalGames(totalGames)
-                .averageScore(Math.round(gameRecordMapper.selectAverageScore() * 10.0) / 10.0)
-                .maxAbyssStreak(gameRecordMapper.selectMaxAbyssStreak())
+                .averageScore(Math.round(gameRecordMapper.selectAverageScoreByRegisteredUsers() * 10.0) / 10.0)
+                .maxAbyssStreak(gameRecordMapper.selectMaxAbyssStreakByRegisteredUsers())
                 .levelDistribution(levelDistribution).build();
     }
 }

@@ -79,13 +79,11 @@
 import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { useUserStore } from '@/stores/userStore'
 import * as authApi from '@/api/authApi'
 import { validateEmail, validateNickname, validatePassword } from '@/utils/authValidation'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const userStore = useUserStore()
 
 const form = reactive({ nickname: '', email: '', password: '' })
 const loading = ref(false)
@@ -118,10 +116,6 @@ async function handleRegister() {
       nickname: form.nickname.trim(),
     })
     authStore.setAuth(res.token, res.user)
-
-    // 注册成功后清空游客数据，同步昵称
-    userStore.reset()
-    userStore.setNickname(res.user.nickname)
 
     router.push('/')
   } catch (e: any) {
